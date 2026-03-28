@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.security import require_admin
@@ -50,7 +50,10 @@ def list_products(
     keyword: str | None = Query(default=None),
     include_off_sale: bool = Query(default=False),
     db: Session = Depends(get_db),
+    x_user_role: str | None = Header(default=None),
 ):
+    if include_off_sale and x_user_role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
     total, items = paginate_products(db, page, size, keyword, include_off_sale)
     payload = ProductPageResponse(
         items=[ProductResponse.model_validate(item, from_attributes=True) for item in items],

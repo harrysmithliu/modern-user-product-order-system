@@ -1,28 +1,31 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { App, ConfigProvider, Typography } from "antd";
-
-const Root = () => (
-  <ConfigProvider
-    theme={{
-      token: {
-        colorPrimary: "#1768ac",
-      },
-    }}
-  >
-    <App>
-      <div style={{ padding: 32 }}>
-        <Typography.Title>Modern User-Product-Order System</Typography.Title>
-        <Typography.Paragraph>
-          Frontend Phase 1 pages will be added after the backend core loop is in place.
-        </Typography.Paragraph>
-      </div>
-    </App>
-  </ConfigProvider>
-);
+import { App as AntApp, ConfigProvider } from "antd";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./modules/auth/AuthProvider";
+import { RootApp } from "./RootApp";
+import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Root />
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#1768ac",
+          borderRadius: 14,
+          colorBgLayout: "#f4f7fb",
+          colorBgContainer: "#ffffff",
+          fontFamily: '"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif',
+        },
+      }}
+    >
+      <AntApp>
+        <BrowserRouter>
+          <AuthProvider>
+            <RootApp />
+          </AuthProvider>
+        </BrowserRouter>
+      </AntApp>
+    </ConfigProvider>
   </React.StrictMode>,
 );

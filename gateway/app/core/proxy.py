@@ -4,7 +4,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from app.core.config import settings
-from app.core.security import CurrentUser, get_current_user
+from app.core.security import CurrentUser, get_current_user, get_optional_current_user
 
 router = APIRouter()
 
@@ -74,6 +74,10 @@ async def forward_request(request: Request, current_user: Optional[CurrentUser])
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 )
 async def gateway_proxy(path: str, request: Request):
-    current_user = None if is_public_route(request) else get_current_user(request.headers.get("authorization"))
+    current_user = (
+        get_optional_current_user(request.headers.get("authorization"))
+        if is_public_route(request)
+        else get_current_user(request.headers.get("authorization"))
+    )
     enforce_role(request.url.path, current_user)
     return await forward_request(request, current_user)

@@ -44,3 +44,9 @@ def get_current_user(authorization: Optional[str] = Header(default=None)) -> Opt
             detail="Authorization header must use Bearer token",
         )
     return decode_token(token)
+
+
+def get_optional_current_user(authorization: Optional[str]) -> Optional[CurrentUser]:
+    if not authorization:
+        return None
+    return get_current_user(authorization)

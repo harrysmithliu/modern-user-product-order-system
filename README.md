@@ -96,4 +96,5 @@ npm run dev
 - `product-service` includes public catalog APIs and internal stock reservation APIs
 - `order-service` includes create, cancel, my orders, admin list, approve, and reject
 - `gateway` routes `/api/**` and injects request user headers for downstream services
+- `frontend` now includes login, products, my orders, profile, admin orders, and admin products pages
 - MongoDB is only reserved in docs and architecture for later audit/event expansion

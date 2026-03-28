@@ -2,6 +2,49 @@
 
 Spring Boot service responsible for order creation and approval flow.
 
+## Responsibility
+
+- create single-product orders
+- enforce request-level idempotency via `request_no`
+- list current user's orders
+- cancel pending orders
+- list all orders for admin review
+- approve or reject pending orders
+- call product-service internal APIs to reserve and release stock
+
+## Database
+
+- schema: `h_order_db`
+- table: `t_order`
+- future Phase 2 table: `t_message_consume_log`
+
+Important columns currently used:
+
+- `order_no`
+- `request_no`
+- `user_id`
+- `product_id`
+- `quantity`
+- `total_amount`
+- `status`
+- `reject_reason`
+- `approve_time`
+- `cancel_time`
+- `version`
+
+## Important Environment Requirement
+
+The MySQL application user must have access to `h_order_db`.
+
+Example grant:
+
+```sql
+GRANT ALL PRIVILEGES ON h_order_db.* TO 'app'@'%';
+FLUSH PRIVILEGES;
+```
+
+Without that grant, the service cannot boot because JPA cannot initialize against the schema.
+
 ## Current Endpoints
 
 - `POST /orders`
@@ -10,6 +53,18 @@ Spring Boot service responsible for order creation and approval flow.
 - `GET /admin/orders`
 - `POST /admin/orders/{id}/approve`
 - `POST /admin/orders/{id}/reject`
+- `GET /health`
+- `GET /ready`
+- `GET /live`
+
+## Directory Guide
+
+- `src/main/java/com/example/orders/controller/`: external APIs
+- `src/main/java/com/example/orders/service/`: business logic and product-service client
+- `src/main/java/com/example/orders/entity/`: JPA entity
+- `src/main/java/com/example/orders/repository/`: JPA repository
+- `src/main/java/com/example/orders/security/`: request user extraction from gateway headers
+- `src/main/resources/application.yml`: datasource and service config
 
 ## Local Run
 
@@ -21,3 +76,17 @@ mvn spring-boot:run
 
 - MySQL `h_order_db`
 - product-service internal APIs on `http://localhost:8002`
+
+## Maintenance Notes
+
+- JSON output uses `snake_case` to align with the current frontend contract.
+- The service trusts gateway-provided request headers for user context in Phase 1.
+- Create-order logic is intentionally synchronous for now: reserve stock first, then persist order.
+- If order persistence fails after stock reservation, the service currently attempts stock release as compensation.
+
+## Near-Term TODO
+
+- replace simple compensation with event-driven outbox flow
+- add stronger optimistic concurrency control on state transitions
+- add notification and audit event publishing through RabbitMQ
+- add order query filters beyond status

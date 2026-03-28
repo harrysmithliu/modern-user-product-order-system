@@ -18,6 +18,7 @@ spring:
         format_sql: true
   jackson:
     time-zone: UTC
+    property-naming-strategy: SNAKE_CASE
 
 management:
   endpoints:
