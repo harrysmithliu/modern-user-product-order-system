@@ -55,6 +55,12 @@ Important values:
 - `GATEWAY_PRODUCT_SERVICE_URL`
 - `GATEWAY_ORDER_SERVICE_URL`
 
+## Docker
+
+- Dockerfile: `gateway/Dockerfile`
+- Compose service name: `gateway`
+- Local container docs: `http://localhost:8000/docs`
+
 ## Public vs Protected Routes
 
 Public:

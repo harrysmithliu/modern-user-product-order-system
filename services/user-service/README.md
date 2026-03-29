@@ -57,6 +57,12 @@ See:
 
 - `services/user-service/.env.example`
 
+## Docker
+
+- Dockerfile: `services/user-service/Dockerfile`
+- Compose service name: `user-service`
+- Local container docs: `http://localhost:8001/docs`
+
 ## Current Endpoints
 
 - `POST /auth/login`

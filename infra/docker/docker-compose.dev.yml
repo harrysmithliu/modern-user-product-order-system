@@ -1,0 +1,103 @@
+name: modern-upo-dev
+
+services:
+  user-service:
+    image: upo-user-service:dev
+    build:
+      context: ../..
+      dockerfile: services/user-service/Dockerfile
+    container_name: modern-upo-dev-user-service
+    restart: unless-stopped
+    environment:
+      USER_SERVICE_DB_HOST: ${DEV_DB_HOST:-host.docker.internal}
+      USER_SERVICE_DB_PORT: ${DEV_DB_PORT:-3306}
+      USER_SERVICE_DB_NAME: h_user_db
+      USER_SERVICE_DB_USER: ${DEV_DB_USER:-app}
+      USER_SERVICE_DB_PASSWORD: ${DEV_DB_PASSWORD:-app_pass}
+      USER_SERVICE_JWT_SECRET: ${DEV_JWT_SECRET:-change-me-in-env}
+      USER_SERVICE_JWT_ALGORITHM: HS256
+      USER_SERVICE_JWT_EXPIRE_MINUTES: 120
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8011:8001"
+
+  product-service:
+    image: upo-product-service:dev
+    build:
+      context: ../..
+      dockerfile: services/product-service/Dockerfile
+    container_name: modern-upo-dev-product-service
+    restart: unless-stopped
+    environment:
+      PRODUCT_SERVICE_DB_HOST: ${DEV_DB_HOST:-host.docker.internal}
+      PRODUCT_SERVICE_DB_PORT: ${DEV_DB_PORT:-3306}
+      PRODUCT_SERVICE_DB_NAME: h_product_db
+      PRODUCT_SERVICE_DB_USER: ${DEV_DB_USER:-app}
+      PRODUCT_SERVICE_DB_PASSWORD: ${DEV_DB_PASSWORD:-app_pass}
+      PRODUCT_SERVICE_JWT_SECRET: ${DEV_JWT_SECRET:-change-me-in-env}
+      PRODUCT_SERVICE_JWT_ALGORITHM: HS256
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8012:8002"
+
+  order-service:
+    image: upo-order-service:dev
+    build:
+      context: ../..
+      dockerfile: services/order-service/Dockerfile
+    container_name: modern-upo-dev-order-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DEV_DB_HOST:-host.docker.internal}:${DEV_DB_PORT:-3306}/h_order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${DEV_DB_USER:-app}
+      SPRING_DATASOURCE_PASSWORD: ${DEV_DB_PASSWORD:-app_pass}
+      APP_PRODUCT_SERVICE_BASE_URL: http://product-service:8002
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      product-service:
+        condition: service_started
+    ports:
+      - "8081:8080"
+
+  gateway:
+    image: upo-gateway:dev
+    build:
+      context: ../..
+      dockerfile: gateway/Dockerfile
+    container_name: modern-upo-dev-gateway
+    restart: unless-stopped
+    environment:
+      GATEWAY_JWT_SECRET: ${DEV_JWT_SECRET:-change-me-in-env}
+      GATEWAY_JWT_ALGORITHM: HS256
+      GATEWAY_CORS_ORIGINS: '["http://localhost:5174","http://127.0.0.1:5174"]'
+      GATEWAY_USER_SERVICE_URL: http://user-service:8001
+      GATEWAY_PRODUCT_SERVICE_URL: http://product-service:8002
+      GATEWAY_ORDER_SERVICE_URL: http://order-service:8080
+    depends_on:
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    ports:
+      - "8010:8000"
+
+  frontend:
+    image: upo-frontend:dev
+    build:
+      context: ../..
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8010
+    container_name: modern-upo-dev-frontend
+    restart: unless-stopped
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "5174:80"

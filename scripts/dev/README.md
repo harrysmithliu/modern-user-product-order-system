@@ -22,6 +22,12 @@ Automated Phase 1 smoke test:
 python3 scripts/dev/smoke-test-phase1.py
 ```
 
+Optional base URL override:
+
+```bash
+SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase1.py
+```
+
 The script creates real sample orders in the local development database so the review and history pages have data to display.
 
 The script assumes these services are already running locally:

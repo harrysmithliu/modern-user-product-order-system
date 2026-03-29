@@ -68,6 +68,12 @@ See:
 
 - `services/product-service/.env.example`
 
+## Docker
+
+- Dockerfile: `services/product-service/Dockerfile`
+- Compose service name: `product-service`
+- Local container docs: `http://localhost:8002/docs`
+
 ## Current Endpoints
 
 Public:

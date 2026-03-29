@@ -76,6 +76,18 @@ mvn spring-boot:run
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
+## Environment Variables
+
+See:
+
+- `services/order-service/.env.example`
+
+## Docker
+
+- Dockerfile: `services/order-service/Dockerfile`
+- Compose service name: `order-service`
+- Local container docs: `http://localhost:8080/swagger-ui/index.html`
+
 ## Dependencies
 
 - MySQL `h_order_db`

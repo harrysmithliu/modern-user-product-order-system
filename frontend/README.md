@@ -51,6 +51,16 @@ Default local URL:
 
 - `http://localhost:5173`
 
+## Environment File
+
+- `frontend/.env.example`
+
+## Docker
+
+- Dockerfile: `frontend/Dockerfile`
+- The production image builds the Vite app and serves it through Nginx.
+- In Compose, the frontend is exposed at `http://localhost:5173`.
+
 ## Backend Dependency
 
 The frontend currently calls the gateway at:

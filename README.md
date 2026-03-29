@@ -132,11 +132,60 @@ modern-user-product-order-system/
 │   └── order-service/
 ├── docs/
 ├── infra/
+│   ├── docker/
+│   ├── k8s/
+│   └── aws/
 ├── scripts/
 └── .github/workflows/
 ```
 
+## Environment Strategy
+
+- `dev`
+  - day-to-day developer iteration
+  - may use direct local process startup or `infra/docker/docker-compose.dev.yml`
+  - expects host-managed infrastructure when using the lightweight Compose stack
+- `sandbox`
+  - full integration and demo environment
+  - uses `infra/docker/docker-compose.sandbox.yml`
+  - includes MySQL, Redis, RabbitMQ, and MongoDB containers
+- `prod`
+  - reserved for future Kubernetes and cloud deployment
+  - configuration placeholders live under `infra/k8s/` and `infra/aws/`
+
 ## Local Run
+
+### Sandbox Compose Run
+
+From the repository root:
+
+```bash
+docker compose --env-file infra/docker/.env.sandbox.example -f infra/docker/docker-compose.sandbox.yml up --build
+```
+
+This stack starts:
+
+- frontend
+- gateway
+- user-service
+- product-service
+- order-service
+- mysql
+- redis
+- rabbitmq
+- mongodb
+
+The MySQL container initializes the three schemas, core tables, demo users, and sample products on first boot.
+
+### Dev Compose Run
+
+From the repository root:
+
+```bash
+docker compose --env-file infra/docker/.env.dev.example -f infra/docker/docker-compose.dev.yml up --build
+```
+
+This lightweight stack expects host-managed infrastructure, such as your existing local MySQL and RabbitMQ containers.
 
 ### 1. Start the backend services
 
@@ -197,6 +246,12 @@ After the four backend services are up, run:
 python3 scripts/dev/smoke-test-phase1.py
 ```
 
+To run the same smoke test against the dev compose stack:
+
+```bash
+SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase1.py
+```
+
 This validates:
 
 - user and admin login
@@ -212,11 +267,26 @@ The script writes sample orders into the local development database so the revie
 
 ## Local Access Points
 
+Sandbox:
+
 - Frontend: `http://localhost:5173`
 - Gateway docs: `http://localhost:8000/docs`
 - User service docs: `http://localhost:8001/docs`
 - Product service docs: `http://localhost:8002/docs`
 - Order service docs: `http://localhost:8080/swagger-ui/index.html`
+- Sandbox MySQL: `localhost:3307`
+- Sandbox Redis: `localhost:6380`
+- Sandbox RabbitMQ AMQP: `localhost:5673`
+- Sandbox RabbitMQ management: `http://localhost:15673`
+- Sandbox MongoDB: `mongodb://admin:admin123@localhost:27018`
+
+Dev compose:
+
+- Frontend: `http://localhost:5174`
+- Gateway docs: `http://localhost:8010/docs`
+- User service docs: `http://localhost:8011/docs`
+- Product service docs: `http://localhost:8012/docs`
+- Order service docs: `http://localhost:8081/swagger-ui/index.html`
 
 ## Demo Accounts
 
@@ -233,12 +303,14 @@ The script writes sample orders into the local development database so the revie
 - The frontend currently assumes the gateway is reachable at `http://localhost:8000`.
 - The current UI is English-only for now. Internationalization can be added later.
 - MongoDB is a planned side-channel data store for Phase 2 and later, not the source of truth for user, product, or order records.
+- The sandbox Compose stack uses `infra/docker/mysql/init/01-init.sql` to provision fresh local data on first database startup.
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Database Design](docs/database-design.md)
 - [API Overview](docs/api-overview.md)
+- [Infra Overview](infra/README.md)
 - [Frontend README](frontend/README.md)
 - [Gateway README](gateway/README.md)
 - [User Service README](services/user-service/README.md)

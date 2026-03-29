@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import json
+import os
 import sys
 import time
 import urllib.error
 import urllib.request
 
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = os.getenv("SMOKE_TEST_BASE_URL", "http://127.0.0.1:8000")
 
 
 def request(method: str, path: str, data=None, token: str | None = None):

@@ -1,0 +1,164 @@
+name: modern-upo-sandbox
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: modern-upo-sandbox-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+    ports:
+      - "3307:3306"
+    command: ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    volumes:
+      - mysql_sandbox_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7.0
+    container_name: modern-upo-sandbox-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_sandbox_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: modern-upo-sandbox-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-admin123}
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - rabbitmq_sandbox_data:/var/lib/rabbitmq
+
+  mongodb:
+    image: mongo:7
+    container_name: modern-upo-sandbox-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-admin123}
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_sandbox_data:/data/db
+
+  user-service:
+    image: upo-user-service:sandbox
+    build:
+      context: ../..
+      dockerfile: services/user-service/Dockerfile
+    container_name: modern-upo-sandbox-user-service
+    restart: unless-stopped
+    environment:
+      USER_SERVICE_DB_HOST: mysql
+      USER_SERVICE_DB_PORT: 3306
+      USER_SERVICE_DB_NAME: h_user_db
+      USER_SERVICE_DB_USER: ${MYSQL_APP_USER:-app}
+      USER_SERVICE_DB_PASSWORD: ${MYSQL_APP_PASSWORD:-app_pass}
+      USER_SERVICE_JWT_SECRET: ${SANDBOX_JWT_SECRET:-change-me-in-env}
+      USER_SERVICE_JWT_ALGORITHM: HS256
+      USER_SERVICE_JWT_EXPIRE_MINUTES: 120
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+
+  product-service:
+    image: upo-product-service:sandbox
+    build:
+      context: ../..
+      dockerfile: services/product-service/Dockerfile
+    container_name: modern-upo-sandbox-product-service
+    restart: unless-stopped
+    environment:
+      PRODUCT_SERVICE_DB_HOST: mysql
+      PRODUCT_SERVICE_DB_PORT: 3306
+      PRODUCT_SERVICE_DB_NAME: h_product_db
+      PRODUCT_SERVICE_DB_USER: ${MYSQL_APP_USER:-app}
+      PRODUCT_SERVICE_DB_PASSWORD: ${MYSQL_APP_PASSWORD:-app_pass}
+      PRODUCT_SERVICE_JWT_SECRET: ${SANDBOX_JWT_SECRET:-change-me-in-env}
+      PRODUCT_SERVICE_JWT_ALGORITHM: HS256
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8002:8002"
+
+  order-service:
+    image: upo-order-service:sandbox
+    build:
+      context: ../..
+      dockerfile: services/order-service/Dockerfile
+    container_name: modern-upo-sandbox-order-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/h_order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_APP_USER:-app}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_APP_PASSWORD:-app_pass}
+      APP_PRODUCT_SERVICE_BASE_URL: http://product-service:8002
+    depends_on:
+      mysql:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  gateway:
+    image: upo-gateway:sandbox
+    build:
+      context: ../..
+      dockerfile: gateway/Dockerfile
+    container_name: modern-upo-sandbox-gateway
+    restart: unless-stopped
+    environment:
+      GATEWAY_JWT_SECRET: ${SANDBOX_JWT_SECRET:-change-me-in-env}
+      GATEWAY_JWT_ALGORITHM: HS256
+      GATEWAY_CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
+      GATEWAY_USER_SERVICE_URL: http://user-service:8001
+      GATEWAY_PRODUCT_SERVICE_URL: http://product-service:8002
+      GATEWAY_ORDER_SERVICE_URL: http://order-service:8080
+    depends_on:
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: upo-frontend:sandbox
+    build:
+      context: ../..
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: modern-upo-sandbox-frontend
+    restart: unless-stopped
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "5173:80"
+
+volumes:
+  mysql_sandbox_data:
+  redis_sandbox_data:
+  rabbitmq_sandbox_data:
+  mongodb_sandbox_data:
