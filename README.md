@@ -190,6 +190,27 @@ Frontend URL:
 
 - `http://localhost:5173`
 
+### 3. Run the Phase 1 smoke test
+
+After the four backend services are up, run:
+
+```bash
+python3 scripts/dev/smoke-test-phase1.py
+```
+
+This validates:
+
+- user and admin login
+- product listing
+- create order
+- cancel order
+- approve order
+- reject order
+- latest-first order sorting
+- pending review queue behavior
+
+The script writes sample orders into the local development database so the review and history screens show realistic data.
+
 ## Local Access Points
 
 - Frontend: `http://localhost:5173`
@@ -226,7 +247,6 @@ Frontend URL:
 
 ## Near-Term Next Steps
 
-- finish end-to-end order review flow verification
 - add Docker Compose for one-command local startup
 - integrate Redis caching
 - integrate RabbitMQ domain events

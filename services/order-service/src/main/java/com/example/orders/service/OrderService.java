@@ -17,6 +17,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,7 +89,7 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> listMyOrders(RequestUser requestUser, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(page - 1, 0), size);
+        Pageable pageable = buildPageRequest(page, size);
         Page<OrderEntity> orderPage = orderRepository.findByUserId(requestUser.userId(), pageable);
         return toPageResponse(orderPage, page, size);
     }
@@ -96,7 +97,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> listAllOrders(RequestUser requestUser, int page, int size, Integer status) {
         ensureAdmin(requestUser);
-        Pageable pageable = PageRequest.of(Math.max(page - 1, 0), size);
+        Pageable pageable = buildPageRequest(page, size);
         Page<OrderEntity> orderPage = status == null
                 ? orderRepository.findAll(pageable)
                 : orderRepository.findByStatus(status, pageable);
@@ -141,6 +142,14 @@ public class OrderService {
         if (!requestUser.isAdmin()) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Admin role required");
         }
+    }
+
+    private Pageable buildPageRequest(int page, int size) {
+        return PageRequest.of(
+                Math.max(page - 1, 0),
+                size,
+                Sort.by(Sort.Order.desc("createTime"), Sort.Order.desc("id"))
+        );
     }
 
     private PageResponse<OrderResponse> toPageResponse(Page<OrderEntity> orderPage, int page, int size) {

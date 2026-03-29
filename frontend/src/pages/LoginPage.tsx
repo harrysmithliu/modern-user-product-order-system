@@ -70,6 +70,9 @@ export function LoginPage() {
               Sign In
             </Button>
           </Form>
+          <Typography.Text className="login-author-mark">
+            Built by harrysmithliu
+          </Typography.Text>
         </Card>
       </div>
     </div>
