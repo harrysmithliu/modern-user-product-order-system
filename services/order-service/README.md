@@ -72,6 +72,10 @@ Without that grant, the service cannot boot because JPA cannot initialize agains
 mvn spring-boot:run
 ```
 
+## API Docs
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+
 ## Dependencies
 
 - MySQL `h_order_db`

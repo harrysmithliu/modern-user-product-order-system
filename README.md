@@ -45,8 +45,6 @@ The repository is under phased implementation.
   - load testing
   - AWS migration notes
 
-AWS deployment is **not live yet**, so no cloud access links are shown in this README.
-
 ## Screenshots
 
 ### Sign-In
@@ -91,7 +89,8 @@ AWS deployment is **not live yet**, so no cloud access links are shown in this R
 - RabbitMQ
   - reserved for Phase 2 async order event handling
 - MongoDB
-  - intentionally reserved for a later audit / event timeline extension, not the critical transaction path
+  - reserved for audit logs, order event timelines, and notification records
+  - intentionally kept out of the critical relational transaction path
 
 ## Tech Stack
 
@@ -214,10 +213,10 @@ The script writes sample orders into the local development database so the revie
 ## Local Access Points
 
 - Frontend: `http://localhost:5173`
-- Gateway docs: `http://127.0.0.1:8000/docs`
-- User service docs: `http://127.0.0.1:8001/docs`
-- Product service docs: `http://127.0.0.1:8002/docs`
-- Order service docs: `http://127.0.0.1:8080/swagger-ui/index.html`
+- Gateway docs: `http://localhost:8000/docs`
+- User service docs: `http://localhost:8001/docs`
+- Product service docs: `http://localhost:8002/docs`
+- Order service docs: `http://localhost:8080/swagger-ui/index.html`
 
 ## Demo Accounts
 
@@ -233,6 +232,7 @@ The script writes sample orders into the local development database so the revie
   - `h_order_db`
 - The frontend currently assumes the gateway is reachable at `http://localhost:8000`.
 - The current UI is English-only for now. Internationalization can be added later.
+- MongoDB is a planned side-channel data store for Phase 2 and later, not the source of truth for user, product, or order records.
 
 ## Documentation
 

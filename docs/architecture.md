@@ -18,6 +18,23 @@
 - MongoDB:
   - reserved for audit logs, order event timeline, and notification records
 
+## MongoDB Reservation Strategy
+
+MongoDB is intentionally reserved for side-channel operational data instead of core transaction records.
+
+Planned usage:
+
+- order event timeline documents
+- notification delivery records
+- gateway or admin audit logs
+
+Not planned for the critical write path:
+
+- user source-of-truth records
+- product source-of-truth records
+- order source-of-truth records
+- inventory mutation authority
+
 ## Service Interaction
 
 1. User logs in through `gateway`

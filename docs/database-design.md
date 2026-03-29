@@ -32,3 +32,19 @@ Table: `h_order_db.t_order`
 Table: `h_order_db.t_message_consume_log`
 
 - reserved for RabbitMQ deduplication in Phase 2
+
+## MongoDB Extension (Reserved)
+
+MongoDB is reserved for document-style operational data rather than transactional source-of-truth records.
+
+Planned collections:
+
+- `order_event_timeline`
+- `notification_records`
+- `gateway_audit_logs`
+
+Planned purpose:
+
+- append-only order status transition history
+- notification send/retry tracking
+- request-level audit and troubleshooting data

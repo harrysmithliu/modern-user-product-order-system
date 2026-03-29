@@ -59,7 +59,7 @@ The frontend currently calls the gateway at:
 
 If you change the gateway port or host, update:
 
-- [client.ts](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/frontend/src/api/client.ts)
+- `frontend/src/api/client.ts`
 
 ## Demo Accounts
 

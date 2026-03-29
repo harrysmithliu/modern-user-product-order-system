@@ -58,11 +58,15 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8002
 ```
 
+## API Docs
+
+- Swagger UI: `http://localhost:8002/docs`
+
 ## Environment Variables
 
 See:
 
-- [services/product-service/.env.example](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/services/product-service/.env.example)
+- `services/product-service/.env.example`
 
 ## Current Endpoints
 

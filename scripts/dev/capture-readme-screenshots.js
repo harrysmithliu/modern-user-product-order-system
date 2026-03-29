@@ -1,9 +1,17 @@
-const puppeteer = require("/tmp/mupo-shot/node_modules/puppeteer-core");
+const path = require("path");
+
+let puppeteer;
+try {
+  puppeteer = require("puppeteer-core");
+} catch (error) {
+  puppeteer = require("/tmp/mupo-shot/node_modules/puppeteer-core");
+}
 
 async function main() {
   const browser = await puppeteer.launch({
     headless: "new",
-    executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    executablePath:
+      process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     args: ["--no-sandbox"],
   });
 
@@ -11,8 +19,7 @@ async function main() {
   await page.setViewport({ width: 2048, height: 1167, deviceScaleFactor: 1 });
 
   const baseUrl = "http://localhost:5173";
-  const outputDir =
-    "/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/docs/screenshots";
+  const outputDir = path.resolve(__dirname, "../../docs/screenshots");
 
   const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
