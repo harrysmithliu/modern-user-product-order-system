@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "services/user-service"
+		},
+		{
+			"path": "services/product-service"
+		},
+		{
+			"path": "gateway"
+		}
+	],
+	"settings": {}
+}

@@ -16,10 +16,10 @@ export function LoginPage() {
     try {
       await login(values.username, values.password);
       const user = await refreshUser();
-      message.success("登录成功");
+      message.success("Signed in successfully.");
       navigate(user?.role === "ADMIN" ? "/admin/orders" : "/products");
     } catch (error: unknown) {
-      message.error("登录失败，请检查用户名和密码");
+      message.error("Sign-in failed. Please check your username and password.");
     } finally {
       setLoading(false);
     }
@@ -27,48 +27,51 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-hero">
-        <Typography.Text className="login-eyebrow">Polyglot Microservices Demo</Typography.Text>
-        <Typography.Title className="login-title">
-          Modern User-Product-Order System
-        </Typography.Title>
-        <Typography.Paragraph className="login-description">
-          一个面向作品集展示的最简现代电商微服务系统，包含用户、商品、订单三大核心域，以及统一网关、JWT 鉴权和可扩展的云原生架构。
-        </Typography.Paragraph>
-        <Space direction="vertical" size={4}>
-          <Typography.Text>
-            管理员账号：<Typography.Text code>admin / Admin@123</Typography.Text>
-          </Typography.Text>
-          <Typography.Text>
-            普通用户示例：<Typography.Text code>john_smith / User@123</Typography.Text>
-          </Typography.Text>
-        </Space>
+      <div className="login-shell">
+        <div className="login-hero">
+          <Typography.Text className="login-eyebrow">Polyglot Microservices Demo</Typography.Text>
+          <Typography.Title className="login-title">
+            Modern User-Product-Order System
+          </Typography.Title>
+          <Typography.Paragraph className="login-description">
+            A portfolio-focused modern commerce demo built around user, product, and order domains,
+            with a unified gateway, JWT-based authentication, and a cloud-ready microservices layout.
+          </Typography.Paragraph>
+          <Space direction="vertical" size={4}>
+            <Typography.Text>
+              Admin account: <Typography.Text code>admin / Admin@123</Typography.Text>
+            </Typography.Text>
+            <Typography.Text>
+              Demo user: <Typography.Text code>john_smith / User@123</Typography.Text>
+            </Typography.Text>
+          </Space>
+        </div>
+        <Card className="login-card" bordered={false}>
+          <Typography.Title level={3}>Sign In</Typography.Title>
+          <Typography.Paragraph type="secondary">
+            This MVP focuses on the core business loop first. Registration is reserved for a later phase.
+          </Typography.Paragraph>
+          <Form layout="vertical" onFinish={handleSubmit} autoComplete="off">
+            <Form.Item
+              label="Username"
+              name="username"
+              rules={[{ required: true, message: "Please enter your username." }]}
+            >
+              <Input prefix={<UserOutlined />} placeholder="Enter your username" />
+            </Form.Item>
+            <Form.Item
+              label="Password"
+              name="password"
+              rules={[{ required: true, message: "Please enter your password." }]}
+            >
+              <Input.Password prefix={<LockOutlined />} placeholder="Enter your password" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" block size="large" loading={loading}>
+              Sign In
+            </Button>
+          </Form>
+        </Card>
       </div>
-      <Card className="login-card" bordered={false}>
-        <Typography.Title level={3}>登录系统</Typography.Title>
-        <Typography.Paragraph type="secondary">
-          当前版本优先打通核心业务闭环，注册页预留到后续增强阶段。
-        </Typography.Paragraph>
-        <Form layout="vertical" onFinish={handleSubmit} autoComplete="off">
-          <Form.Item
-            label="用户名"
-            name="username"
-            rules={[{ required: true, message: "请输入用户名" }]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="请输入用户名" />
-          </Form.Item>
-          <Form.Item
-            label="密码"
-            name="password"
-            rules={[{ required: true, message: "请输入密码" }]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="请输入密码" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" block size="large" loading={loading}>
-            登录
-          </Button>
-        </Form>
-      </Card>
     </div>
   );
 }

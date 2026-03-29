@@ -6,11 +6,11 @@ import type { Order } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
 
 const statusOptions = [
-  { label: "全部状态", value: undefined },
-  { label: "待审批", value: 0 },
-  { label: "已通过", value: 1 },
-  { label: "已驳回", value: 2 },
-  { label: "已取消", value: 3 },
+  { label: "All Statuses", value: undefined },
+  { label: "Pending Approval", value: 0 },
+  { label: "Approved", value: 1 },
+  { label: "Rejected", value: 2 },
+  { label: "Cancelled", value: 3 },
 ];
 
 export function AdminOrdersPage() {
@@ -32,7 +32,7 @@ export function AdminOrdersPage() {
       setSize(data.size);
       setTotal(data.total);
     } catch (error) {
-      message.error("订单管理数据加载失败");
+      message.error("Failed to load order review data.");
     } finally {
       setLoading(false);
     }
@@ -43,17 +43,17 @@ export function AdminOrdersPage() {
   }, [statusFilter]);
 
   const columns: ColumnsType<Order> = [
-    { title: "订单号", dataIndex: "order_no" },
-    { title: "用户 ID", dataIndex: "user_id" },
-    { title: "商品 ID", dataIndex: "product_id" },
-    { title: "数量", dataIndex: "quantity" },
+    { title: "Order No.", dataIndex: "order_no" },
+    { title: "User ID", dataIndex: "user_id" },
+    { title: "Product ID", dataIndex: "product_id" },
+    { title: "Quantity", dataIndex: "quantity" },
     {
-      title: "金额",
+      title: "Amount",
       dataIndex: "total_amount",
-      render: (value: number) => `¥${value}`,
+      render: (value: number) => `CNY ${value}`,
     },
     {
-      title: "状态",
+      title: "Status",
       dataIndex: "status_label",
       render: (value: string) => {
         const color =
@@ -68,12 +68,12 @@ export function AdminOrdersPage() {
       },
     },
     {
-      title: "创建时间",
+      title: "Created At",
       dataIndex: "create_time",
       render: (value: string | null) => value || "-",
     },
     {
-      title: "操作",
+      title: "Action",
       key: "action",
       render: (_, record) => (
         <Space>
@@ -83,21 +83,21 @@ export function AdminOrdersPage() {
             onClick={async () => {
               try {
                 await approveOrder(record.id);
-                message.success("订单已审批通过");
+                message.success("Order approved.");
                 void loadOrders(page, size, statusFilter);
               } catch (error) {
-                message.error("审批失败");
+                message.error("Approval failed.");
               }
             }}
           >
-            通过
+            Approve
           </Button>
           <Button
             danger
             disabled={record.status_label !== "PENDING_APPROVAL"}
             onClick={() => setRejectingOrder(record)}
           >
-            驳回
+            Reject
           </Button>
         </Space>
       ),
@@ -106,7 +106,7 @@ export function AdminOrdersPage() {
 
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
-      <PageHeader title="订单审批" subtitle="管理员可分页查看订单，筛选待审批数据，并对订单执行审批通过或驳回。" />
+      <PageHeader title="Order Review" subtitle="Review all orders, filter pending items, and approve or reject them from the admin console." />
       <Card bordered={false}>
         <Space direction="vertical" size={16} style={{ width: "100%" }}>
           <Select
@@ -155,10 +155,10 @@ function RejectOrderModal(props: {
   return (
     <Modal
       open={Boolean(props.order)}
-      title="驳回订单"
+      title="Reject Order"
       onCancel={props.onClose}
       onOk={() => form.submit()}
-      okText="确认驳回"
+      okText="Confirm Reject"
       confirmLoading={submitting}
     >
       <Form
@@ -171,26 +171,26 @@ function RejectOrderModal(props: {
           setSubmitting(true);
           try {
             await rejectOrder(props.order.id, values.rejectReason);
-            message.success("订单已驳回");
+            message.success("Order rejected.");
             form.resetFields();
             props.onSuccess();
           } catch (error) {
-            message.error("驳回失败");
+            message.error("Reject action failed.");
           } finally {
             setSubmitting(false);
           }
         }}
       >
         <Form.Item
-          label="驳回原因"
+          label="Reject Reason"
           name="rejectReason"
-          rules={[{ required: true, message: "请输入驳回原因" }]}
+          rules={[{ required: true, message: "Please provide a reject reason." }]}
         >
           <Select
             options={[
-              { label: "库存风险待复核", value: "库存风险待复核" },
-              { label: "商品信息异常", value: "商品信息异常" },
-              { label: "请求不符合规则", value: "请求不符合规则" },
+              { label: "Inventory risk needs review", value: "Inventory risk needs review" },
+              { label: "Product information is invalid", value: "Product information is invalid" },
+              { label: "Request does not meet policy", value: "Request does not meet policy" },
             ]}
           />
         </Form.Item>

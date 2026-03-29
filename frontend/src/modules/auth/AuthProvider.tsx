@@ -45,7 +45,7 @@ export function AuthProvider(props: { children: ReactNode }) {
     }
 
     void refreshUser().catch(() => {
-      message.error("登录态已失效，请重新登录");
+      message.error("Your session has expired. Please sign in again.");
     });
   }, []);
 

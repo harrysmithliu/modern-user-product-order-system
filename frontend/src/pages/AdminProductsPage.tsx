@@ -22,7 +22,7 @@ export function AdminProductsPage() {
       });
       setItems(data.items);
     } catch (error) {
-      message.error("商品管理数据加载失败");
+      message.error("Failed to load product administration data.");
     } finally {
       setLoading(false);
     }
@@ -33,26 +33,26 @@ export function AdminProductsPage() {
   }, []);
 
   const columns: ColumnsType<Product> = [
-    { title: "商品编码", dataIndex: "product_code" },
-    { title: "商品名称", dataIndex: "product_name" },
-    { title: "价格", dataIndex: "price", render: (value: number) => `¥${value}` },
-    { title: "库存", dataIndex: "stock" },
-    { title: "分类", dataIndex: "category", render: (value: string | null) => value || "-" },
+    { title: "Product Code", dataIndex: "product_code" },
+    { title: "Product Name", dataIndex: "product_name" },
+    { title: "Price", dataIndex: "price", render: (value: number) => `CNY ${value}` },
+    { title: "Stock", dataIndex: "stock" },
+    { title: "Category", dataIndex: "category", render: (value: string | null) => value || "-" },
     {
-      title: "状态",
+      title: "Status",
       dataIndex: "status",
       render: (value: number, record) => (
         <Space>
-          {value === 1 ? <Tag color="green">上架</Tag> : <Tag>下架</Tag>}
+          {value === 1 ? <Tag color="green">On Sale</Tag> : <Tag>Off Sale</Tag>}
           <Switch
             checked={value === 1}
             onChange={async (checked) => {
               try {
                 await updateProductStatus(record.id, checked ? 1 : 0);
-                message.success("商品状态已更新");
+                message.success("Product status updated.");
                 void loadData();
               } catch (error) {
-                message.error("状态更新失败");
+                message.error("Failed to update status.");
               }
             }}
           />
@@ -60,23 +60,23 @@ export function AdminProductsPage() {
       ),
     },
     {
-      title: "操作",
+      title: "Action",
       key: "action",
       render: (_, record) => (
         <Space>
-          <Button onClick={() => setEditingProduct(record)}>编辑</Button>
+          <Button onClick={() => setEditingProduct(record)}>Edit</Button>
           <Button
             onClick={async () => {
               try {
                 await updateProductStock(record.id, record.stock + 10);
-                message.success("已为商品补充 10 件库存");
+                message.success("Added 10 units of stock.");
                 void loadData();
               } catch (error) {
-                message.error("库存更新失败");
+                message.error("Failed to update stock.");
               }
             }}
           >
-            +10 库存
+            +10 Stock
           </Button>
         </Space>
       ),
@@ -85,8 +85,8 @@ export function AdminProductsPage() {
 
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
-      <PageHeader title="商品管理" subtitle="管理员可以新增商品、编辑核心字段、切换上下架，并快速调整库存。" />
-      <Card bordered={false} extra={<Button type="primary" onClick={() => setCreating(true)}>新增商品</Button>}>
+      <PageHeader title="Product Admin" subtitle="Create products, edit core fields, toggle sale status, and adjust stock from the admin console." />
+      <Card bordered={false} extra={<Button type="primary" onClick={() => setCreating(true)}>Create Product</Button>}>
         <Table rowKey="id" columns={columns} dataSource={items} loading={loading} pagination={false} />
       </Card>
       <ProductModal
@@ -139,10 +139,10 @@ function ProductModal(props: {
   return (
     <Modal
       open={props.open}
-      title={props.mode === "create" ? "新增商品" : "编辑商品"}
+      title={props.mode === "create" ? "Create Product" : "Edit Product"}
       onCancel={props.onClose}
       onOk={() => form.submit()}
-      okText={props.mode === "create" ? "创建" : "保存"}
+      okText={props.mode === "create" ? "Create" : "Save"}
       confirmLoading={submitting}
     >
       <Form
@@ -158,40 +158,40 @@ function ProductModal(props: {
             delete payload.is_on_sale;
             if (props.mode === "create") {
               await createProduct(payload);
-              message.success("商品已创建");
+              message.success("Product created.");
             } else if (props.product) {
               await updateProduct(props.product.id, payload);
-              message.success("商品已更新");
+              message.success("Product updated.");
             }
             form.resetFields();
             props.onSuccess();
           } catch (error) {
-            message.error(props.mode === "create" ? "创建失败" : "更新失败");
+            message.error(props.mode === "create" ? "Failed to create product." : "Failed to update product.");
           } finally {
             setSubmitting(false);
           }
         }}
       >
-        <Form.Item label="商品名称" name="product_name" rules={[{ required: true, message: "请输入商品名称" }]}>
+        <Form.Item label="Product Name" name="product_name" rules={[{ required: true, message: "Please enter a product name." }]}>
           <Input />
         </Form.Item>
         <Form.Item
-          label="商品编码"
+          label="Product Code"
           name="product_code"
-          rules={[{ required: props.mode === "create", message: "请输入商品编码" }]}
+          rules={[{ required: props.mode === "create", message: "Please enter a product code." }]}
         >
           <Input disabled={props.mode === "edit"} />
         </Form.Item>
-        <Form.Item label="价格" name="price" rules={[{ required: true, message: "请输入价格" }]}>
+        <Form.Item label="Price" name="price" rules={[{ required: true, message: "Please enter a price." }]}>
           <InputNumber min={0.01} step={0.01} style={{ width: "100%" }} />
         </Form.Item>
-        <Form.Item label="库存" name="stock" rules={[{ required: true, message: "请输入库存" }]}>
+        <Form.Item label="Stock" name="stock" rules={[{ required: true, message: "Please enter stock." }]}>
           <InputNumber min={0} style={{ width: "100%" }} />
         </Form.Item>
-        <Form.Item label="分类" name="category">
+        <Form.Item label="Category" name="category">
           <Input />
         </Form.Item>
-        <Form.Item label="是否上架" name="is_on_sale" valuePropName="checked">
+        <Form.Item label="On Sale" name="is_on_sale" valuePropName="checked">
           <Switch />
         </Form.Item>
       </Form>

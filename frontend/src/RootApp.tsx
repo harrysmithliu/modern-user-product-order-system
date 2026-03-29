@@ -31,17 +31,17 @@ export function RootApp() {
         {
           key: "/login",
           icon: <LoginOutlined />,
-          label: "登录",
+          label: "Sign In",
         },
       ]
     : [
-        { key: "/products", icon: <AppstoreOutlined />, label: "商品列表" },
-        { key: "/orders", icon: <ShoppingCartOutlined />, label: "我的订单" },
-        { key: "/profile", icon: <UserOutlined />, label: "个人资料" },
+        { key: "/products", icon: <AppstoreOutlined />, label: "Products" },
+        { key: "/orders", icon: <ShoppingCartOutlined />, label: "My Orders" },
+        { key: "/profile", icon: <UserOutlined />, label: "Profile" },
         ...(user.role === "ADMIN"
           ? [
-              { key: "/admin/orders", icon: <OrderedListOutlined />, label: "订单审批" },
-              { key: "/admin/products", icon: <TeamOutlined />, label: "商品管理" },
+              { key: "/admin/orders", icon: <OrderedListOutlined />, label: "Order Review" },
+              { key: "/admin/products", icon: <TeamOutlined />, label: "Product Admin" },
             ]
           : []),
       ];
@@ -72,7 +72,7 @@ export function RootApp() {
             Modern UPO
           </Typography.Title>
           <Typography.Paragraph className="brand-subtitle">
-            用户、商品、订单微服务系统
+            User, Product, and Order microservices platform
           </Typography.Paragraph>
         </div>
         <Menu
@@ -100,7 +100,7 @@ export function RootApp() {
               }}
               icon={<LogoutOutlined />}
             >
-              退出登录
+              Sign Out
             </Button>
           </Space>
         </Header>

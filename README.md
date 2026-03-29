@@ -1,51 +1,147 @@
 # Modern User-Product-Order System
 
-A polyglot microservices demo for portfolio use, centered around `user`, `product`, and `order` domains.
+A portfolio-focused polyglot microservices commerce demo built around three core domains:
 
-## Current Scope
+- users
+- products
+- orders
 
-This repository is being built in phases.
+The project is intentionally designed as a **minimal but complete modern architecture demo**. It emphasizes clear service boundaries, runnable local development, API-driven frontend integration, and room for production-oriented upgrades such as Redis, RabbitMQ, Kubernetes, and cloud deployment.
 
-- Phase 1: core business loop
+## Highlights
+
+- Polyglot backend:
+  - `user-service` in Python / FastAPI
+  - `product-service` in Python / FastAPI
+  - `order-service` in Java / Spring Boot
+- Dedicated API gateway with JWT verification and route forwarding
+- React + Vite + TypeScript frontend
+- MySQL split by domain schema
+- Idempotency-ready order design with `request_no`
+- Admin and user flows in a single demo UI
+- Local-first development with infrastructure already available for Redis and RabbitMQ
+
+## Current Status
+
+The repository is under phased implementation.
+
+- Phase 1:
   - login
-  - user profile management
-  - product pagination
+  - profile update
+  - password change
+  - product listing
   - create order
   - cancel order
-  - admin order approval/rejection
-- Phase 2: Redis, RabbitMQ, Docker Compose, unified production polish
-- Phase 3: Kubernetes, monitoring, load testing, AWS migration notes
+  - admin order review
+  - admin product management
+- Phase 2:
+  - Redis
+  - RabbitMQ
+  - Docker Compose
+  - unified production polish
+- Phase 3:
+  - Kubernetes
+  - monitoring
+  - load testing
+  - AWS migration notes
 
-## Services
+AWS deployment is **not live yet**, so no cloud access links are shown in this README.
 
-- `gateway`: FastAPI API gateway, JWT verification, routing, CORS
-- `services/user-service`: FastAPI user service
-- `services/product-service`: FastAPI product service
-- `services/order-service`: Spring Boot order service
-- `frontend`: React + Vite skeleton
+## Screenshots
 
-## Infrastructure Notes
+### Sign-In
 
-- MySQL is reused from the local environment with:
+![Sign-In Page](docs/screenshots/login-page.png)
+
+### Admin Order Review
+
+![Admin Order Review](docs/screenshots/order-review-page.png)
+
+### Product Listing
+
+![Product Listing](docs/screenshots/products-page.png)
+
+### Product Admin
+
+![Product Admin](docs/screenshots/product-admin-page.png)
+
+## Architecture Overview
+
+### Services
+
+- `frontend`
+  - React application for user and admin flows
+- `gateway`
+  - FastAPI gateway for routing, JWT verification, and request user context propagation
+- `services/user-service`
+  - authentication and user profile management
+- `services/product-service`
+  - product listing, product administration, stock mutation APIs
+- `services/order-service`
+  - order creation, cancellation, and admin approval / rejection
+
+### Data and Infra
+
+- MySQL
   - `h_user_db`
   - `h_product_db`
   - `h_order_db`
-- Redis and RabbitMQ are already available locally
-- MongoDB is intentionally reserved for a later audit/event timeline extension, not the core transaction path
+- Redis
+  - reserved for Phase 2 caching and token support data
+- RabbitMQ
+  - reserved for Phase 2 async order event handling
+- MongoDB
+  - intentionally reserved for a later audit / event timeline extension, not the critical transaction path
 
-## Docs
+## Tech Stack
 
-- [Architecture](./docs/architecture.md)
-- [Database Design](./docs/database-design.md)
-- [API Overview](./docs/api-overview.md)
+### Frontend
 
-## Quick Start
+- React 18
+- Vite
+- TypeScript
+- Ant Design
+- Axios
+- React Router
 
-Each service currently has its own local configuration defaults. Environment-specific values can be overridden with environment variables.
+### Backend
 
-## Local Run Commands
+- FastAPI
+- SQLAlchemy
+- Spring Boot
+- Spring Data JPA
+- Spring Security
+- springdoc-openapi
 
-### Gateway
+### Infrastructure
+
+- MySQL 8
+- Redis 7
+- RabbitMQ 3
+- Docker / Docker Compose
+- Kubernetes manifests planned in later phases
+
+## Repository Structure
+
+```text
+modern-user-product-order-system/
+├── frontend/
+├── gateway/
+├── services/
+│   ├── user-service/
+│   ├── product-service/
+│   └── order-service/
+├── docs/
+├── infra/
+├── scripts/
+└── .github/workflows/
+```
+
+## Local Run
+
+### 1. Start the backend services
+
+Gateway:
 
 ```bash
 cd gateway
@@ -55,7 +151,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-### User Service
+User service:
 
 ```bash
 cd services/user-service
@@ -65,7 +161,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
-### Product Service
+Product service:
 
 ```bash
 cd services/product-service
@@ -75,14 +171,14 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8002
 ```
 
-### Order Service
+Order service:
 
 ```bash
 cd services/order-service
 mvn spring-boot:run
 ```
 
-### Frontend
+### 2. Start the frontend
 
 ```bash
 cd frontend
@@ -90,11 +186,49 @@ npm install
 npm run dev
 ```
 
-## Phase 1 Notes
+Frontend URL:
 
-- `user-service` is already wired to the local BCrypt user data you prepared
-- `product-service` includes public catalog APIs and internal stock reservation APIs
-- `order-service` includes create, cancel, my orders, admin list, approve, and reject
-- `gateway` routes `/api/**` and injects request user headers for downstream services
-- `frontend` now includes login, products, my orders, profile, admin orders, and admin products pages
-- MongoDB is only reserved in docs and architecture for later audit/event expansion
+- `http://localhost:5173`
+
+## Local Access Points
+
+- Frontend: `http://localhost:5173`
+- Gateway docs: `http://127.0.0.1:8000/docs`
+- User service docs: `http://127.0.0.1:8001/docs`
+- Product service docs: `http://127.0.0.1:8002/docs`
+- Order service docs: `http://127.0.0.1:8080/swagger-ui/index.html`
+
+## Demo Accounts
+
+- Admin: `admin / Admin@123`
+- Demo user: `john_smith / User@123`
+
+## Important Local Notes
+
+- The JWT secret used by the gateway and user-service must match.
+- The MySQL application user must have access to:
+  - `h_user_db`
+  - `h_product_db`
+  - `h_order_db`
+- The frontend currently assumes the gateway is reachable at `http://localhost:8000`.
+- The current UI is English-only for now. Internationalization can be added later.
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Database Design](docs/database-design.md)
+- [API Overview](docs/api-overview.md)
+- [Frontend README](frontend/README.md)
+- [Gateway README](gateway/README.md)
+- [User Service README](services/user-service/README.md)
+- [Product Service README](services/product-service/README.md)
+- [Order Service README](services/order-service/README.md)
+
+## Near-Term Next Steps
+
+- finish end-to-end order review flow verification
+- add Docker Compose for one-command local startup
+- integrate Redis caching
+- integrate RabbitMQ domain events
+- add Kubernetes manifests
+- add monitoring and load-test artifacts

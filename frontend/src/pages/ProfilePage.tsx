@@ -22,10 +22,10 @@ export function ProfilePage() {
 
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
-      <PageHeader title="个人资料" subtitle="支持查看当前登录用户资料，并分别完成资料修改和密码修改。" />
+      <PageHeader title="Profile" subtitle="View the current account profile, update basic information, and change the password separately." />
       <Row gutter={[20, 20]}>
         <Col xs={24} xl={14}>
-          <Card title="基础资料" bordered={false}>
+          <Card title="Basic Information" bordered={false}>
             <Form
               form={profileForm}
               layout="vertical"
@@ -34,34 +34,34 @@ export function ProfilePage() {
                 try {
                   await updateMyProfile(values);
                   await refreshUser();
-                  message.success("资料已更新");
+                  message.success("Profile updated.");
                 } catch (error) {
-                  message.error("资料更新失败");
+                  message.error("Failed to update profile.");
                 } finally {
                   setProfileSaving(false);
                 }
               }}
             >
-              <Form.Item label="用户名">
+              <Form.Item label="Username">
                 <Input value={user?.username} disabled />
               </Form.Item>
-              <Form.Item label="昵称" name="nickname">
-                <Input placeholder="请输入昵称" />
+              <Form.Item label="Nickname" name="nickname">
+                <Input placeholder="Enter a nickname" />
               </Form.Item>
-              <Form.Item label="手机号" name="phone">
-                <Input placeholder="请输入手机号" />
+              <Form.Item label="Phone" name="phone">
+                <Input placeholder="Enter a phone number" />
               </Form.Item>
-              <Form.Item label="邮箱" name="email">
-                <Input placeholder="请输入邮箱" />
+              <Form.Item label="Email" name="email">
+                <Input placeholder="Enter an email address" />
               </Form.Item>
               <Button type="primary" htmlType="submit" loading={profileSaving}>
-                保存资料
+                Save Profile
               </Button>
             </Form>
           </Card>
         </Col>
         <Col xs={24} xl={10}>
-          <Card title="修改密码" bordered={false}>
+          <Card title="Change Password" bordered={false}>
             <Form
               form={passwordForm}
               layout="vertical"
@@ -69,31 +69,31 @@ export function ProfilePage() {
                 setPasswordSaving(true);
                 try {
                   await changeMyPassword(values.oldPassword, values.newPassword);
-                  message.success("密码修改成功");
+                  message.success("Password updated.");
                   passwordForm.resetFields();
                 } catch (error) {
-                  message.error("密码修改失败");
+                  message.error("Failed to update password.");
                 } finally {
                   setPasswordSaving(false);
                 }
               }}
             >
               <Form.Item
-                label="旧密码"
+                label="Current Password"
                 name="oldPassword"
-                rules={[{ required: true, message: "请输入旧密码" }]}
+                rules={[{ required: true, message: "Please enter your current password." }]}
               >
                 <Input.Password />
               </Form.Item>
               <Form.Item
-                label="新密码"
+                label="New Password"
                 name="newPassword"
-                rules={[{ required: true, message: "请输入新密码" }]}
+                rules={[{ required: true, message: "Please enter a new password." }]}
               >
                 <Input.Password />
               </Form.Item>
               <Button type="primary" htmlType="submit" loading={passwordSaving}>
-                更新密码
+                Update Password
               </Button>
             </Form>
           </Card>

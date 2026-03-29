@@ -29,7 +29,7 @@ export function MyOrdersPage() {
       setSize(data.size);
       setTotal(data.total);
     } catch (error) {
-      message.error("订单列表加载失败");
+      message.error("Failed to load orders.");
     } finally {
       setLoading(false);
     }
@@ -41,39 +41,39 @@ export function MyOrdersPage() {
 
   const columns: ColumnsType<Order> = [
     {
-      title: "订单号",
+      title: "Order No.",
       dataIndex: "order_no",
     },
     {
-      title: "商品 ID",
+      title: "Product ID",
       dataIndex: "product_id",
     },
     {
-      title: "数量",
+      title: "Quantity",
       dataIndex: "quantity",
     },
     {
-      title: "金额",
+      title: "Amount",
       dataIndex: "total_amount",
-      render: (value: number) => `¥${value}`,
+      render: (value: number) => `CNY ${value}`,
     },
     {
-      title: "状态",
+      title: "Status",
       dataIndex: "status_label",
       render: (value: string) => <Tag color={statusColorMap[value] || "default"}>{value}</Tag>,
     },
     {
-      title: "驳回原因",
+      title: "Reject Reason",
       dataIndex: "reject_reason",
       render: (value: string | null) => value || "-",
     },
     {
-      title: "创建时间",
+      title: "Created At",
       dataIndex: "create_time",
       render: (value: string | null) => value || "-",
     },
     {
-      title: "操作",
+      title: "Action",
       key: "action",
       render: (_, record) => (
         <Button
@@ -81,14 +81,14 @@ export function MyOrdersPage() {
           onClick={async () => {
             try {
               await cancelOrder(record.id);
-              message.success("订单已取消");
+              message.success("Order cancelled.");
               void loadOrders(page, size);
             } catch (error) {
-              message.error("取消订单失败");
+              message.error("Failed to cancel order.");
             }
           }}
         >
-          取消订单
+          Cancel
         </Button>
       ),
     },
@@ -96,7 +96,7 @@ export function MyOrdersPage() {
 
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
-      <PageHeader title="我的订单" subtitle="展示当前登录用户的订单状态和审批结果，未审批订单支持主动取消。" />
+      <PageHeader title="My Orders" subtitle="Review your order history, approval results, and cancel orders that are still pending review." />
       <Card bordered={false}>
         <Table
           rowKey="id"

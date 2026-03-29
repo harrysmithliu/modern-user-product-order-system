@@ -16,3 +16,4 @@ target/
 .env.local
 .pytest_cache/
 .mypy_cache/
+**/.vscode/settings.json

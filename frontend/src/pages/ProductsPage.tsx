@@ -29,7 +29,7 @@ export function ProductsPage() {
       setSize(data.size);
       setTotal(data.total);
     } catch (error) {
-      message.error("商品列表加载失败");
+      message.error("Failed to load products.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ export function ProductsPage() {
 
   const columns: ColumnsType<Product> = [
     {
-      title: "商品",
+      title: "Product",
       dataIndex: "product_name",
       render: (_, record) => (
         <div>
@@ -51,27 +51,27 @@ export function ProductsPage() {
       ),
     },
     {
-      title: "分类",
+      title: "Category",
       dataIndex: "category",
       render: (value) => value || "-",
     },
     {
-      title: "价格",
+      title: "Price",
       dataIndex: "price",
-      render: (value: number) => `¥${value}`,
+      render: (value: number) => `CNY ${value}`,
     },
     {
-      title: "库存",
+      title: "Stock",
       dataIndex: "stock",
     },
     {
-      title: "状态",
+      title: "Status",
       dataIndex: "status",
       render: (value: number) =>
-        value === 1 ? <Tag color="green">在售</Tag> : <Tag color="default">下架</Tag>,
+        value === 1 ? <Tag color="green">On Sale</Tag> : <Tag color="default">Off Sale</Tag>,
     },
     {
-      title: "操作",
+      title: "Action",
       key: "action",
       render: (_, record) => (
         <Button
@@ -79,7 +79,7 @@ export function ProductsPage() {
           disabled={record.status !== 1 || record.stock <= 0}
           onClick={() => setOrderingProduct(record)}
         >
-          下单
+          Order
         </Button>
       ),
     },
@@ -87,11 +87,11 @@ export function ProductsPage() {
 
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
-      <PageHeader title="商品列表" subtitle="支持关键字搜索、分页查询和直接下单，是当前 MVP 的主要用户入口。" />
+      <PageHeader title="Products" subtitle="Browse the catalog, search by keyword, and place an order directly from the main MVP entry point." />
       <Card bordered={false}>
         <Space direction="vertical" size={16} style={{ width: "100%" }}>
           <Input.Search
-            placeholder="搜索商品名称"
+            placeholder="Search product name"
             allowClear
             value={keywordInput}
             onChange={(event) => setKeywordInput(event.target.value)}
@@ -146,11 +146,11 @@ function CreateOrderModal(props: {
         product_id: props.product.id,
         quantity: values.quantity,
       });
-      message.success("订单已创建，等待管理员审批");
+      message.success("Order created and waiting for admin review.");
       form.resetFields();
       props.onSuccess();
     } catch (error) {
-      message.error("下单失败，请稍后重试");
+      message.error("Failed to create order. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -159,20 +159,20 @@ function CreateOrderModal(props: {
   return (
     <Modal
       open={Boolean(props.product)}
-      title={props.product ? `下单: ${props.product.product_name}` : "创建订单"}
+      title={props.product ? `Create Order: ${props.product.product_name}` : "Create Order"}
       onCancel={props.onClose}
       onOk={() => form.submit()}
-      okText="提交订单"
+      okText="Submit Order"
       confirmLoading={submitting}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ quantity: 1 }}>
-        <Form.Item label="商品单价">
-          <Typography.Text>{props.product ? `¥${props.product.price}` : "-"}</Typography.Text>
+        <Form.Item label="Unit Price">
+          <Typography.Text>{props.product ? `CNY ${props.product.price}` : "-"}</Typography.Text>
         </Form.Item>
         <Form.Item
-          label="数量"
+          label="Quantity"
           name="quantity"
-          rules={[{ required: true, message: "请输入数量" }]}
+          rules={[{ required: true, message: "Please enter a quantity." }]}
         >
           <InputNumber min={1} max={props.product?.stock || 1} style={{ width: "100%" }} />
         </Form.Item>

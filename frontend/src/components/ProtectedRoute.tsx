@@ -11,7 +11,7 @@ export function ProtectedRoute(props: { children: ReactElement; adminOnly?: bool
   }
 
   if (props.adminOnly && user.role !== "ADMIN") {
-    return <Result status="403" title="403" subTitle="当前账号没有访问该页面的权限" />;
+    return <Result status="403" title="403" subTitle="This account does not have permission to view this page." />;
   }
 
   return props.children;
