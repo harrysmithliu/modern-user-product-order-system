@@ -53,6 +53,10 @@ uvicorn app.main:app --reload --port 8001
 ## API Docs
 
 - Swagger UI: `http://localhost:8001/docs`
+- Health probes are intentionally hidden from the generated schema:
+  - `http://localhost:8001/health`
+  - `http://localhost:8001/ready`
+  - `http://localhost:8001/live`
 
 ## Environment Variables
 

@@ -11,17 +11,17 @@ from app.services.auth_service import change_password, get_user_by_id, login, lo
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", include_in_schema=False)
 def health():
     return {"status": "UP", "service": "user-service"}
 
 
-@router.get("/ready")
+@router.get("/ready", include_in_schema=False)
 def ready():
     return {"status": "READY", "service": "user-service"}
 
 
-@router.get("/live")
+@router.get("/live", include_in_schema=False)
 def live():
     return {"status": "LIVE", "service": "user-service"}
 

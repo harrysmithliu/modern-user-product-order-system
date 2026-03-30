@@ -16,6 +16,9 @@ app = FastAPI(
     title="api-gateway",
     version="0.1.0",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 app.add_middleware(
@@ -29,7 +32,7 @@ app.add_middleware(
 app.include_router(router)
 
 
-@app.get("/health")
+@app.get("/health", include_in_schema=False)
 async def health():
     return {
         "status": "UP",
@@ -37,7 +40,7 @@ async def health():
     }
 
 
-@app.get("/ready")
+@app.get("/ready", include_in_schema=False)
 async def ready():
     return {
         "status": "READY",
@@ -45,7 +48,7 @@ async def ready():
     }
 
 
-@app.get("/live")
+@app.get("/live", include_in_schema=False)
 async def live():
     return {
         "status": "LIVE",

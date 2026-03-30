@@ -42,7 +42,11 @@ uvicorn app.main:app --reload --port 8000
 
 ## API Docs
 
-- Swagger UI: `http://localhost:8000/docs`
+- Gateway OpenAPI docs are intentionally disabled.
+- Health endpoints remain available:
+  - `http://localhost:8000/health`
+  - `http://localhost:8000/ready`
+  - `http://localhost:8000/live`
 
 ## Environment Variables
 
@@ -65,7 +69,7 @@ Important values:
 
 - Dockerfile: `gateway/Dockerfile`
 - Compose service name: `gateway`
-- Local container docs: `http://localhost:8000/docs`
+- Local container health: `http://localhost:8000/health`
 
 ## Public vs Protected Routes
 
