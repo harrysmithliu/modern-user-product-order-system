@@ -22,10 +22,20 @@ Automated Phase 1 smoke test:
 python3 scripts/dev/smoke-test-phase1.py
 ```
 
+Automated Phase 2 Redis smoke test:
+
+```bash
+python3 scripts/dev/smoke-test-phase2.py
+```
+
 Optional base URL override:
 
 ```bash
 SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase1.py
+```
+
+```bash
+SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase2.py
 ```
 
 The script creates real sample orders in the local development database so the review and history pages have data to display.
@@ -47,3 +57,12 @@ The smoke test covers:
 6. create + reject flow
 7. latest-first order sorting
 8. pending queue verification
+
+The Redis smoke test covers:
+
+1. user login
+2. authenticated profile lookup
+3. logout
+4. revoked token rejection
+5. re-login after logout
+6. product listing with the fresh token

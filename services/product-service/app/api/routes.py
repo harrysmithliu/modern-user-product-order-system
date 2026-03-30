@@ -35,17 +35,17 @@ from app.services.product_service import (
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", include_in_schema=False)
 def health():
     return {"status": "UP", "service": "product-service"}
 
 
-@router.get("/ready")
+@router.get("/ready", include_in_schema=False)
 def ready():
     return {"status": "READY", "service": "product-service"}
 
 
-@router.get("/live")
+@router.get("/live", include_in_schema=False)
 def live():
     return {"status": "LIVE", "service": "product-service"}
 

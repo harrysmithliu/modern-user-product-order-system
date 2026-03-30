@@ -2,14 +2,14 @@ import { App as AntApp } from "antd";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { apiClient, loadToken } from "../../api/client";
-import { fetchMe } from "../../api/services";
+import { fetchMe, logout as logoutRequest } from "../../api/services";
 import type { UserProfile } from "../../api/types";
 
 interface AuthContextValue {
   user: UserProfile | null;
   ready: boolean;
   refreshUser: () => Promise<UserProfile | null>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -33,9 +33,17 @@ export function AuthProvider(props: { children: ReactNode }) {
     }
   }
 
-  function logout() {
-    apiClient.clearToken();
-    setUser(null);
+  async function logout() {
+    try {
+      if (loadToken()) {
+        await logoutRequest();
+      }
+    } catch {
+      // Best-effort logout: clear local session even if the backend call fails.
+    } finally {
+      apiClient.clearToken();
+      setUser(null);
+    }
   }
 
   useEffect(() => {

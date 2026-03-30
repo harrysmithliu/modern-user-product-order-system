@@ -1,27 +1,27 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_claims
+from app.core.security import get_current_claims, get_current_token_with_claims
 from app.db.session import get_db
 from app.schemas.auth import LoginRequest
 from app.schemas.common import ApiResponse
 from app.schemas.user import ChangePasswordRequest, UpdateProfileRequest, UserProfileResponse
-from app.services.auth_service import change_password, get_user_by_id, login, update_profile
+from app.services.auth_service import change_password, get_user_by_id, login, logout, update_profile
 
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", include_in_schema=False)
 def health():
     return {"status": "UP", "service": "user-service"}
 
 
-@router.get("/ready")
+@router.get("/ready", include_in_schema=False)
 def ready():
     return {"status": "READY", "service": "user-service"}
 
 
-@router.get("/live")
+@router.get("/live", include_in_schema=False)
 def live():
     return {"status": "LIVE", "service": "user-service"}
 
@@ -29,6 +29,13 @@ def live():
 @router.post("/auth/login", response_model=ApiResponse)
 def login_endpoint(payload: LoginRequest, db: Session = Depends(get_db)):
     return ApiResponse(data=login(db, payload.username, payload.password))
+
+
+@router.post("/auth/logout", response_model=ApiResponse)
+def logout_endpoint(auth_context: tuple[str, dict] = Depends(get_current_token_with_claims)):
+    token, claims = auth_context
+    logout(token, claims)
+    return ApiResponse(message="signed out")
 
 
 @router.get("/users/me", response_model=ApiResponse)

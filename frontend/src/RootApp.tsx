@@ -93,9 +93,8 @@ export function RootApp() {
           </div>
           <Space>
             <Button
-              onClick={() => {
-                apiClient.clearToken();
-                logout();
+              onClick={async () => {
+                await logout();
                 navigate("/login");
               }}
               icon={<LogoutOutlined />}

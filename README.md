@@ -35,7 +35,9 @@ The repository is under phased implementation.
   - admin order review
   - admin product management
 - Phase 2:
-  - Redis
+  - Redis-backed product cache
+  - Redis-backed logout blacklist
+  - Redis-backed gateway rate limiting
   - RabbitMQ
   - Docker Compose
   - unified production polish
@@ -86,7 +88,8 @@ The repository is under phased implementation.
   - `h_order_db`
 - Redis
   - active for product catalog caching in `product-service`
-  - reserved next for token support data and rate limiting
+  - active for JWT blacklist support in `user-service`
+  - active for gateway login and order-create rate limiting
 - RabbitMQ
   - reserved for Phase 2 async order event handling
 - MongoDB
@@ -297,6 +300,20 @@ To run the same smoke test against the dev compose stack:
 SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase1.py
 ```
 
+### 4. Run the Phase 2 Redis smoke test
+
+After Redis-backed logout revocation is enabled, run:
+
+```bash
+python3 scripts/dev/smoke-test-phase2.py
+```
+
+To run it against the dev compose stack:
+
+```bash
+SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase2.py
+```
+
 This validates:
 
 - user and admin login
@@ -315,7 +332,6 @@ The script writes sample orders into the local development database so the revie
 Sandbox:
 
 - Frontend: `http://localhost:5173`
-- Gateway docs: `http://localhost:8000/docs`
 - User service docs: `http://localhost:8001/docs`
 - Product service docs: `http://localhost:8002/docs`
 - Order service docs: `http://localhost:8080/swagger-ui/index.html`
@@ -328,10 +344,61 @@ Sandbox:
 Dev compose:
 
 - Frontend: `http://localhost:5174`
-- Gateway docs: `http://localhost:8010/docs`
 - User service docs: `http://localhost:8011/docs`
 - Product service docs: `http://localhost:8012/docs`
 - Order service docs: `http://localhost:8081/swagger-ui/index.html`
+
+## Sandbox Promotion Runbook
+
+Use this flow when a batch of work is ready to move from `dev` into `sandbox` for integration verification.
+
+### 1. Switch to `sandbox` and merge `dev`
+
+```bash
+git checkout sandbox
+git merge dev
+```
+
+### 2. Start or refresh the sandbox stack
+
+```bash
+docker compose --env-file infra/docker/.env.sandbox.example -f infra/docker/docker-compose.sandbox.yml up -d --build
+```
+
+### 3. Run the Phase 1 business smoke test
+
+```bash
+python3 scripts/dev/smoke-test-phase1.py
+```
+
+### 4. Run the Phase 2 Redis smoke test
+
+```bash
+python3 scripts/dev/smoke-test-phase2.py
+```
+
+### 5. Perform manual sandbox checks
+
+Open and verify:
+
+- Frontend: `http://localhost:5173`
+- User service docs: `http://localhost:8001/docs`
+- Product service docs: `http://localhost:8002/docs`
+- Order service docs: `http://localhost:8080/swagger-ui/index.html`
+
+Recommended manual checks:
+
+- sign in as `john_smith` and confirm product browsing still works
+- sign in as `admin` and confirm order review and product admin pages still load
+- sign out once and confirm the session is cleared cleanly
+
+### 6. Push the validated `sandbox` branch
+
+```bash
+git push origin sandbox
+```
+
+After the sandbox branch is validated and pushed, open the pull request from `sandbox` into `main`.
 
 ## Demo Accounts
 
@@ -341,6 +408,7 @@ Dev compose:
 ## Important Local Notes
 
 - The JWT secret used by the gateway and user-service must match.
+- The gateway and user-service now also share Redis-backed token revocation state.
 - The MySQL application user must have access to:
   - `h_user_db`
   - `h_product_db`

@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import create_access_token, hash_password, revoke_token, verify_password
 from app.models.user import User
 from app.schemas.auth import LoginResponse
 from app.schemas.user import UpdateProfileRequest
@@ -48,3 +48,7 @@ def change_password(db: Session, user: User, old_password: str, new_password: st
     user.version += 1
     db.add(user)
     db.commit()
+
+
+def logout(token: str, claims: dict) -> None:
+    revoke_token(token, claims)
