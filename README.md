@@ -300,6 +300,20 @@ To run the same smoke test against the dev compose stack:
 SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase1.py
 ```
 
+### 4. Run the Phase 2 Redis smoke test
+
+After Redis-backed logout revocation is enabled, run:
+
+```bash
+python3 scripts/dev/smoke-test-phase2.py
+```
+
+To run it against the dev compose stack:
+
+```bash
+SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase2.py
+```
+
 This validates:
 
 - user and admin login
