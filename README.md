@@ -348,6 +348,55 @@ Dev compose:
 - Product service docs: `http://localhost:8012/docs`
 - Order service docs: `http://localhost:8081/swagger-ui/index.html`
 
+## New Branch Development Runbook
+
+Use this flow when following the long-lived `dev -> sandbox -> main` promotion model and starting a new batch of implementation work.
+
+### 1. Refresh local `main`
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### 2. Sync `dev` with the latest `main`
+
+```bash
+git checkout dev
+git merge main
+git push origin dev
+```
+
+### 3. Create a new feature branch from `dev`
+
+Replace `dev-xxx` with the actual workstream name, for example `dev-rabbitmq-events`.
+
+```bash
+git checkout dev
+git checkout -b dev-xxx
+git push -u origin dev-xxx
+```
+
+### 4. Implement and validate on the feature branch
+
+Typical checks during development:
+
+- run local service-specific checks
+- run `python3 scripts/dev/smoke-test-phase1.py` when the core order flow is affected
+- run `python3 scripts/dev/smoke-test-phase2.py` when Redis-backed auth or rate limiting is affected
+
+### 5. Merge the feature branch back into `dev`
+
+```bash
+git checkout dev
+git merge dev-xxx
+git push origin dev
+```
+
+### 6. Promote the validated `dev` branch into `sandbox`
+
+After the `dev` branch is stable, continue with the `Sandbox Promotion Runbook` above.
+
 ## Sandbox Promotion Runbook
 
 Use this flow when a batch of work is ready to move from `dev` into `sandbox` for integration verification.
