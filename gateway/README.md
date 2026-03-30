@@ -10,8 +10,10 @@ FastAPI-based API gateway for the Modern User-Product-Order System.
 - enforce admin access on `/api/admin/**`
 - attach request user context headers for downstream services
 - handle CORS for the frontend
+- apply Redis-backed fixed-window rate limiting for high-risk entry points
+- reject access tokens that have been blacklisted by `user-service`
 
-This gateway is intentionally lightweight for Phase 1. It is not yet a full production gateway with rate limiting, tracing, and centralized exception mapping.
+This gateway is intentionally lightweight, but it now includes basic Redis-backed rate limiting and token blacklist checks for Phase 2 hardening.
 
 ## Route Mapping
 
@@ -54,6 +56,10 @@ Important values:
 - `GATEWAY_USER_SERVICE_URL`
 - `GATEWAY_PRODUCT_SERVICE_URL`
 - `GATEWAY_ORDER_SERVICE_URL`
+- `GATEWAY_REDIS_HOST`
+- `GATEWAY_REDIS_PORT`
+- `GATEWAY_LOGIN_RATE_LIMIT_MAX_REQUESTS`
+- `GATEWAY_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS`
 
 ## Docker
 
@@ -83,11 +89,13 @@ Protected:
   - `X-Username`
   - `X-User-Role`
 - The gateway currently forwards response bodies as-is from upstream services.
+- Login requests and order creation requests now use fixed-window Redis counters.
+- Blacklisted tokens are denied at the gateway before downstream proxying.
 
 ## Near-Term TODO
 
 - add unified error envelope handling in the gateway layer
 - add request logging with trace IDs
-- add rate limiting
-- add refresh token / blacklist support through Redis
+- refine rate limit policies per route and environment
+- add refresh token flow on top of the existing Redis-backed blacklist support
 - add service discovery-friendly configuration for Docker Compose and Kubernetes

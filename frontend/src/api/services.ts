@@ -7,6 +7,10 @@ export async function login(username: string, password: string) {
   return response.data.data;
 }
 
+export async function logout() {
+  await apiClient.post<ApiResponse<null>>("/api/auth/logout");
+}
+
 export async function fetchMe() {
   const response = await apiClient.get<ApiResponse<UserProfile>>("/api/users/me");
   return response.data.data;

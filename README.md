@@ -35,7 +35,9 @@ The repository is under phased implementation.
   - admin order review
   - admin product management
 - Phase 2:
-  - Redis
+  - Redis-backed product cache
+  - Redis-backed logout blacklist
+  - Redis-backed gateway rate limiting
   - RabbitMQ
   - Docker Compose
   - unified production polish
@@ -86,7 +88,8 @@ The repository is under phased implementation.
   - `h_order_db`
 - Redis
   - active for product catalog caching in `product-service`
-  - reserved next for token support data and rate limiting
+  - active for JWT blacklist support in `user-service`
+  - active for gateway login and order-create rate limiting
 - RabbitMQ
   - reserved for Phase 2 async order event handling
 - MongoDB
@@ -341,6 +344,7 @@ Dev compose:
 ## Important Local Notes
 
 - The JWT secret used by the gateway and user-service must match.
+- The gateway and user-service now also share Redis-backed token revocation state.
 - The MySQL application user must have access to:
   - `h_user_db`
   - `h_product_db`

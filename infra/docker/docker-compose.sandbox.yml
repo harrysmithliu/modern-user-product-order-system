@@ -70,9 +70,16 @@ services:
       USER_SERVICE_JWT_SECRET: ${SANDBOX_JWT_SECRET:-change-me-in-env}
       USER_SERVICE_JWT_ALGORITHM: HS256
       USER_SERVICE_JWT_EXPIRE_MINUTES: 120
+      USER_SERVICE_REDIS_ENABLED: "true"
+      USER_SERVICE_REDIS_HOST: ${SANDBOX_REDIS_HOST:-redis}
+      USER_SERVICE_REDIS_PORT: ${SANDBOX_REDIS_PORT:-6379}
+      USER_SERVICE_REDIS_PASSWORD: ${SANDBOX_REDIS_PASSWORD:-}
+      USER_SERVICE_REDIS_DB: 0
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "8001:8001"
 
@@ -140,12 +147,23 @@ services:
       GATEWAY_USER_SERVICE_URL: http://user-service:8001
       GATEWAY_PRODUCT_SERVICE_URL: http://product-service:8002
       GATEWAY_ORDER_SERVICE_URL: http://order-service:8080
+      GATEWAY_REDIS_ENABLED: "true"
+      GATEWAY_REDIS_HOST: ${SANDBOX_REDIS_HOST:-redis}
+      GATEWAY_REDIS_PORT: ${SANDBOX_REDIS_PORT:-6379}
+      GATEWAY_REDIS_PASSWORD: ${SANDBOX_REDIS_PASSWORD:-}
+      GATEWAY_REDIS_DB: 0
+      GATEWAY_LOGIN_RATE_LIMIT_MAX_REQUESTS: ${SANDBOX_LOGIN_RATE_LIMIT_MAX_REQUESTS:-10}
+      GATEWAY_LOGIN_RATE_LIMIT_WINDOW_SECONDS: ${SANDBOX_LOGIN_RATE_LIMIT_WINDOW_SECONDS:-60}
+      GATEWAY_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS: ${SANDBOX_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS:-20}
+      GATEWAY_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS: ${SANDBOX_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS:-60}
     depends_on:
       user-service:
         condition: service_started
       product-service:
         condition: service_started
       order-service:
+        condition: service_started
+      redis:
         condition: service_started
     ports:
       - "8000:8000"

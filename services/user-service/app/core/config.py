@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-in-env"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 120
+    redis_enabled: bool = True
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_password: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

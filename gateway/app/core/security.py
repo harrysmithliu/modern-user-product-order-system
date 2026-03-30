@@ -4,6 +4,7 @@ from typing import Optional
 import jwt
 from fastapi import Header, HTTPException, status
 
+from app.core.cache import is_token_blacklisted
 from app.core.config import settings
 
 
@@ -15,6 +16,11 @@ class CurrentUser:
 
 
 def decode_token(token: str) -> CurrentUser:
+    if is_token_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token has been revoked",
+        )
     try:
         payload = jwt.decode(
             token,

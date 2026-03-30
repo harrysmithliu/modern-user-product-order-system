@@ -13,7 +13,8 @@
   - source of truth for users, products, orders
 - Redis:
   - active for product catalog query cache in `product-service`
-  - reserved next for token support data and rate limiting
+  - active for token blacklist support shared by `user-service` and `gateway`
+  - active for gateway login and order creation rate limiting
 - RabbitMQ:
   - reserved for order event fan-out in Phase 2
 - MongoDB:

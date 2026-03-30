@@ -9,6 +9,15 @@ class Settings(BaseSettings):
     product_service_url: str = "http://localhost:8002"
     order_service_url: str = "http://localhost:8080"
     request_timeout_seconds: int = 15
+    redis_enabled: bool = True
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_password: str | None = None
+    login_rate_limit_max_requests: int = 10
+    login_rate_limit_window_seconds: int = 60
+    order_create_rate_limit_max_requests: int = 20
+    order_create_rate_limit_window_seconds: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",
