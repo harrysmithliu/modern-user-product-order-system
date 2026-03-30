@@ -91,9 +91,17 @@ services:
       PRODUCT_SERVICE_DB_PASSWORD: ${MYSQL_APP_PASSWORD:-app_pass}
       PRODUCT_SERVICE_JWT_SECRET: ${SANDBOX_JWT_SECRET:-change-me-in-env}
       PRODUCT_SERVICE_JWT_ALGORITHM: HS256
+      PRODUCT_SERVICE_REDIS_ENABLED: "true"
+      PRODUCT_SERVICE_REDIS_HOST: ${SANDBOX_REDIS_HOST:-redis}
+      PRODUCT_SERVICE_REDIS_PORT: ${SANDBOX_REDIS_PORT:-6379}
+      PRODUCT_SERVICE_REDIS_PASSWORD: ${SANDBOX_REDIS_PASSWORD:-}
+      PRODUCT_SERVICE_REDIS_DB: 0
+      PRODUCT_SERVICE_REDIS_CACHE_TTL_SECONDS: 120
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "8002:8002"
 

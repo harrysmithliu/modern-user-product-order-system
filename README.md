@@ -85,7 +85,8 @@ The repository is under phased implementation.
   - `h_product_db`
   - `h_order_db`
 - Redis
-  - reserved for Phase 2 caching and token support data
+  - active for product catalog caching in `product-service`
+  - reserved next for token support data and rate limiting
 - RabbitMQ
   - reserved for Phase 2 async order event handling
 - MongoDB
@@ -152,6 +153,50 @@ modern-user-product-order-system/
 - `prod`
   - reserved for future Kubernetes and cloud deployment
   - configuration placeholders live under `infra/k8s/` and `infra/aws/`
+
+## Branching and Promotion Strategy
+
+This repository is intended to follow three long-lived branches that mirror the three environment tiers:
+
+- `dev`
+  - the active development trunk
+  - feature work should branch from `dev`
+  - new work is merged back into `dev` first
+- `sandbox`
+  - the integration, demo, and pre-release validation branch
+  - changes are promoted from `dev` into `sandbox` after a coherent feature batch is ready for end-to-end verification
+- `main`
+  - the most stable showcase branch
+  - intended to represent the latest approved release candidate for portfolio presentation and future production promotion
+
+Recommended branch flow:
+
+```text
+feature/* -> dev -> sandbox -> main
+```
+
+Recommended collaboration rules:
+
+- create feature branches from `dev`
+- open pull requests back into `dev` for day-to-day implementation work
+- promote `dev` into `sandbox` when the integration set is ready for smoke tests, screenshots, and demo review
+- promote `sandbox` into `main` only after validation passes
+- treat `main` as the branch that should stay the cleanest and most presentation-ready
+
+Current practical meaning:
+
+- merging into `dev` means the work is ready for developer iteration
+- merging into `sandbox` means the work is ready for full Compose-based integration and demo validation
+- merging into `main` means the work is stable enough to be presented as the current best version of the project
+
+Future CI/CD mapping:
+
+- `dev`
+  - run build, lint, unit tests, and service-level checks
+- `sandbox`
+  - run integration build, smoke test, and sandbox deployment
+- `main`
+  - run release build and future production deployment workflow
 
 ## Local Run
 
@@ -304,6 +349,7 @@ Dev compose:
 - The current UI is English-only for now. Internationalization can be added later.
 - MongoDB is a planned side-channel data store for Phase 2 and later, not the source of truth for user, product, or order records.
 - The sandbox Compose stack uses `infra/docker/mysql/init/01-init.sql` to provision fresh local data on first database startup.
+- The intended long-lived branch strategy is `feature/* -> dev -> sandbox -> main`.
 
 ## Documentation
 

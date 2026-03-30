@@ -43,6 +43,7 @@ Without that grant, the service will fail at query time with MySQL access denied
 ## Directory Guide
 
 - `app/main.py`: service entry
+- `app/core/cache.py`: Redis cache helpers and catalog version invalidation
 - `app/api/routes.py`: public, admin, and internal APIs
 - `app/core/security.py`: admin check helper
 - `app/db/session.py`: SQLAlchemy session setup
@@ -67,6 +68,15 @@ uvicorn app.main:app --reload --port 8002
 See:
 
 - `services/product-service/.env.example`
+
+Important Redis-related variables:
+
+- `PRODUCT_SERVICE_REDIS_ENABLED`
+- `PRODUCT_SERVICE_REDIS_HOST`
+- `PRODUCT_SERVICE_REDIS_PORT`
+- `PRODUCT_SERVICE_REDIS_DB`
+- `PRODUCT_SERVICE_REDIS_PASSWORD`
+- `PRODUCT_SERVICE_REDIS_CACHE_TTL_SECONDS`
 
 ## Docker
 
@@ -99,10 +109,12 @@ Internal:
 - `include_off_sale=true` is restricted to admin callers.
 - Stock reserve and release are written as direct SQL updates for Phase 1 simplicity.
 - Inventory still lives in `t_product`; a dedicated inventory table can be introduced later if the domain grows.
+- Redis now caches public product list queries, public product detail queries, and internal product detail lookups.
+- Product creation, updates, stock changes, and reserve/release operations bump a shared catalog cache version so stale keys fall out naturally.
 
 ## Near-Term TODO
 
 - add product validation and business exceptions with clearer error codes
 - add optimistic-lock-aware stock updates using explicit `version` checks
-- add Redis cache for product listing
+- add cache metrics and observability around hit / miss rates
 - add category management if the admin domain expands
