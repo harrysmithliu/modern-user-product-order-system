@@ -19,7 +19,8 @@
   - active for order lifecycle event fan-out from `order-service`
   - consumed by `notification-service` for structured notification logging
 - MongoDB:
-  - reserved for audit logs, order event timeline, and notification records
+  - active as an optional `order_event_timeline` sink in `notification-service`
+  - still reserved for side-channel audit logs and notification records outside the critical write path
 
 ## MongoDB Reservation Strategy
 
@@ -47,7 +48,7 @@ Not planned for the critical write path:
 5. Order creation is handled by `order-service`
 6. `order-service` calls internal `product-service` endpoints to reserve or release inventory
 7. `order-service` emits lifecycle events to RabbitMQ after transaction commit
-8. `notification-service` consumes the events and records notification-style logs
+8. `notification-service` consumes the events, records notification-style logs, and can persist them into MongoDB for audit lookup
 
 ## Future Release Flow
 

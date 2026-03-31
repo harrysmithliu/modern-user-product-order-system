@@ -157,6 +157,10 @@ services:
       NOTIFICATION_SERVICE_EXCHANGE: ${SANDBOX_ORDER_EVENTS_EXCHANGE:-order.events}
       NOTIFICATION_SERVICE_QUEUE_NAME: notification.order.events
       NOTIFICATION_SERVICE_ROUTING_KEYS: order.created,order.cancelled,order.approved,order.rejected
+      NOTIFICATION_SERVICE_MONGO_ENABLED: ${SANDBOX_MONGO_ENABLED:-true}
+      NOTIFICATION_SERVICE_MONGO_URI: ${SANDBOX_MONGO_URI:-mongodb://admin:admin123@mongodb:27017/admin?authSource=admin}
+      NOTIFICATION_SERVICE_MONGO_DATABASE: ${SANDBOX_MONGO_DATABASE:-upo_audit}
+      NOTIFICATION_SERVICE_MONGO_COLLECTION: ${SANDBOX_MONGO_COLLECTION:-order_event_timeline}
     depends_on:
       rabbitmq:
         condition: service_started

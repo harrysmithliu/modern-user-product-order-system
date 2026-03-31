@@ -1,12 +1,12 @@
 # notification-service
 
-Lightweight Python worker that consumes RabbitMQ order events and logs notification-style output.
+Lightweight Python worker that consumes RabbitMQ order events, logs notification-style output, and can persist an audit timeline into MongoDB.
 
 ## Responsibility
 
 - consume order lifecycle events from RabbitMQ
 - log structured notification records for demo and debugging use
-- keep the event pipeline visible before MongoDB-backed audit storage is introduced
+- persist consumed order events into MongoDB when audit storage is enabled
 
 ## Current Event Bindings
 
@@ -37,8 +37,20 @@ See:
 
 - RabbitMQ
 - `order.events` topic exchange
+- optional MongoDB audit store
+
+## Audit Storage
+
+When `NOTIFICATION_SERVICE_MONGO_ENABLED=true`, the worker stores consumed order events into the configured MongoDB collection.
+
+Relevant settings:
+
+- `NOTIFICATION_SERVICE_MONGO_URI`
+- `NOTIFICATION_SERVICE_MONGO_DATABASE`
+- `NOTIFICATION_SERVICE_MONGO_COLLECTION`
+
+The default collection name is `order_event_timeline`.
 
 ## Near-Term TODO
 
-- persist consumed events into MongoDB audit collections
 - add delivery retry metrics and dead-letter queue support

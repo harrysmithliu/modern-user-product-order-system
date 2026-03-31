@@ -38,7 +38,8 @@ The repository is under phased implementation.
   - Redis-backed product cache
   - Redis-backed logout blacklist
   - Redis-backed gateway rate limiting
-  - RabbitMQ
+  - RabbitMQ-backed order event flow
+  - MongoDB-backed order event timeline sink
   - Docker Compose
   - unified production polish
 - Phase 3:
@@ -80,7 +81,7 @@ The repository is under phased implementation.
 - `services/order-service`
   - order creation, cancellation, and admin approval / rejection
 - `services/notification-service`
-  - RabbitMQ consumer for order lifecycle notifications and event visibility
+  - RabbitMQ consumer for order lifecycle notifications and MongoDB-backed audit sink
 
 ### Data and Infra
 
@@ -96,7 +97,8 @@ The repository is under phased implementation.
   - active for order lifecycle event fan-out from `order-service`
   - active for the lightweight `notification-service` consumer
 - MongoDB
-  - reserved for audit logs, order event timelines, and notification records
+  - active for the optional `order_event_timeline` audit sink in `notification-service`
+  - reserved for side-channel audit logs and notification records
   - intentionally kept out of the critical relational transaction path
 
 ## Tech Stack

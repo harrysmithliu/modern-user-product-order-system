@@ -1,4 +1,4 @@
-from app.main import build_log_record
+from app.main import build_audit_record, build_log_record, persist_audit_record
 
 
 def test_build_log_record_accepts_snake_case_payload():
@@ -49,3 +49,71 @@ def test_build_log_record_accepts_camel_case_payload():
         "operator_username": "admin",
         "occurred_at": "2026-03-30T10:10:00Z",
     }
+
+
+def test_build_audit_record_accepts_camel_case_payload():
+    document = build_audit_record(
+        {
+            "messageId": "msg-1002",
+            "eventType": "ORDER_APPROVED",
+            "orderId": 7,
+            "orderNo": "ORD-1002",
+            "requestNo": "REQ-1002",
+            "userId": 8,
+            "productId": 17,
+            "quantity": 2,
+            "totalAmount": "598.00",
+            "statusCode": 1,
+            "status": "APPROVED",
+            "operatorId": 8,
+            "operatorUsername": "admin",
+            "operatorRole": "ADMIN",
+            "reason": None,
+            "occurredAt": "2026-03-30T10:10:00Z",
+        },
+        "order.approved",
+        consumed_at="2026-03-30T10:11:00Z",
+    )
+
+    assert document["message_id"] == "msg-1002"
+    assert document["routing_key"] == "order.approved"
+    assert document["event_type"] == "ORDER_APPROVED"
+    assert document["order_id"] == 7
+    assert document["order_no"] == "ORD-1002"
+    assert document["request_no"] == "REQ-1002"
+    assert document["user_id"] == 8
+    assert document["product_id"] == 17
+    assert document["quantity"] == 2
+    assert document["total_amount"] == "598.00"
+    assert document["status_code"] == 1
+    assert document["status"] == "APPROVED"
+    assert document["operator_id"] == 8
+    assert document["operator_username"] == "admin"
+    assert document["operator_role"] == "ADMIN"
+    assert document["occurred_at"] == "2026-03-30T10:10:00Z"
+    assert document["consumed_at"] == "2026-03-30T10:11:00Z"
+
+
+def test_persist_audit_record_upserts_by_message_id():
+    calls: list[tuple[dict, dict, bool]] = []
+
+    class FakeCollection:
+        def update_one(self, selector, update, upsert=False):
+            calls.append((selector, update, upsert))
+
+    saved = persist_audit_record(
+        FakeCollection(),
+        {
+            "message_id": "msg-2001",
+            "event_type": "ORDER_REJECTED",
+        },
+    )
+
+    assert saved is True
+    assert calls == [
+        (
+            {"message_id": "msg-2001"},
+            {"$setOnInsert": {"message_id": "msg-2001", "event_type": "ORDER_REJECTED"}},
+            True,
+        )
+    ]
