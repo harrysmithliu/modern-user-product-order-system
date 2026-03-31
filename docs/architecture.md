@@ -51,18 +51,39 @@ Not planned for the critical write path:
 8. a scheduled relay publishes pending outbox records to RabbitMQ
 9. `notification-service` consumes the events, records notification-style logs, and can persist them into MongoDB for audit lookup
 
-## Future Release Flow
+## RabbitMQ Event Flow
 
-```mermaid
-flowchart LR
-    A["Developer branch / local change"] --> B["Dev environment\nlocal process or docker-compose.dev.yml"]
-    B --> C["Push to GitHub"]
-    C --> D["CI build and test\nfuture GitHub Actions pipeline"]
-    D --> E["Sandbox deployment\ndocker-compose.sandbox.yml or future sandbox K8s"]
-    E --> F["Manual review, smoke test, demo validation"]
-    F --> G["Prod release approval"]
-    G --> H["Prod deployment\nfuture EKS / Kubernetes rollout"]
-```
+This project keeps the order write path in MySQL and pushes side-channel event work into RabbitMQ. The message path is intentionally split into a reliable main chain and a few supporting side chains.
+
+### Main Chain
+
+![RabbitMQ Main Chain](screenshots/rmq_main_chain.png)
+
+Main chain summary:
+
+- order mutations and outbox records are committed together
+- the relay publishes pending outbox records to the `order.events` topic exchange
+- `notification-service` consumes routed messages for logging and optional audit persistence
+
+### Reliability Side Chain
+
+![RabbitMQ Reliability Side Chain](screenshots/rmq_reliability_side_chain.png)
+
+This side chain explains why RabbitMQ publication is not part of the critical write transaction itself: the system first makes the event durable in MySQL, then lets the relay publish and retry outside the request path.
+
+### Routing Side Chain
+
+![RabbitMQ Routing Side Chain](screenshots/rmq_routing_side_chain.png)
+
+This side chain shows the fan-out role of RabbitMQ:
+
+- the publisher sends once to `order.events`
+- each downstream capability can bind its own queue without changing `order-service`
+- current productionized consumer is `notification-service`; other queues are an intentional extension point
+
+### Current Event Types
+
+![RabbitMQ Event Types Side Chain](screenshots/rmq_event_types_side_chain.png)
 
 ## Branch-to-Environment Mapping
 

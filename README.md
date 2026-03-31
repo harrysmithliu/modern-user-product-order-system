@@ -69,6 +69,8 @@ The repository is under phased implementation.
 
 ## Architecture Overview
 
+Detailed cross-service message flow diagrams live in [docs/architecture.md](docs/architecture.md), including the RabbitMQ main chain, reliability side chain, and routing fan-out view.
+
 ### Services
 
 - `frontend`
