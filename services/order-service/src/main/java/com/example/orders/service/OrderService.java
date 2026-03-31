@@ -27,10 +27,16 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
+    private final OrderEventPublisher orderEventPublisher;
 
-    public OrderService(OrderRepository orderRepository, ProductClient productClient) {
+    public OrderService(
+            OrderRepository orderRepository,
+            ProductClient productClient,
+            OrderEventPublisher orderEventPublisher
+    ) {
         this.orderRepository = orderRepository;
         this.productClient = productClient;
+        this.orderEventPublisher = orderEventPublisher;
     }
 
     @Transactional
@@ -63,6 +69,7 @@ public class OrderService {
             entity.setVersion(0);
 
             OrderEntity saved = orderRepository.save(entity);
+            orderEventPublisher.publishCreated(saved, requestUser);
             return toResponse(saved);
         } catch (RuntimeException ex) {
             productClient.releaseStock(request.productId(), request.quantity());
@@ -84,6 +91,7 @@ public class OrderService {
         entity.setVersion(entity.getVersion() + 1);
         OrderEntity saved = orderRepository.save(entity);
         productClient.releaseStock(saved.getProductId(), saved.getQuantity());
+        orderEventPublisher.publishCancelled(saved, requestUser);
         return toResponse(saved);
     }
 
@@ -117,7 +125,9 @@ public class OrderService {
         entity.setStatus(OrderStatus.APPROVED.getCode());
         entity.setApproveTime(LocalDateTime.now());
         entity.setVersion(entity.getVersion() + 1);
-        return toResponse(orderRepository.save(entity));
+        OrderEntity saved = orderRepository.save(entity);
+        orderEventPublisher.publishApproved(saved, requestUser);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -135,6 +145,7 @@ public class OrderService {
         entity.setVersion(entity.getVersion() + 1);
         OrderEntity saved = orderRepository.save(entity);
         productClient.releaseStock(saved.getProductId(), saved.getQuantity());
+        orderEventPublisher.publishRejected(saved, requestUser, request.rejectReason());
         return toResponse(saved);
     }
 

@@ -38,7 +38,9 @@ The repository is under phased implementation.
   - Redis-backed product cache
   - Redis-backed logout blacklist
   - Redis-backed gateway rate limiting
-  - RabbitMQ
+  - RabbitMQ-backed order event flow
+  - outbox-backed event staging in `order-service`
+  - MongoDB-backed order event timeline sink
   - Docker Compose
   - unified production polish
 - Phase 3:
@@ -67,6 +69,8 @@ The repository is under phased implementation.
 
 ## Architecture Overview
 
+Detailed cross-service message flow diagrams live in [docs/architecture.md](docs/architecture.md), including the RabbitMQ main chain, reliability side chain, and routing fan-out view.
+
 ### Services
 
 - `frontend`
@@ -79,6 +83,8 @@ The repository is under phased implementation.
   - product listing, product administration, stock mutation APIs
 - `services/order-service`
   - order creation, cancellation, and admin approval / rejection
+- `services/notification-service`
+  - RabbitMQ consumer for order lifecycle notifications and MongoDB-backed audit sink
 
 ### Data and Infra
 
@@ -91,9 +97,11 @@ The repository is under phased implementation.
   - active for JWT blacklist support in `user-service`
   - active for gateway login and order-create rate limiting
 - RabbitMQ
-  - reserved for Phase 2 async order event handling
+  - active for outbox-relayed order lifecycle event fan-out from `order-service`
+  - active for the lightweight `notification-service` consumer
 - MongoDB
-  - reserved for audit logs, order event timelines, and notification records
+  - active for the optional `order_event_timeline` audit sink in `notification-service`
+  - reserved for side-channel audit logs and notification records
   - intentionally kept out of the critical relational transaction path
 
 ## Tech Stack
@@ -121,6 +129,7 @@ The repository is under phased implementation.
 - MySQL 8
 - Redis 7
 - RabbitMQ 3
+- lightweight notification worker
 - Docker / Docker Compose
 - Kubernetes manifests planned in later phases
 
@@ -133,7 +142,8 @@ modern-user-product-order-system/
 ├── services/
 │   ├── user-service/
 │   ├── product-service/
-│   └── order-service/
+│   ├── order-service/
+│   └── notification-service/
 ├── docs/
 ├── infra/
 │   ├── docker/
@@ -218,6 +228,7 @@ This stack starts:
 - user-service
 - product-service
 - order-service
+- notification-service
 - mysql
 - redis
 - rabbitmq
@@ -272,6 +283,16 @@ Order service:
 ```bash
 cd services/order-service
 mvn spring-boot:run
+```
+
+Notification service:
+
+```bash
+cd services/notification-service
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m app.main
 ```
 
 ### 2. Start the frontend
@@ -347,6 +368,59 @@ Dev compose:
 - User service docs: `http://localhost:8011/docs`
 - Product service docs: `http://localhost:8012/docs`
 - Order service docs: `http://localhost:8081/swagger-ui/index.html`
+
+## New Branch Development Runbook
+
+Use this flow when following the long-lived `dev -> sandbox -> main` promotion model and starting a new batch of implementation work.
+
+### 1. Refresh local `main`
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### 2. Sync `dev` with the latest `main`
+
+```bash
+git checkout dev
+git merge main
+git push origin dev
+```
+
+### 3. Create a new feature branch from `dev`
+
+Replace `dev-xxx` with the actual workstream name, for example `dev-rabbitmq-events`.
+
+```bash
+git checkout dev
+git checkout -b dev-xxx
+git push -u origin dev-xxx
+```
+
+### 4. Implement and validate on the feature branch
+
+Typical checks during development:
+
+- prefer validating feature work in the local `dev` runtime first
+- use `infra/docker/docker-compose.dev.yml` when the batch depends on host-managed local services such as `local-mysql` or `rmq`
+- run local service-specific checks
+- run `python3 scripts/dev/smoke-test-phase1.py` when the core order flow is affected
+- run `python3 scripts/dev/smoke-test-phase2.py` when Redis-backed auth or rate limiting is affected
+- inspect `modern-upo-dev-notification-service` logs when RabbitMQ event flow changes
+- run `python3 scripts/dev/smoke-test-rabbitmq-dev.py` when validating local RabbitMQ event flow against IDE-started services
+
+### 5. Merge the feature branch back into `dev`
+
+```bash
+git checkout dev
+git merge dev-xxx
+git push origin dev
+```
+
+### 6. Promote the validated `dev` branch into `sandbox`
+
+After the `dev` branch is stable, continue with the `Sandbox Promotion Runbook` above.
 
 ## Sandbox Promotion Runbook
 

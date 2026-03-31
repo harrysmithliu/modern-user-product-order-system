@@ -8,7 +8,7 @@ This project is organized around three environment tiers:
   - current Docker entry: `infra/docker/docker-compose.dev.yml`
 - `sandbox`
   - full integration and demo environment
-  - includes application services plus MySQL, Redis, RabbitMQ, and MongoDB
+  - includes frontend, gateway, core services, notification worker, MySQL, Redis, RabbitMQ, and MongoDB
   - current Docker entry: `infra/docker/docker-compose.sandbox.yml`
 - `prod`
   - reserved for future Kubernetes and cloud deployment
