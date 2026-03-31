@@ -11,6 +11,7 @@ Spring Boot service responsible for order creation and approval flow.
 - list all orders for admin review
 - approve or reject pending orders
 - call product-service internal APIs to reserve and release stock
+- publish order lifecycle events to RabbitMQ after successful transaction commit
 
 ## Database
 
@@ -57,6 +58,15 @@ Without that grant, the service cannot boot because JPA cannot initialize agains
 - `GET /ready`
 - `GET /live`
 
+## Event Publishing
+
+- exchange: `order.events`
+- routing keys:
+  - `order.created`
+  - `order.cancelled`
+  - `order.approved`
+  - `order.rejected`
+
 ## Directory Guide
 
 - `src/main/java/com/example/orders/controller/`: external APIs
@@ -87,11 +97,13 @@ See:
 - Dockerfile: `services/order-service/Dockerfile`
 - Compose service name: `order-service`
 - Local container docs: `http://localhost:8080/swagger-ui/index.html`
+- In the `dev` runtime, RabbitMQ validation should point to your host-managed local broker, such as `rmq` on `localhost:5672`.
 
 ## Dependencies
 
 - MySQL `h_order_db`
 - product-service internal APIs on `http://localhost:8002`
+- RabbitMQ for order domain events
 
 ## Maintenance Notes
 
@@ -99,10 +111,11 @@ See:
 - The service trusts gateway-provided request headers for user context in Phase 1.
 - Create-order logic is intentionally synchronous for now: reserve stock first, then persist order.
 - If order persistence fails after stock reservation, the service currently attempts stock release as compensation.
+- RabbitMQ publishing happens after transaction commit so failed database transactions do not emit lifecycle events.
 
 ## Near-Term TODO
 
 - replace simple compensation with event-driven outbox flow
 - add stronger optimistic concurrency control on state transitions
-- add notification and audit event publishing through RabbitMQ
+- add dead-letter handling and richer delivery tracing for RabbitMQ
 - add order query filters beyond status

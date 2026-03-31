@@ -16,7 +16,8 @@
   - active for token blacklist support shared by `user-service` and `gateway`
   - active for gateway login and order creation rate limiting
 - RabbitMQ:
-  - reserved for order event fan-out in Phase 2
+  - active for order lifecycle event fan-out from `order-service`
+  - consumed by `notification-service` for structured notification logging
 - MongoDB:
   - reserved for audit logs, order event timeline, and notification records
 
@@ -45,6 +46,8 @@ Not planned for the critical write path:
 4. Product queries are served by `product-service`
 5. Order creation is handled by `order-service`
 6. `order-service` calls internal `product-service` endpoints to reserve or release inventory
+7. `order-service` emits lifecycle events to RabbitMQ after transaction commit
+8. `notification-service` consumes the events and records notification-style logs
 
 ## Future Release Flow
 

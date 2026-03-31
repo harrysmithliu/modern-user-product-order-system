@@ -79,6 +79,8 @@ The repository is under phased implementation.
   - product listing, product administration, stock mutation APIs
 - `services/order-service`
   - order creation, cancellation, and admin approval / rejection
+- `services/notification-service`
+  - RabbitMQ consumer for order lifecycle notifications and event visibility
 
 ### Data and Infra
 
@@ -91,7 +93,8 @@ The repository is under phased implementation.
   - active for JWT blacklist support in `user-service`
   - active for gateway login and order-create rate limiting
 - RabbitMQ
-  - reserved for Phase 2 async order event handling
+  - active for order lifecycle event fan-out from `order-service`
+  - active for the lightweight `notification-service` consumer
 - MongoDB
   - reserved for audit logs, order event timelines, and notification records
   - intentionally kept out of the critical relational transaction path
@@ -121,6 +124,7 @@ The repository is under phased implementation.
 - MySQL 8
 - Redis 7
 - RabbitMQ 3
+- lightweight notification worker
 - Docker / Docker Compose
 - Kubernetes manifests planned in later phases
 
@@ -133,7 +137,8 @@ modern-user-product-order-system/
 ├── services/
 │   ├── user-service/
 │   ├── product-service/
-│   └── order-service/
+│   ├── order-service/
+│   └── notification-service/
 ├── docs/
 ├── infra/
 │   ├── docker/
@@ -218,6 +223,7 @@ This stack starts:
 - user-service
 - product-service
 - order-service
+- notification-service
 - mysql
 - redis
 - rabbitmq
@@ -272,6 +278,16 @@ Order service:
 ```bash
 cd services/order-service
 mvn spring-boot:run
+```
+
+Notification service:
+
+```bash
+cd services/notification-service
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m app.main
 ```
 
 ### 2. Start the frontend
@@ -381,9 +397,13 @@ git push -u origin dev-xxx
 
 Typical checks during development:
 
+- prefer validating feature work in the local `dev` runtime first
+- use `infra/docker/docker-compose.dev.yml` when the batch depends on host-managed local services such as `local-mysql` or `rmq`
 - run local service-specific checks
 - run `python3 scripts/dev/smoke-test-phase1.py` when the core order flow is affected
 - run `python3 scripts/dev/smoke-test-phase2.py` when Redis-backed auth or rate limiting is affected
+- inspect `modern-upo-dev-notification-service` logs when RabbitMQ event flow changes
+- run `python3 scripts/dev/smoke-test-rabbitmq-dev.py` when validating local RabbitMQ event flow against IDE-started services
 
 ### 5. Merge the feature branch back into `dev`
 

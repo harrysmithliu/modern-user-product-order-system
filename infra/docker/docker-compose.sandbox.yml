@@ -125,13 +125,41 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MYSQL_APP_USER:-app}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_APP_PASSWORD:-app_pass}
       APP_PRODUCT_SERVICE_BASE_URL: http://product-service:8002
+      SPRING_RABBITMQ_HOST: ${SANDBOX_RABBITMQ_HOST:-rabbitmq}
+      SPRING_RABBITMQ_PORT: ${SANDBOX_RABBITMQ_PORT:-5672}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-admin123}
+      SPRING_RABBITMQ_VIRTUAL_HOST: /
+      APP_ORDER_EVENTS_EXCHANGE: ${SANDBOX_ORDER_EVENTS_EXCHANGE:-order.events}
     depends_on:
       mysql:
         condition: service_healthy
       product-service:
         condition: service_started
+      rabbitmq:
+        condition: service_started
     ports:
       - "8080:8080"
+
+  notification-service:
+    image: upo-notification-service:sandbox
+    build:
+      context: ../..
+      dockerfile: services/notification-service/Dockerfile
+    container_name: modern-upo-sandbox-notification-service
+    restart: unless-stopped
+    environment:
+      NOTIFICATION_SERVICE_RABBITMQ_HOST: ${SANDBOX_RABBITMQ_HOST:-rabbitmq}
+      NOTIFICATION_SERVICE_RABBITMQ_PORT: ${SANDBOX_RABBITMQ_PORT:-5672}
+      NOTIFICATION_SERVICE_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-admin}
+      NOTIFICATION_SERVICE_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-admin123}
+      NOTIFICATION_SERVICE_RABBITMQ_VIRTUAL_HOST: /
+      NOTIFICATION_SERVICE_EXCHANGE: ${SANDBOX_ORDER_EVENTS_EXCHANGE:-order.events}
+      NOTIFICATION_SERVICE_QUEUE_NAME: notification.order.events
+      NOTIFICATION_SERVICE_ROUTING_KEYS: order.created,order.cancelled,order.approved,order.rejected
+    depends_on:
+      rabbitmq:
+        condition: service_started
 
   gateway:
     image: upo-gateway:sandbox

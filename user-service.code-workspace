@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "gateway"
+		},
+		{
+			"path": "services/notification-service"
 		}
 	],
 	"settings": {}
