@@ -1,4 +1,4 @@
-from app.main import build_audit_record, build_log_record, persist_audit_record
+from app.main import build_audit_record, build_log_record, normalize_timestamp, persist_audit_record
 
 
 def test_build_log_record_accepts_snake_case_payload():
@@ -51,6 +51,10 @@ def test_build_log_record_accepts_camel_case_payload():
     }
 
 
+def test_normalize_timestamp_converts_epoch_seconds_to_iso_utc():
+    assert normalize_timestamp(1774964218.685016) == "2026-03-31T13:36:58.685016+00:00"
+
+
 def test_build_audit_record_accepts_camel_case_payload():
     document = build_audit_record(
         {
@@ -92,6 +96,22 @@ def test_build_audit_record_accepts_camel_case_payload():
     assert document["operator_role"] == "ADMIN"
     assert document["occurred_at"] == "2026-03-30T10:10:00Z"
     assert document["consumed_at"] == "2026-03-30T10:11:00Z"
+
+
+def test_build_audit_record_normalizes_epoch_occurred_at():
+    document = build_audit_record(
+        {
+            "messageId": "msg-3001",
+            "eventType": "ORDER_REJECTED",
+            "orderId": 16,
+            "orderNo": "ORD-3001",
+            "occurredAt": 1774964218.685016,
+        },
+        "order.rejected",
+        consumed_at="2026-03-31T13:36:58.688780+00:00",
+    )
+
+    assert document["occurred_at"] == "2026-03-31T13:36:58.685016+00:00"
 
 
 def test_persist_audit_record_upserts_by_message_id():

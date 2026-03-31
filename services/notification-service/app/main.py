@@ -31,6 +31,12 @@ _mongo_client = None
 _audit_collection = None
 
 
+def normalize_timestamp(value: Any) -> Any:
+    if isinstance(value, (int, float)):
+        return datetime.fromtimestamp(value, timezone.utc).isoformat()
+    return value
+
+
 def build_connection_parameters() -> pika.ConnectionParameters:
     credentials = pika.PlainCredentials(
         settings.rabbitmq_username,
@@ -60,7 +66,7 @@ def build_log_record(payload: dict, routing_key: str) -> dict:
         "status": value("status"),
         "user_id": value("user_id", "userId"),
         "operator_username": value("operator_username", "operatorUsername"),
-        "occurred_at": value("occurred_at", "occurredAt"),
+        "occurred_at": normalize_timestamp(value("occurred_at", "occurredAt")),
     }
 
 
@@ -93,7 +99,7 @@ def build_audit_record(payload: dict[str, Any], routing_key: str, consumed_at: s
         "operator_username": value("operator_username", "operatorUsername"),
         "operator_role": value("operator_role", "operatorRole"),
         "reason": value("reason"),
-        "occurred_at": value("occurred_at", "occurredAt"),
+        "occurred_at": normalize_timestamp(value("occurred_at", "occurredAt")),
         "consumed_at": consumed_at or datetime.now(timezone.utc).isoformat(),
         "payload": payload,
     }
