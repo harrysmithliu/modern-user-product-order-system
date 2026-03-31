@@ -48,6 +48,16 @@ The repository is under phased implementation.
   - monitoring
   - load testing
   - AWS migration notes
+  - CI/CD baseline
+
+Phase 3 has now started with:
+
+- a Kubernetes sandbox manifest baseline under `infra/k8s/sandbox`
+- runtime-configurable frontend API routing for ingress-based deployments
+- Prometheus / Grafana bootstrap assets under `infra/monitoring`
+- starter `k6` load-test scripts under `scripts/load`
+- a first GitHub Actions CI workflow under `.github/workflows/ci.yml`
+- expanded AWS production migration notes under `infra/aws/prod`
 
 ## Screenshots
 
@@ -70,6 +80,13 @@ The repository is under phased implementation.
 ## Architecture Overview
 
 Detailed cross-service message flow diagrams live in [docs/architecture.md](docs/architecture.md), including the RabbitMQ main chain, reliability side chain, and routing fan-out view.
+
+Phase 3 deployment and performance notes now also include:
+
+- [docs/pressure-test.md](docs/pressure-test.md)
+- [infra/monitoring/README.md](infra/monitoring/README.md)
+- [infra/k8s/sandbox/README.md](infra/k8s/sandbox/README.md)
+- [infra/aws/prod/README.md](infra/aws/prod/README.md)
 
 ### Services
 
@@ -131,7 +148,7 @@ Detailed cross-service message flow diagrams live in [docs/architecture.md](docs
 - RabbitMQ 3
 - lightweight notification worker
 - Docker / Docker Compose
-- Kubernetes manifests planned in later phases
+- Kubernetes sandbox baseline now available under `infra/k8s/sandbox`
 
 ## Repository Structure
 

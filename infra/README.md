@@ -20,6 +20,27 @@ At the current stage:
 - `sandbox` is the recommended environment for end-to-end demo validation
 - `prod` is intentionally reserved as a deployment target, not yet implemented
 
+## Kubernetes Baseline
+
+Phase 3 now includes an initial Kubernetes sandbox baseline under:
+
+- `infra/k8s/sandbox`
+
+The current manifest set includes:
+
+- namespace
+- ConfigMap and Secret
+- MySQL, Redis, RabbitMQ, and MongoDB deployments
+- frontend, gateway, user-service, product-service, order-service, and notification-service deployments
+- ingress
+- HPA stubs
+
+Apply with:
+
+```bash
+kubectl apply -k infra/k8s/sandbox
+```
+
 ## Branch Mapping
 
 The environment layout is intended to match the Git branching model:

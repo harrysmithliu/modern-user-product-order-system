@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: upo-user-service:sandbox
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: USER_SERVICE_DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: mysql-host
+            - name: USER_SERVICE_DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: mysql-port
+            - name: USER_SERVICE_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: user-db-name
+            - name: USER_SERVICE_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: mysql-app-user
+            - name: USER_SERVICE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: mysql-app-password
+            - name: USER_SERVICE_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: jwt-secret
+            - name: USER_SERVICE_JWT_ALGORITHM
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: jwt-algorithm
+            - name: USER_SERVICE_JWT_EXPIRE_MINUTES
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: jwt-expire-minutes
+            - name: USER_SERVICE_REDIS_ENABLED
+              value: "true"
+            - name: USER_SERVICE_REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: redis-host
+            - name: USER_SERVICE_REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: redis-port
+            - name: USER_SERVICE_REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: redis-db
+          ports:
+            - containerPort: 8001
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 8001
+      targetPort: http

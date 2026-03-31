@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+        - name: product-service
+          image: upo-product-service:sandbox
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PRODUCT_SERVICE_DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: mysql-host
+            - name: PRODUCT_SERVICE_DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: mysql-port
+            - name: PRODUCT_SERVICE_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: product-db-name
+            - name: PRODUCT_SERVICE_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: mysql-app-user
+            - name: PRODUCT_SERVICE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: mysql-app-password
+            - name: PRODUCT_SERVICE_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: jwt-secret
+            - name: PRODUCT_SERVICE_JWT_ALGORITHM
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: jwt-algorithm
+            - name: PRODUCT_SERVICE_REDIS_ENABLED
+              value: "true"
+            - name: PRODUCT_SERVICE_REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: redis-host
+            - name: PRODUCT_SERVICE_REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: redis-port
+            - name: PRODUCT_SERVICE_REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: redis-db
+            - name: PRODUCT_SERVICE_REDIS_CACHE_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: product-cache-ttl-seconds
+          ports:
+            - containerPort: 8002
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+spec:
+  selector:
+    app: product-service
+  ports:
+    - port: 8002
+      targetPort: http

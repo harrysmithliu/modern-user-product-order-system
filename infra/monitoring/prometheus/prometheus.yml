@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  # Placeholder service jobs for the next metrics iteration.
+  # These targets assume future service-level Prometheus endpoints
+  # or sidecar/exporter support in sandbox and production environments.
+  - job_name: modern-upo-services
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - gateway:8000
+          - user-service:8001
+          - product-service:8002
+          - order-service:8080
+
+  - job_name: rabbitmq-management
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - rabbitmq:15672

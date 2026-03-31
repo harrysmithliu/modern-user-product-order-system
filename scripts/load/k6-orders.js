@@ -1,0 +1,62 @@
+import http from "k6/http";
+import { check, sleep } from "k6";
+
+export const options = {
+  vus: 5,
+  duration: "30s",
+  thresholds: {
+    http_req_failed: ["rate<0.02"],
+    http_req_duration: ["p(95)<1500"]
+  }
+};
+
+const baseUrl = __ENV.BASE_URL || "http://localhost:8000";
+const username = __ENV.USERNAME || "john_smith";
+const password = __ENV.PASSWORD || "User@123";
+const productId = Number(__ENV.PRODUCT_ID || "1");
+
+function login() {
+  const response = http.post(
+    `${baseUrl}/api/auth/login`,
+    JSON.stringify({ username, password }),
+    {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  check(response, {
+    "login status is 200": (r) => r.status === 200
+  });
+
+  const payload = JSON.parse(response.body);
+  return payload?.data?.access_token;
+}
+
+export default function () {
+  const token = login();
+  const requestNo = `K6-${__VU}-${__ITER}-${Date.now()}`;
+
+  const response = http.post(
+    `${baseUrl}/api/orders`,
+    JSON.stringify({
+      request_no: requestNo,
+      product_id: productId,
+      quantity: 1
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  check(response, {
+    "create order status is 200": (r) => r.status === 200 || r.status === 201,
+    "create order response has data": (r) => r.body.includes('"data"')
+  });
+
+  sleep(1);
+}
