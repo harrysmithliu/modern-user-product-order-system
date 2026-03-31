@@ -2,21 +2,19 @@ package com.example.orders.service;
 
 import com.example.orders.entity.OrderEntity;
 import com.example.orders.enums.OrderStatus;
-import com.example.orders.event.OrderDomainEvent;
 import com.example.orders.event.OrderEventMessage;
 import com.example.orders.security.RequestUser;
 import java.time.Instant;
 import java.util.UUID;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderEventPublisher {
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final OrderOutboxService orderOutboxService;
 
-    public OrderEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-        this.applicationEventPublisher = applicationEventPublisher;
+    public OrderEventPublisher(OrderOutboxService orderOutboxService) {
+        this.orderOutboxService = orderOutboxService;
     }
 
     public void publishCreated(OrderEntity order, RequestUser operator) {
@@ -61,6 +59,6 @@ public class OrderEventPublisher {
                 operator.role(),
                 reason
         );
-        applicationEventPublisher.publishEvent(new OrderDomainEvent(routingKey, payload));
+        orderOutboxService.enqueue(routingKey, payload);
     }
 }

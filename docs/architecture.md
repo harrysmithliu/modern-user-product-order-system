@@ -16,7 +16,7 @@
   - active for token blacklist support shared by `user-service` and `gateway`
   - active for gateway login and order creation rate limiting
 - RabbitMQ:
-  - active for order lifecycle event fan-out from `order-service`
+  - active for outbox-relayed order lifecycle event fan-out from `order-service`
   - consumed by `notification-service` for structured notification logging
 - MongoDB:
   - active as an optional `order_event_timeline` sink in `notification-service`
@@ -47,8 +47,9 @@ Not planned for the critical write path:
 4. Product queries are served by `product-service`
 5. Order creation is handled by `order-service`
 6. `order-service` calls internal `product-service` endpoints to reserve or release inventory
-7. `order-service` emits lifecycle events to RabbitMQ after transaction commit
-8. `notification-service` consumes the events, records notification-style logs, and can persist them into MongoDB for audit lookup
+7. `order-service` writes lifecycle events into `t_order_outbox` inside the same transaction as order mutations
+8. a scheduled relay publishes pending outbox records to RabbitMQ
+9. `notification-service` consumes the events, records notification-style logs, and can persist them into MongoDB for audit lookup
 
 ## Future Release Flow
 

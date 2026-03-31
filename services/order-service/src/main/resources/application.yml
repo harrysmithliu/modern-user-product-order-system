@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: order-service
+  sql:
+    init:
+      mode: always
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:localhost}
     port: ${SPRING_RABBITMQ_PORT:5672}
@@ -37,3 +40,4 @@ app:
     base-url: ${APP_PRODUCT_SERVICE_BASE_URL:http://localhost:8002}
   order-events:
     exchange: ${APP_ORDER_EVENTS_EXCHANGE:order.events}
+    outbox-batch-size: ${APP_ORDER_EVENTS_OUTBOX_BATCH_SIZE:50}

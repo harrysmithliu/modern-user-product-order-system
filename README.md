@@ -39,6 +39,7 @@ The repository is under phased implementation.
   - Redis-backed logout blacklist
   - Redis-backed gateway rate limiting
   - RabbitMQ-backed order event flow
+  - outbox-backed event staging in `order-service`
   - MongoDB-backed order event timeline sink
   - Docker Compose
   - unified production polish
@@ -94,7 +95,7 @@ The repository is under phased implementation.
   - active for JWT blacklist support in `user-service`
   - active for gateway login and order-create rate limiting
 - RabbitMQ
-  - active for order lifecycle event fan-out from `order-service`
+  - active for outbox-relayed order lifecycle event fan-out from `order-service`
   - active for the lightweight `notification-service` consumer
 - MongoDB
   - active for the optional `order_event_timeline` audit sink in `notification-service`
