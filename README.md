@@ -89,6 +89,7 @@ Phase 3 deployment and performance notes now also include:
 - [infra/k8s/sandbox/README.md](infra/k8s/sandbox/README.md)
 - [infra/aws/prod/README.md](infra/aws/prod/README.md)
 - [infra/aws/prod/checklist.md](infra/aws/prod/checklist.md)
+- [infra/aws/sandbox-ec2/README.md](infra/aws/sandbox-ec2/README.md)
 
 ### Services
 
@@ -182,6 +183,10 @@ modern-user-product-order-system/
   - full integration and demo environment
   - uses `infra/docker/docker-compose.sandbox.yml`
   - includes MySQL, Redis, RabbitMQ, and MongoDB containers
+- `sandbox-ec2-online`
+  - low-cost always-on online demo environment
+  - uses a single EC2 host with Docker Compose, Nginx, Let's Encrypt, and GitHub Actions
+  - deployment assets live under `infra/aws/sandbox-ec2`
 - `prod`
   - reserved for future Kubernetes and cloud deployment
   - configuration placeholders live under `infra/k8s/` and `infra/aws/`
@@ -200,6 +205,9 @@ This repository is intended to follow three long-lived branches that mirror the 
 - `main`
   - the most stable showcase branch
   - intended to represent the latest approved release candidate for portfolio presentation and future production promotion
+- `sandbox-ec2-online`
+  - the long-running public demo deployment branch
+  - intentionally split from `main` so the public demo can stay cost-efficient while `main` keeps the full cloud-native production direction
 
 Recommended branch flow:
 
@@ -220,6 +228,7 @@ Current practical meaning:
 - merging into `dev` means the work is ready for developer iteration
 - merging into `sandbox` means the work is ready for full Compose-based integration and demo validation
 - merging into `main` means the work is stable enough to be presented as the current best version of the project
+- merging into `sandbox-ec2-online` means the sandbox-approved demo state is ready for long-running low-cost EC2 deployment
 
 Future CI/CD mapping:
 
