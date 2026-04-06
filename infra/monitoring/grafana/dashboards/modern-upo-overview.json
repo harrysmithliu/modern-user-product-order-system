@@ -67,7 +67,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(up{job=\"modern-upo-services\"})",
+          "expr": "sum(up{job=~\"modern-upo-fastapi-sandbox|modern-upo-order-service-sandbox\"})",
           "legendFormat": "up targets",
           "range": true,
           "refId": "A"
@@ -108,7 +108,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "up{job=\"modern-upo-services\"}",
+          "expr": "up{job=~\"modern-upo-fastapi-sandbox|modern-upo-order-service-sandbox\"}",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"

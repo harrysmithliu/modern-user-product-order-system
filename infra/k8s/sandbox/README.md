@@ -71,3 +71,8 @@ hard-wired to `localhost:8000`.
 The current sandbox environment is implemented through:
 
 - `infra/docker/docker-compose.sandbox.yml`
+
+For remote Kubernetes day-2 operations such as rollout, restart, rollback, and
+health-check procedure, see:
+
+- `docs/sandbox-operations-runbook.md`
