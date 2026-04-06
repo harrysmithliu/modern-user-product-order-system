@@ -263,6 +263,19 @@ docker compose --env-file infra/docker/.env.dev.example -f infra/docker/docker-c
 
 This lightweight stack expects host-managed infrastructure, such as your existing local MySQL and RabbitMQ containers.
 
+### Monitoring Compose Run
+
+From the repository root:
+
+```bash
+docker compose --env-file infra/docker/.env.monitoring.example -f infra/docker/docker-compose.monitoring.yml up -d
+```
+
+Default local URLs:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
+
 ### 1. Start the backend services
 
 Gateway:

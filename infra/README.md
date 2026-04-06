@@ -41,6 +41,18 @@ Apply with:
 kubectl apply -k infra/k8s/sandbox
 ```
 
+## Monitoring Compose
+
+Phase 3 also includes a local monitoring stack:
+
+- `infra/docker/docker-compose.monitoring.yml`
+
+Start it with:
+
+```bash
+docker compose --env-file infra/docker/.env.monitoring.example -f infra/docker/docker-compose.monitoring.yml up -d
+```
+
 ## Branch Mapping
 
 The environment layout is intended to match the Git branching model:

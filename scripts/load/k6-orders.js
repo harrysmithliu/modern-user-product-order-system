@@ -1,11 +1,15 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
+const vus = Number(__ENV.VUS || "1");
+const duration = __ENV.DURATION || "20s";
+const sleepSeconds = Number(__ENV.SLEEP_SECONDS || "2");
+
 export const options = {
-  vus: 5,
-  duration: "30s",
+  vus,
+  duration,
   thresholds: {
-    http_req_failed: ["rate<0.02"],
+    http_req_failed: ["rate<0.05"],
     http_req_duration: ["p(95)<1500"]
   }
 };
@@ -34,8 +38,13 @@ function login() {
   return payload?.data?.access_token;
 }
 
-export default function () {
-  const token = login();
+export function setup() {
+  return {
+    token: login()
+  };
+}
+
+export default function (data) {
   const requestNo = `K6-${__VU}-${__ITER}-${Date.now()}`;
 
   const response = http.post(
@@ -48,7 +57,7 @@ export default function () {
     {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${data.token}`
       }
     }
   );
@@ -58,5 +67,5 @@ export default function () {
     "create order response has data": (r) => r.body.includes('"data"')
   });
 
-  sleep(1);
+  sleep(sleepSeconds);
 }

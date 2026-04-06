@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.config import settings
 from app.core.proxy import router
@@ -30,6 +31,10 @@ app.add_middleware(
 )
 
 app.include_router(router)
+
+Instrumentator(
+    excluded_handlers=["/health", "/ready", "/live", "/metrics"],
+).instrument(app).expose(app, include_in_schema=False)
 
 
 @app.get("/health", include_in_schema=False)
