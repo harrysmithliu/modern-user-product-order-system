@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sandbox-app-config
+data:
+  cors-origins: '["http://sandbox.modern-upo.local","http://localhost:5173"]'
+  jwt-algorithm: HS256
+  jwt-expire-minutes: "120"
+  mysql-host: mysql
+  mysql-port: "3306"
+  user-db-name: h_user_db
+  product-db-name: h_product_db
+  order-db-name: h_order_db
+  redis-host: redis
+  redis-port: "6379"
+  redis-db: "0"
+  product-cache-ttl-seconds: "120"
+  rabbitmq-host: rabbitmq
+  rabbitmq-port: "5672"
+  rabbitmq-vhost: /
+  order-events-exchange: order.events
+  order-events-outbox-batch-size: "50"
+  mongodb-host: mongodb
+  mongodb-port: "27017"
+  mongodb-database: upo_audit
+  mongodb-collection: order_event_timeline
+  login-rate-limit-max-requests: "10"
+  login-rate-limit-window-seconds: "60"
+  order-create-rate-limit-max-requests: "20"
+  order-create-rate-limit-window-seconds: "60"
+  ingress-host: sandbox.modern-upo.local

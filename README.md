@@ -48,6 +48,16 @@ The repository is under phased implementation.
   - monitoring
   - load testing
   - AWS migration notes
+  - CI/CD baseline
+
+Phase 3 has now started with:
+
+- a Kubernetes sandbox manifest baseline under `infra/k8s/sandbox`
+- runtime-configurable frontend API routing for ingress-based deployments
+- Prometheus / Grafana bootstrap assets under `infra/monitoring`
+- starter `k6` load-test scripts under `scripts/load`
+- a first GitHub Actions CI workflow under `.github/workflows/ci.yml`
+- expanded AWS production migration notes under `infra/aws/prod`
 
 ## Screenshots
 
@@ -70,6 +80,14 @@ The repository is under phased implementation.
 ## Architecture Overview
 
 Detailed cross-service message flow diagrams live in [docs/architecture.md](docs/architecture.md), including the RabbitMQ main chain, reliability side chain, and routing fan-out view.
+
+Phase 3 deployment and performance notes now also include:
+
+- [docs/pressure-test.md](docs/pressure-test.md)
+- [docs/sandbox-operations-runbook.md](docs/sandbox-operations-runbook.md)
+- [infra/monitoring/README.md](infra/monitoring/README.md)
+- [infra/k8s/sandbox/README.md](infra/k8s/sandbox/README.md)
+- [infra/aws/prod/README.md](infra/aws/prod/README.md)
 
 ### Services
 
@@ -131,7 +149,7 @@ Detailed cross-service message flow diagrams live in [docs/architecture.md](docs
 - RabbitMQ 3
 - lightweight notification worker
 - Docker / Docker Compose
-- Kubernetes manifests planned in later phases
+- Kubernetes sandbox baseline now available under `infra/k8s/sandbox`
 
 ## Repository Structure
 
@@ -245,6 +263,19 @@ docker compose --env-file infra/docker/.env.dev.example -f infra/docker/docker-c
 ```
 
 This lightweight stack expects host-managed infrastructure, such as your existing local MySQL and RabbitMQ containers.
+
+### Monitoring Compose Run
+
+From the repository root:
+
+```bash
+docker compose --env-file infra/docker/.env.monitoring.example -f infra/docker/docker-compose.monitoring.yml up -d
+```
+
+Default local URLs:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 
 ### 1. Start the backend services
 
@@ -466,7 +497,37 @@ Recommended manual checks:
 - sign in as `admin` and confirm order review and product admin pages still load
 - sign out once and confirm the session is cleared cleanly
 
-### 6. Push the validated `sandbox` branch
+### 6. Perform monitoring checks
+
+If the monitoring stack is part of the current validation batch, start or refresh it:
+
+```bash
+docker compose --env-file infra/docker/.env.monitoring.example -f infra/docker/docker-compose.monitoring.yml up -d
+```
+
+Open and verify:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
+
+Reference screenshots:
+
+![Prometheus Targets](docs/screenshots/screen_prometheus.png)
+
+![Grafana Overview](docs/screenshots/screen_grafana.png)
+
+Grafana default credentials:
+
+- username: `admin`
+- password: `admin123`
+
+Recommended monitoring checks:
+
+- in Prometheus, open `Status` -> `Targets` and confirm the sandbox targets on `localhost:8000`, `localhost:8001`, `localhost:8002`, and `localhost:8080` are `UP`
+- in Prometheus, run the `up` query and confirm the sandbox service metrics are visible
+- in Grafana, open the provisioned `Modern UPO Overview` dashboard and confirm panels load without datasource errors
+
+### 7. Push the validated `sandbox` branch
 
 ```bash
 git push origin sandbox

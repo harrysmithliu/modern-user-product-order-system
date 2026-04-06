@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: modern-upo-sandbox
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+  - namespace.yaml
+  - configmap-app.yaml
+  - configmap-frontend.yaml
+  - secret-app.yaml
+  - mysql.yaml
+  - redis.yaml
+  - rabbitmq.yaml
+  - mongodb.yaml
+  - user-service.yaml
+  - product-service.yaml
+  - order-service.yaml
+  - notification-service.yaml
+  - gateway.yaml
+  - frontend.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+configMapGenerator:
+  - name: mysql-init-sql
+    files:
+      - 01-init.sql=mysql-init/01-init.sql

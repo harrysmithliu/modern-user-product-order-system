@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: upo-notification-service:sandbox
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NOTIFICATION_SERVICE_RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: rabbitmq-host
+            - name: NOTIFICATION_SERVICE_RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: rabbitmq-port
+            - name: NOTIFICATION_SERVICE_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: rabbitmq-username
+            - name: NOTIFICATION_SERVICE_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: rabbitmq-password
+            - name: NOTIFICATION_SERVICE_RABBITMQ_VIRTUAL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: rabbitmq-vhost
+            - name: NOTIFICATION_SERVICE_EXCHANGE
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: order-events-exchange
+            - name: NOTIFICATION_SERVICE_QUEUE_NAME
+              value: notification.order.events
+            - name: NOTIFICATION_SERVICE_ROUTING_KEYS
+              value: order.created,order.cancelled,order.approved,order.rejected
+            - name: NOTIFICATION_SERVICE_MONGO_ENABLED
+              value: "true"
+            - name: NOTIFICATION_SERVICE_MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: sandbox-app-secret
+                  key: notification-service-mongo-uri
+            - name: NOTIFICATION_SERVICE_MONGO_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: mongodb-database
+            - name: NOTIFICATION_SERVICE_MONGO_COLLECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: sandbox-app-config
+                  key: mongodb-collection

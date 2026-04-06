@@ -30,10 +30,14 @@ spring:
     property-naming-strategy: SNAKE_CASE
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
 
 app:
   product-service:
