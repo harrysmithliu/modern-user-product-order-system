@@ -88,6 +88,7 @@ Phase 3 deployment and performance notes now also include:
 - [infra/monitoring/README.md](infra/monitoring/README.md)
 - [infra/k8s/sandbox/README.md](infra/k8s/sandbox/README.md)
 - [infra/aws/prod/README.md](infra/aws/prod/README.md)
+- [infra/aws/prod/checklist.md](infra/aws/prod/checklist.md)
 
 ### Services
 
@@ -276,6 +277,18 @@ Default local URLs:
 
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000`
+
+### Kubernetes Sandbox Validation
+
+From the repository root:
+
+```bash
+bash scripts/dev/validate-k8s-sandbox-kind.sh
+```
+
+This script creates or reuses the local `kind-modern-upo` cluster, loads the
+current `upo-*:sandbox` images, applies `infra/k8s/sandbox`, and waits for the
+core sandbox Deployments to become ready.
 
 ### 1. Start the backend services
 

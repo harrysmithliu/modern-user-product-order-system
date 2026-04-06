@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prod-app-config
+data:
+  cors-origins: '["https://app.modern-upo.example"]'
+  jwt-algorithm: HS256
+  jwt-expire-minutes: "120"
+  mysql-host: modern-upo-prod.cluster-xxxxxxxxxx.us-east-1.rds.amazonaws.com
+  mysql-port: "3306"
+  user-db-name: h_user_db
+  product-db-name: h_product_db
+  order-db-name: h_order_db
+  redis-host: modern-upo-prod.xxxxxx.use1.cache.amazonaws.com
+  redis-port: "6379"
+  redis-db: "0"
+  product-cache-ttl-seconds: "120"
+  rabbitmq-host: b-xxxxxxxx-xxxx-xxxx.mq.us-east-1.amazonaws.com
+  rabbitmq-port: "5671"
+  rabbitmq-vhost: /
+  order-events-exchange: order.events
+  order-events-outbox-batch-size: "100"
+  mongodb-database: upo_audit
+  mongodb-collection: order_event_timeline
+  login-rate-limit-max-requests: "20"
+  login-rate-limit-window-seconds: "60"
+  order-create-rate-limit-max-requests: "30"
+  order-create-rate-limit-window-seconds: "60"
+  ingress-host: app.modern-upo.example

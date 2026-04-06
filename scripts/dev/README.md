@@ -34,6 +34,12 @@ Automated dev RabbitMQ smoke test:
 python3 scripts/dev/smoke-test-rabbitmq-dev.py
 ```
 
+Automated local kind validation for the sandbox Kubernetes baseline:
+
+```bash
+bash scripts/dev/validate-k8s-sandbox-kind.sh
+```
+
 Python unit tests:
 
 ```bash
@@ -104,6 +110,15 @@ The dev RabbitMQ smoke test covers:
 3. create + approve flow directly against `order-service`
 4. create + reject flow directly against `order-service`
 5. printed order numbers for checking the `notification-service` IDE console logs
+
+The local kind validation script covers:
+
+1. creating the `kind-modern-upo` cluster if missing
+2. loading the local `upo-*:sandbox` images into the cluster
+3. applying `infra/k8s/sandbox`
+4. waiting for the 10 core sandbox Deployments to become ready
+5. printing pods, services, and ingress status
+6. optionally port-forwarding the gateway when `PORT_FORWARD_GATEWAY=true`
 
 The Python unit test batch covers:
 

@@ -27,6 +27,32 @@ The manifests are designed for:
 kubectl apply -k infra/k8s/sandbox
 ```
 
+## Local kind Validation
+
+For a repeatable local validation flow, use:
+
+```bash
+bash scripts/dev/validate-k8s-sandbox-kind.sh
+```
+
+By default this script will:
+
+- create the `kind-modern-upo` cluster if it does not exist
+- load the local `upo-*:sandbox` images into the kind nodes
+- apply the full sandbox manifest set
+- wait for the 10 core Deployments to become ready
+- print pod, service, and ingress status
+
+Optional environment overrides:
+
+- `KIND_CLUSTER_NAME`
+- `K8S_SANDBOX_NAMESPACE`
+- `CREATE_KIND_CLUSTER_IF_MISSING`
+- `LOAD_SANDBOX_IMAGES`
+- `ROLLOUT_TIMEOUT`
+- `PORT_FORWARD_GATEWAY`
+- `PORT_FORWARD_PORT`
+
 ## Local Hostname
 
 The ingress manifest is written against:
@@ -57,6 +83,8 @@ kind load docker-image upo-product-service:sandbox
 kind load docker-image upo-order-service:sandbox
 kind load docker-image upo-notification-service:sandbox
 ```
+
+The validation script above performs this load step automatically when `LOAD_SANDBOX_IMAGES=true`.
 
 ## Frontend Runtime Config
 
