@@ -41,6 +41,12 @@ Apply with:
 kubectl apply -k infra/k8s/sandbox
 ```
 
+Repeatable local kind validation is also available through:
+
+```bash
+bash scripts/dev/validate-k8s-sandbox-kind.sh
+```
+
 ## Monitoring Compose
 
 Phase 3 also includes a local monitoring stack:
@@ -52,6 +58,21 @@ Start it with:
 ```bash
 docker compose --env-file infra/docker/.env.monitoring.example -f infra/docker/docker-compose.monitoring.yml up -d
 ```
+
+## AWS Deployment Baseline
+
+Phase 3 now also includes an AWS deployment skeleton under:
+
+- `infra/aws/prod`
+
+This baseline currently provides:
+
+- an AWS environment template
+- an ECR push script
+- an EKS deployment script
+- a release checklist
+
+These files are designed to turn the current local Kubernetes validation into a repeatable AWS migration path once real AWS credentials and cluster resources are available.
 
 ## Branch Mapping
 
