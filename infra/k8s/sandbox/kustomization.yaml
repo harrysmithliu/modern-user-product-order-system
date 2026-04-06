@@ -27,4 +27,4 @@ resources:
 configMapGenerator:
   - name: mysql-init-sql
     files:
-      - 01-init.sql=../../docker/mysql/init/01-init.sql
+      - 01-init.sql=mysql-init/01-init.sql
