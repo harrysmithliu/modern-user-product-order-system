@@ -4,7 +4,8 @@ WORKDIR /workspace
 
 COPY frontend/package*.json ./frontend/
 WORKDIR /workspace/frontend
-RUN npm ci
+RUN npm ci --ignore-scripts
+RUN npm rebuild
 
 COPY frontend ./ 
 ARG VITE_API_BASE_URL=http://localhost:8000
