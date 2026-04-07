@@ -14,6 +14,10 @@ __pycache__/
 target/
 .env
 .env.local
+.env.*
+.env.*.local
 .pytest_cache/
 .mypy_cache/
 **/.vscode/settings.json
+infra/aws/sandbox-ec2/nginx/active.conf
+infra/aws/sandbox-ec2/runtime/

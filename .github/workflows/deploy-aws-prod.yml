@@ -1,0 +1,84 @@
+name: Deploy AWS Prod Baseline
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      IMAGE_TAG: prod-${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_PROD_REGION || 'ca-central-1' }}
+
+      - name: Prepare prod environment file
+        run: |
+          mkdir -p infra/aws/prod
+          printf '%s\n' "${{ secrets.AWS_PROD_ENV_FILE }}" > infra/aws/prod/.env.prod.local
+
+      - name: Build frontend image
+        run: docker build -t upo-frontend:prod -f frontend/Dockerfile .
+
+      - name: Build gateway image
+        run: docker build -t upo-gateway:prod -f gateway/Dockerfile .
+
+      - name: Build user-service image
+        run: docker build -t upo-user-service:prod -f services/user-service/Dockerfile .
+
+      - name: Build product-service image
+        run: docker build -t upo-product-service:prod -f services/product-service/Dockerfile .
+
+      - name: Build notification-service image
+        run: docker build -t upo-notification-service:prod -f services/notification-service/Dockerfile .
+
+      - name: Build order-service image
+        run: docker build -t upo-order-service:prod -f services/order-service/Dockerfile .
+
+      - name: Push images to ECR
+        run: |
+          set -a
+          source infra/aws/prod/.env.prod.local
+          set +a
+          export IMAGE_TAG="$IMAGE_TAG"
+          bash infra/aws/prod/deploy-ecr.sh
+
+      - name: Deploy to EKS baseline
+        run: |
+          set -a
+          source infra/aws/prod/.env.prod.local
+          set +a
+          export IMAGE_TAG="$IMAGE_TAG"
+          bash infra/aws/prod/deploy-eks.sh

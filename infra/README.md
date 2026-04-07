@@ -74,6 +74,17 @@ This baseline currently provides:
 
 These files are designed to turn the current local Kubernetes validation into a repeatable AWS migration path once real AWS credentials and cluster resources are available.
 
+## Shared CI and split CD
+
+The infrastructure automation now follows a shared validation layer with two separate deployment targets:
+
+- shared CI
+  - [ci.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/ci.yml) validates the frontend, Python services, and Java order service across the mainline branches and the EC2 demo branch
+- EC2 online demo CD
+  - [deploy-sandbox-ec2.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-sandbox-ec2.yml) deploys the `sandbox-ec2-online` branch to the long-running EC2 demo environment
+- AWS prod CD baseline
+  - [deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml) is a manual production deployment skeleton for future `main` branch ECR and EKS rollout automation
+
 ## Branch Mapping
 
 The environment layout is intended to match the Git branching model:

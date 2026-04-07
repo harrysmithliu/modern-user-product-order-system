@@ -230,6 +230,15 @@ Future CI/CD mapping:
 - `main`
   - run release build and future production deployment workflow
 
+Shared CI and split CD:
+
+- shared CI
+  - `dev`, `sandbox`, `main`, `dev-*`, and `sandbox-ec2-online` use the common [ci.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/ci.yml) workflow for frontend build, Python test execution, and Java package validation
+- demo deployment route
+  - `sandbox-ec2-online` uses [deploy-sandbox-ec2.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-sandbox-ec2.yml) for low-cost always-on EC2 deployment over SSH
+- production deployment route
+  - `main` now has [deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml) as a manual baseline for future ECR and EKS rollout automation
+
 ## Local Run
 
 ### Sandbox Compose Run
