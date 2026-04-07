@@ -220,4 +220,15 @@ The Kubernetes production skeleton handles:
 - the repository does not yet provision AWS infrastructure itself
 - TLS certificate management is still a follow-up task
 - RDS, ElastiCache, Amazon MQ, and MongoDB service wiring still require real production values
-- CI-driven tag injection and full rollout automation remain the next enhancement layer
+- the production deployment workflow is still intentionally manual-first and depends on account-specific GitHub secrets and a real EKS target
+
+## Workflow Alignment
+
+The repository now separates validation and deployment responsibilities:
+
+- [/.github/workflows/ci.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/ci.yml)
+  - shared CI for frontend, Python services, and the Java order service
+- [/.github/workflows/deploy-sandbox-ec2.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-sandbox-ec2.yml)
+  - always-on EC2 demo deployment for the `sandbox-ec2-online` branch
+- [/.github/workflows/deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml)
+  - manual AWS production deployment baseline for future `main` branch ECR and EKS rollout automation

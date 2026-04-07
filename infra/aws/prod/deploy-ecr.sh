@@ -28,12 +28,12 @@ command -v docker >/dev/null 2>&1 || { echo "docker is required"; exit 1; }
 ACCOUNT_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
 declare -a image_map=(
-  "upo-frontend:sandbox:${ECR_FRONTEND_REPO}"
-  "upo-gateway:sandbox:${ECR_GATEWAY_REPO}"
-  "upo-user-service:sandbox:${ECR_USER_SERVICE_REPO}"
-  "upo-product-service:sandbox:${ECR_PRODUCT_SERVICE_REPO}"
-  "upo-order-service:sandbox:${ECR_ORDER_SERVICE_REPO}"
-  "upo-notification-service:sandbox:${ECR_NOTIFICATION_SERVICE_REPO}"
+  "upo-frontend:prod:${ECR_FRONTEND_REPO}"
+  "upo-gateway:prod:${ECR_GATEWAY_REPO}"
+  "upo-user-service:prod:${ECR_USER_SERVICE_REPO}"
+  "upo-product-service:prod:${ECR_PRODUCT_SERVICE_REPO}"
+  "upo-order-service:prod:${ECR_ORDER_SERVICE_REPO}"
+  "upo-notification-service:prod:${ECR_NOTIFICATION_SERVICE_REPO}"
 )
 
 echo "Checking local source images..."
