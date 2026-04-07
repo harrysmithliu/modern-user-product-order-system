@@ -9,6 +9,10 @@ on:
       - "dev-*"
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend:
     runs-on: ubuntu-latest
@@ -24,6 +28,14 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+
+  compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose --env-file infra/aws/sandbox-ec2/env.example -f infra/aws/sandbox-ec2/docker-compose.yml config >/dev/null
+      - run: docker compose -f infra/docker/docker-compose.dev.yml config >/dev/null
+      - run: docker compose -f infra/docker/docker-compose.sandbox.yml config >/dev/null
 
   python-services:
     runs-on: ubuntu-latest
@@ -59,4 +71,31 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
-      - run: mvn -q -DskipTests package
+      - run: mvn -q verify
+
+  docker-builds:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: frontend
+            dockerfile: frontend/Dockerfile
+            build_args: --build-arg VITE_API_BASE_URL=/api
+          - name: gateway
+            dockerfile: gateway/Dockerfile
+            build_args:
+          - name: user-service
+            dockerfile: services/user-service/Dockerfile
+            build_args:
+          - name: product-service
+            dockerfile: services/product-service/Dockerfile
+            build_args:
+          - name: order-service
+            dockerfile: services/order-service/Dockerfile
+            build_args:
+          - name: notification-service
+            dockerfile: services/notification-service/Dockerfile
+            build_args:
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build ${{ matrix.build_args }} -f ${{ matrix.dockerfile }} -t ci/${{ matrix.name }}:test .

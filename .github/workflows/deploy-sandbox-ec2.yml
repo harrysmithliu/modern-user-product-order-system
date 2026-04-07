@@ -6,9 +6,17 @@ on:
       - sandbox-ec2-online
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-sandbox-ec2-online
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -26,12 +34,33 @@ jobs:
           REMOTE_USER: ${{ secrets.SANDBOX_EC2_USER }}
           REMOTE_APP_DIR: ${{ secrets.SANDBOX_EC2_APP_DIR }}
           REMOTE_ENV_FILE: ${{ secrets.SANDBOX_EC2_ENV_FILE }}
-          REMOTE_BRANCH: ${{ vars.SANDBOX_EC2_BRANCH || 'sandbox-ec2-online' }}
+          REMOTE_BRANCH: ${{ vars.SANDBOX_EC2_BRANCH }}
         run: |
+          REMOTE_BRANCH="${REMOTE_BRANCH:-sandbox-ec2-online}"
+          if [[ -z "${REMOTE_ENV_FILE}" ]]; then
+            echo "SANDBOX_EC2_ENV_FILE is empty."
+            exit 1
+          fi
+
           ssh "${REMOTE_USER}@${REMOTE_HOST}" "mkdir -p '${REMOTE_APP_DIR}'"
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "if [ ! -d '${REMOTE_APP_DIR}/.git' ]; then git clone 'https://github.com/${{ github.repository }}.git' '${REMOTE_APP_DIR}'; fi"
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && git fetch origin && git checkout '${REMOTE_BRANCH}' && git pull origin '${REMOTE_BRANCH}'"
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "cat > '${REMOTE_APP_DIR}/infra/aws/sandbox-ec2/.env.ec2.local' <<'EOF'
-${REMOTE_ENV_FILE}
-EOF"
+          ssh "${REMOTE_USER}@${REMOTE_HOST}" "if [ ! -d '${REMOTE_APP_DIR}/.git' ]; then git clone --branch '${REMOTE_BRANCH}' --single-branch 'https://github.com/${{ github.repository }}.git' '${REMOTE_APP_DIR}'; fi"
+          ssh "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && git fetch --prune origin '${REMOTE_BRANCH}' && git checkout '${REMOTE_BRANCH}' && git pull --ff-only origin '${REMOTE_BRANCH}'"
+          printf '%s\n' "${REMOTE_ENV_FILE}" | ssh "${REMOTE_USER}@${REMOTE_HOST}" "cat > '${REMOTE_APP_DIR}/infra/aws/sandbox-ec2/.env.ec2.local'"
+          ssh "${REMOTE_USER}@${REMOTE_HOST}" "chmod 600 '${REMOTE_APP_DIR}/infra/aws/sandbox-ec2/.env.ec2.local'"
           ssh "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && bash infra/aws/sandbox-ec2/deploy.sh infra/aws/sandbox-ec2/.env.ec2.local"
+
+      - name: Verify remote health checks
+        env:
+          REMOTE_HOST: ${{ secrets.SANDBOX_EC2_HOST }}
+          REMOTE_USER: ${{ secrets.SANDBOX_EC2_USER }}
+          REMOTE_APP_DIR: ${{ secrets.SANDBOX_EC2_APP_DIR }}
+        run: |
+          ssh "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && \
+            for attempt in \$(seq 1 24); do \
+              if curl -fsS http://127.0.0.1 >/dev/null && curl -fsS http://127.0.0.1/api/health >/dev/null; then \
+                exit 0; \
+              fi; \
+              sleep 5; \
+            done; \
+            docker compose --env-file infra/aws/sandbox-ec2/.env.ec2.local -f infra/aws/sandbox-ec2/docker-compose.yml ps; \
+            exit 1"

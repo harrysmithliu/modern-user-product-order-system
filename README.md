@@ -57,6 +57,7 @@ Phase 3 has now started with:
 - Prometheus / Grafana bootstrap assets under `infra/monitoring`
 - starter `k6` load-test scripts under `scripts/load`
 - a first GitHub Actions CI workflow under `.github/workflows/ci.yml`
+- Docker / Compose validation and image build verification in CI
 - expanded AWS production migration notes under `infra/aws/prod`
 
 ## Screenshots
@@ -187,6 +188,8 @@ modern-user-product-order-system/
   - low-cost always-on online demo environment
   - uses a single EC2 host with Docker Compose, Nginx, Let's Encrypt, and GitHub Actions
   - deployment assets live under `infra/aws/sandbox-ec2`
+  - pushes to this branch can be wired to auto-deploy through `.github/workflows/deploy-sandbox-ec2.yml`
+  - the GitHub Actions job rewrites the EC2 env file, redeploys, and waits for remote health checks
 - `prod`
   - reserved for future Kubernetes and cloud deployment
   - configuration placeholders live under `infra/k8s/` and `infra/aws/`

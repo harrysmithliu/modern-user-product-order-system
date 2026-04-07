@@ -176,6 +176,75 @@ The workflow assumes:
 - the EC2 host already has Docker installed
 - the repository is already cloned
 - the env file is provided by GitHub Actions as a secret payload
+- the GitHub repository is public, or the EC2 host already has permission to `git clone` and `git pull` this repository
+
+### Recommended GitHub Secret Values
+
+For the current deployment baseline, use:
+
+- `SANDBOX_EC2_HOST`
+  - the SSH host for the EC2 instance
+  - recommended current value: the public IPv4 address, such as `3.96.161.74`
+- `SANDBOX_EC2_USER`
+  - `ubuntu`
+- `SANDBOX_EC2_SSH_KEY`
+  - the full contents of the EC2 private key file
+  - for example, the contents of `~/.ssh/modern-upo-online-key.pem`
+- `SANDBOX_EC2_APP_DIR`
+  - `/opt/modern-upo/repo`
+- `SANDBOX_EC2_ENV_FILE`
+  - the full contents of `infra/aws/sandbox-ec2/.env.ec2.local`
+  - this should stay a GitHub secret and must not be committed
+
+### Recommended GitHub Variable Values
+
+- `SANDBOX_EC2_BRANCH`
+  - `sandbox-ec2-online`
+
+After the secrets are configured, every push to `sandbox-ec2-online` will:
+
+- connect to the EC2 host over SSH
+- update the checked-out branch
+- rewrite `infra/aws/sandbox-ec2/.env.ec2.local`
+- run the deployment script
+- wait for the remote homepage and gateway health endpoint to become healthy
+
+### GitHub Actions Setup Checklist
+
+1. Open GitHub:
+   `Settings` -> `Secrets and variables` -> `Actions`
+2. Under `Secrets`, create:
+   - `SANDBOX_EC2_HOST`
+   - `SANDBOX_EC2_USER`
+   - `SANDBOX_EC2_SSH_KEY`
+   - `SANDBOX_EC2_APP_DIR`
+   - `SANDBOX_EC2_ENV_FILE`
+3. Under `Variables`, create:
+   - `SANDBOX_EC2_BRANCH`
+4. Confirm the branch already exists in GitHub:
+   - `sandbox-ec2-online`
+5. Confirm the EC2 host is already prepared:
+   - Docker and Compose are installed
+   - the repository can be cloned or pulled from that host
+   - port `22` is reachable from GitHub Actions runners
+6. Push a small commit to `sandbox-ec2-online`.
+7. Open the `Actions` tab and confirm:
+   - the CI workflow passes
+   - `Deploy Sandbox EC2 Online` completes
+   - the site responds at `https://${APP_DOMAIN}`
+   - `https://${APP_DOMAIN}/api/health` returns success
+
+### Recommended First Verification Push
+
+After you finish the GitHub configuration, the fastest smoke test is:
+
+```bash
+git checkout sandbox-ec2-online
+git commit --allow-empty -m "chore: verify sandbox ec2 deploy"
+git push origin sandbox-ec2-online
+```
+
+That gives you a clean Actions run without mixing the first deployment check with unrelated code changes.
 
 ## Runtime Ports
 
