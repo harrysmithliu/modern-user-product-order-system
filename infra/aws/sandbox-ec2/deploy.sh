@@ -23,6 +23,10 @@ APP_SERVICES=(
   notification-service
 )
 
+EDGE_SERVICES=(
+  reverse-proxy
+)
+
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "Missing env file: ${ENV_FILE}"
   exit 1
@@ -53,5 +57,10 @@ done
 
 echo "Starting containers..."
 docker compose "${COMPOSE_ARGS[@]}" up -d
+
+for service in "${EDGE_SERVICES[@]}"; do
+  echo "Refreshing ${service}..."
+  docker compose "${COMPOSE_ARGS[@]}" up -d --force-recreate "${service}"
+done
 
 echo "Deployment applied."

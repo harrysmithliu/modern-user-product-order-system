@@ -28,7 +28,18 @@ jobs:
           ssh-private-key: ${{ secrets.SANDBOX_EC2_SSH_KEY }}
 
       - name: Add host to known_hosts
-        run: ssh-keyscan -H "${{ secrets.SANDBOX_EC2_HOST }}" >> ~/.ssh/known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
+          for attempt in 1 2 3; do
+            if ssh-keyscan -T 15 -H "${{ secrets.SANDBOX_EC2_HOST }}" >> ~/.ssh/known_hosts; then
+              exit 0
+            fi
+            echo "ssh-keyscan attempt ${attempt} failed, retrying..."
+            sleep 5
+          done
+          echo "Failed to fetch SSH host key from ${{ secrets.SANDBOX_EC2_HOST }}"
+          exit 1
 
       - name: Sync repo and deploy remotely
         env:
