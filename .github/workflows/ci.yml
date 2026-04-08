@@ -6,6 +6,7 @@ on:
       - main
       - sandbox
       - dev
+      - sandbox-ec2-online
       - "dev-*"
   pull_request:
 
