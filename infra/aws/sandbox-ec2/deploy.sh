@@ -7,6 +7,21 @@ AWS_DIR="${ROOT_DIR}/infra/aws/sandbox-ec2"
 ENV_FILE="${1:-${AWS_DIR}/.env.ec2.local}"
 ACTIVE_NGINX_CONF="${AWS_DIR}/nginx/active.conf"
 RUNTIME_DIR="${AWS_DIR}/runtime"
+COMPOSE_FILE="${AWS_DIR}/docker-compose.yml"
+
+COMPOSE_ARGS=(
+  --env-file "${ENV_FILE}"
+  -f "${COMPOSE_FILE}"
+)
+
+APP_SERVICES=(
+  frontend
+  gateway
+  user-service
+  product-service
+  order-service
+  notification-service
+)
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "Missing env file: ${ENV_FILE}"
@@ -31,9 +46,12 @@ else
   cp "${AWS_DIR}/nginx/default.http.conf" "${ACTIVE_NGINX_CONF}"
 fi
 
-docker compose \
-  --env-file "${ENV_FILE}" \
-  -f "${AWS_DIR}/docker-compose.yml" \
-  up -d --build
+for service in "${APP_SERVICES[@]}"; do
+  echo "Building ${service}..."
+  COMPOSE_BAKE=false docker compose "${COMPOSE_ARGS[@]}" build "${service}"
+done
+
+echo "Starting containers..."
+docker compose "${COMPOSE_ARGS[@]}" up -d
 
 echo "Deployment applied."

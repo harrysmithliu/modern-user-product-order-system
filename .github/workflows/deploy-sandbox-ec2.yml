@@ -17,6 +17,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      SSH_OPTS: -o ServerAliveInterval=30 -o ServerAliveCountMax=6 -o ConnectTimeout=15
     steps:
       - uses: actions/checkout@v4
 
@@ -42,12 +44,12 @@ jobs:
             exit 1
           fi
 
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "mkdir -p '${REMOTE_APP_DIR}'"
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "if [ ! -d '${REMOTE_APP_DIR}/.git' ]; then git clone --branch '${REMOTE_BRANCH}' --single-branch 'https://github.com/${{ github.repository }}.git' '${REMOTE_APP_DIR}'; fi"
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && git fetch --prune origin '${REMOTE_BRANCH}' && git checkout '${REMOTE_BRANCH}' && git pull --ff-only origin '${REMOTE_BRANCH}'"
-          printf '%s\n' "${REMOTE_ENV_FILE}" | ssh "${REMOTE_USER}@${REMOTE_HOST}" "cat > '${REMOTE_APP_DIR}/infra/aws/sandbox-ec2/.env.ec2.local'"
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "chmod 600 '${REMOTE_APP_DIR}/infra/aws/sandbox-ec2/.env.ec2.local'"
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && bash infra/aws/sandbox-ec2/deploy.sh infra/aws/sandbox-ec2/.env.ec2.local"
+          ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "mkdir -p '${REMOTE_APP_DIR}'"
+          ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "if [ ! -d '${REMOTE_APP_DIR}/.git' ]; then git clone --branch '${REMOTE_BRANCH}' --single-branch 'https://github.com/${{ github.repository }}.git' '${REMOTE_APP_DIR}'; fi"
+          ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && git fetch --prune origin '${REMOTE_BRANCH}' && git checkout '${REMOTE_BRANCH}' && git pull --ff-only origin '${REMOTE_BRANCH}'"
+          printf '%s\n' "${REMOTE_ENV_FILE}" | ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "cat > '${REMOTE_APP_DIR}/infra/aws/sandbox-ec2/.env.ec2.local'"
+          ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "chmod 600 '${REMOTE_APP_DIR}/infra/aws/sandbox-ec2/.env.ec2.local'"
+          ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && bash infra/aws/sandbox-ec2/deploy.sh infra/aws/sandbox-ec2/.env.ec2.local"
 
       - name: Verify remote health checks
         env:
@@ -55,7 +57,7 @@ jobs:
           REMOTE_USER: ${{ secrets.SANDBOX_EC2_USER }}
           REMOTE_APP_DIR: ${{ secrets.SANDBOX_EC2_APP_DIR }}
         run: |
-          ssh "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && \
+          ssh ${SSH_OPTS} "${REMOTE_USER}@${REMOTE_HOST}" "cd '${REMOTE_APP_DIR}' && \
             for attempt in \$(seq 1 24); do \
               if curl -fsS http://127.0.0.1 >/dev/null && curl -fsS http://127.0.0.1/api/health >/dev/null; then \
                 exit 0; \
