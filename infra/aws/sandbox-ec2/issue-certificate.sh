@@ -28,6 +28,8 @@ docker compose \
   --webroot-path /var/www/certbot \
   --email "${LETSENCRYPT_EMAIL}" \
   --agree-tos \
+  --non-interactive \
+  --keep-until-expiring \
   --no-eff-email \
   -d "${APP_DOMAIN}"
 

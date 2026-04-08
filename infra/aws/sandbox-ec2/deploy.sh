@@ -27,6 +27,20 @@ EDGE_SERVICES=(
   reverse-proxy
 )
 
+cert_file_exists() {
+  local path="$1"
+  if [[ -f "${path}" ]]; then
+    return 0
+  fi
+
+  if command -v sudo >/dev/null 2>&1; then
+    sudo -n test -f "${path}"
+    return $?
+  fi
+
+  return 1
+}
+
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "Missing env file: ${ENV_FILE}"
   exit 1
@@ -44,7 +58,7 @@ fi
 mkdir -p "${RUNTIME_DIR}/certbot/www" "${RUNTIME_DIR}/letsencrypt"
 
 HTTPS_CERT_DIR="${RUNTIME_DIR}/letsencrypt/live/${APP_DOMAIN}"
-if [[ -f "${HTTPS_CERT_DIR}/fullchain.pem" && -f "${HTTPS_CERT_DIR}/privkey.pem" ]]; then
+if cert_file_exists "${HTTPS_CERT_DIR}/fullchain.pem" && cert_file_exists "${HTTPS_CERT_DIR}/privkey.pem"; then
   envsubst '${APP_DOMAIN}' <"${AWS_DIR}/nginx/default.https.conf" >"${ACTIVE_NGINX_CONF}"
 else
   cp "${AWS_DIR}/nginx/default.http.conf" "${ACTIVE_NGINX_CONF}"
