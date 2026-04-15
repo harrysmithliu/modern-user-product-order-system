@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile, status
-
 from sqlalchemy.orm import Session
-
 from app.core.cache import (
     bump_catalog_version,
     get_cached_json,
@@ -11,7 +9,6 @@ from app.core.cache import (
 )
 from app.core.security import require_admin
 from app.db.session import get_db
-from app.models.product import Product
 from app.schemas.common import ApiResponse
 from app.schemas.product import (
     ProductCreateRequest,
