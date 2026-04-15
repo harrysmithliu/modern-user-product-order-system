@@ -28,6 +28,13 @@ CREATE TABLE IF NOT EXISTS t_user (
   KEY idx_phone (phone)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='User Table';
 
+CREATE TABLE IF NOT EXISTS t_system_config (
+  config_key VARCHAR(100) NOT NULL COMMENT 'Config key',
+  config_value VARCHAR(255) NOT NULL COMMENT 'Config value',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update Time',
+  PRIMARY KEY (config_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='System Config Table';
+
 INSERT INTO t_user (userno, username, password, nickname, phone, email, role, version)
 VALUES
   ('U0001', 'john_smith', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'John', '13800000001', 'john.smith@example.com', 'USER', 1),
@@ -43,6 +50,12 @@ ON DUPLICATE KEY UPDATE
   email = VALUES(email),
   role = VALUES(role),
   version = VALUES(version);
+
+INSERT INTO t_system_config (config_key, config_value)
+VALUES
+  ('USER_LOGIN_ENABLED', '1')
+ON DUPLICATE KEY UPDATE
+  config_value = VALUES(config_value);
 
 USE h_product_db;
 
