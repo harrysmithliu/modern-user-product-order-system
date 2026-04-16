@@ -126,8 +126,6 @@ Additional optional values for weekday cost optimization:
 - `AUTO_CERTBOT_ON_STARTUP`
 - `EC2_APP_USER`
 - `WORKDAY_TIMEZONE`
-- `WORKDAY_STOP_HOUR`
-- `WORKDAY_STOP_MINUTE`
 
 ## Deploy the Stack
 
@@ -172,9 +170,9 @@ This mode is for a lower monthly bill:
 - `workday-startup.sh`
   - deploy stack, sync DNS, and optionally run cert check
 - `install-workday-automation.sh`
-  - installs systemd startup unit and cron automation on EC2
+  - installs systemd startup unit and on-instance cron automation (DNS + cert checks only)
 - `setup-ec2-workday-scheduler.sh`
-  - creates AWS EventBridge Scheduler start/stop schedules
+  - creates AWS EventBridge Scheduler start/stop schedules (single stop/start source)
 
 ### IAM Requirements
 
@@ -230,6 +228,12 @@ Default schedule produced by this script:
 
 - start: weekdays `09:00` (America/Toronto)
 - stop: weekdays `17:35` (America/Toronto)
+
+Important:
+
+- keep **only one** stop/start control plane to avoid unexpected shutdown timing
+- recommended: EventBridge Scheduler only
+- `install-workday-automation.sh` does not install local shutdown cron anymore
 
 5. Verify:
 

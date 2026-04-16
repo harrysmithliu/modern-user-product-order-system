@@ -21,8 +21,6 @@ if [[ -z "${APP_DOMAIN:-}" ]]; then
 fi
 
 WORKDAY_TIMEZONE="${WORKDAY_TIMEZONE:-America/Toronto}"
-WORKDAY_STOP_HOUR="${WORKDAY_STOP_HOUR:-17}"
-WORKDAY_STOP_MINUTE="${WORKDAY_STOP_MINUTE:-30}"
 EC2_APP_USER="${EC2_APP_USER:-ubuntu}"
 
 SYSTEMD_UNIT="/etc/systemd/system/modern-upo-online-startup.service"
@@ -47,7 +45,12 @@ TimeoutStartSec=1800
 WantedBy=multi-user.target
 UNIT
 
-echo "Installing cost-aware cron schedule..."
+if [[ -n "${WORKDAY_STOP_HOUR:-}" || -n "${WORKDAY_STOP_MINUTE:-}" ]]; then
+  echo "WORKDAY_STOP_HOUR and WORKDAY_STOP_MINUTE are deprecated."
+  echo "Use setup-ec2-workday-scheduler.sh as the single stop/start source."
+fi
+
+echo "Installing on-instance cron schedule (DNS + cert checks only)..."
 sudo tee "${CRON_FILE}" >/dev/null <<CRON
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -58,9 +61,6 @@ CRON_TZ=${WORKDAY_TIMEZONE}
 
 # Check certificate weekly in work window (keep-until-expiring).
 15 11 * * 1 ${EC2_APP_USER} cd ${ROOT_DIR} && ${AWS_DIR}/issue-certificate.sh ${ENV_FILE} >> ${LOG_FILE} 2>&1
-
-# Stop instance after demo hours to reduce cost.
-${WORKDAY_STOP_MINUTE} ${WORKDAY_STOP_HOUR} * * 1-5 root /sbin/shutdown -h now "off-hours cost optimization"
 CRON
 
 sudo touch "${LOG_FILE}"
