@@ -82,6 +82,13 @@ See:
 - `GET /ready`
 - `GET /live`
 
+## Login Policy Switch
+
+- key: `USER_LOGIN_ENABLED`
+- `true` (`1`): `USER` login is allowed
+- `false` (`0`): `USER` login returns `403`
+- `ADMIN` login is always allowed to avoid lockout
+
 ## Known Good Accounts
 
 - `admin / Admin@123`
