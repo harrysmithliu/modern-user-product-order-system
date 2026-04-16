@@ -25,7 +25,17 @@ if [[ -z "${ROUTE53_HOSTED_ZONE_ID:-}" ]]; then
   exit 1
 fi
 
-if ! command -v aws >/dev/null 2>&1; then
+AWS_BIN="$(command -v aws || true)"
+if [[ -z "${AWS_BIN}" && -x /usr/local/bin/aws ]]; then
+  AWS_BIN="/usr/local/bin/aws"
+fi
+if [[ -z "${AWS_BIN}" && -x /usr/bin/aws ]]; then
+  AWS_BIN="/usr/bin/aws"
+fi
+if [[ -z "${AWS_BIN}" && -x /snap/bin/aws ]]; then
+  AWS_BIN="/snap/bin/aws"
+fi
+if [[ -z "${AWS_BIN}" ]]; then
   echo "aws CLI is required."
   exit 1
 fi
@@ -72,7 +82,7 @@ CHANGE_BATCH="$(cat <<JSON
 JSON
 )"
 
-aws "${AWS_REGION_ARG[@]}" route53 change-resource-record-sets \
+"${AWS_BIN}" "${AWS_REGION_ARG[@]}" route53 change-resource-record-sets \
   --hosted-zone-id "${ROUTE53_HOSTED_ZONE_ID}" \
   --change-batch "${CHANGE_BATCH}" >/dev/null
 

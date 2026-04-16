@@ -10,7 +10,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get install -y ca-certificates curl gnupg git unzip gettext-base awscli
+apt-get install -y ca-certificates curl gnupg git unzip gettext-base
 
 install -m 0755 -d /etc/apt/keyrings
 if [[ ! -f /etc/apt/keyrings/docker.asc ]]; then
@@ -31,6 +31,28 @@ fi
 
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+if ! command -v aws >/dev/null 2>&1; then
+  ARCH="$(dpkg --print-architecture)"
+  case "${ARCH}" in
+    amd64)
+      AWSCLI_ZIP_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+      ;;
+    arm64)
+      AWSCLI_ZIP_URL="https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
+      ;;
+    *)
+      echo "Unsupported architecture for AWS CLI: ${ARCH}"
+      exit 1
+      ;;
+  esac
+
+  TMP_DIR="$(mktemp -d)"
+  curl -fsSL "${AWSCLI_ZIP_URL}" -o "${TMP_DIR}/awscliv2.zip"
+  unzip -q "${TMP_DIR}/awscliv2.zip" -d "${TMP_DIR}"
+  "${TMP_DIR}/aws/install" --update
+  rm -rf "${TMP_DIR}"
+fi
 
 systemctl enable docker
 systemctl start docker

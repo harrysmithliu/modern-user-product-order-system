@@ -49,7 +49,7 @@ It intentionally differs from the cloud-native production material in
 - `nginx/default.https.conf`
   - HTTPS reverse proxy config after certificates exist
 - `bootstrap-ec2.sh`
-  - installs Docker, Compose plugin, Git, awscli, and prepares host directories
+  - installs Docker, Compose plugin, Git, AWS CLI v2, and prepares host directories
 - `deploy.sh`
   - renders the active Nginx config and runs `docker compose up -d --build`
 - `issue-certificate.sh`
@@ -247,6 +247,12 @@ curl -fsS https://${APP_DOMAIN}/api/health
 - It avoids permanent Elastic IP charges, but requires Route53 dynamic record
   updates.
 - If you need the simplest networking behavior, use Elastic IP instead.
+
+## Quickstart
+
+For the shortest operator checklist, see:
+
+- [workday-operations-quickstart.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/infra/aws/sandbox-ec2/workday-operations-quickstart.md)
 
 ## URLs After HTTPS
 
