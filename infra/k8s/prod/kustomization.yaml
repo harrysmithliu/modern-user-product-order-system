@@ -5,7 +5,6 @@ resources:
   - namespace.yaml
   - configmap-app.yaml
   - configmap-frontend.yaml
-  - secret-app.yaml
   - frontend.yaml
   - gateway.yaml
   - user-service.yaml
