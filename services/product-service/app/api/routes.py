@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.cache import (
@@ -24,6 +24,7 @@ from app.schemas.product import (
 from app.services.product_service import (
     create_product,
     get_product_or_404,
+    import_products_from_csv,
     paginate_products,
     release_stock,
     reserve_stock,
@@ -93,6 +94,13 @@ def create_product_endpoint(payload: ProductCreateRequest, db: Session = Depends
     product = create_product(db, payload)
     bump_catalog_version()
     return ApiResponse(data=ProductResponse.model_validate(product, from_attributes=True))
+
+
+@router.post("/admin/products/import", response_model=ApiResponse, dependencies=[Depends(require_admin)])
+async def import_products_endpoint(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    raw = await file.read()
+    result = import_products_from_csv(db=db, filename=file.filename, raw=raw)
+    return ApiResponse(data=result)
 
 
 @router.put("/admin/products/{product_id}", response_model=ApiResponse, dependencies=[Depends(require_admin)])

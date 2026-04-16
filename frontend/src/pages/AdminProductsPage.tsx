@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { createProduct, listProducts, updateProduct, updateProductStatus, updateProductStock } from "../api/services";
 import type { Product } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
+import { UploadOutlined } from "@ant-design/icons";
+import { BulkImportProductsModal } from "../components/BulkImportProductsModal";
 
 export function AdminProductsPage() {
+  const [importing, setImporting] = useState(false);
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -85,9 +88,33 @@ export function AdminProductsPage() {
 
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
-      <PageHeader title="Product Admin" subtitle="Create products, edit core fields, toggle sale status, and adjust stock from the admin console." />
-      <Card bordered={false} extra={<Button type="primary" onClick={() => setCreating(true)}>Create Product</Button>}>
-        <Table rowKey="id" columns={columns} dataSource={items} loading={loading} pagination={false} />
+      <PageHeader
+        title="Product Admin"
+        subtitle="Create products, edit core fields, toggle sale status, and adjust stock from the admin console."
+      />
+      <Card
+        bordered={false}
+        extra={
+          <Space>
+            <Button type="primary" onClick={() => setCreating(true)}>
+              Create Product
+            </Button>
+            <Button
+              onClick={() => setImporting(true)}
+              icon={<UploadOutlined />}
+            >
+              Bulk Import Products
+            </Button>
+          </Space>
+        }
+      >
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={items}
+          loading={loading}
+          pagination={false}
+        />
       </Card>
       <ProductModal
         mode="create"
@@ -106,6 +133,14 @@ export function AdminProductsPage() {
         onClose={() => setEditingProduct(null)}
         onSuccess={() => {
           setEditingProduct(null);
+          void loadData();
+        }}
+      />
+      <BulkImportProductsModal
+        open={importing}
+        onClose={() => setImporting(false)}
+        onSuccess={() => {
+          setImporting(false);
           void loadData();
         }}
       />
