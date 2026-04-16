@@ -1,5 +1,7 @@
 # Modern User-Product-Order System
 
+<h2><a href="https://harrysmithliu.com"><font color="#000000"><strong>Main site: https://harrysmithliu.com</strong></font></a></h2>
+
 A portfolio-focused polyglot microservices commerce demo built around three core domains:
 
 - users
