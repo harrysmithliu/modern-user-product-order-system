@@ -19,7 +19,7 @@ When the EC2 instance boots:
 
 When the workday ends:
 
-- the instance stops
+- EventBridge Scheduler stops the instance
 - SSH disconnects as expected
 
 ## Manual Actions You Need
@@ -115,4 +115,4 @@ Before leaving the instance to automation:
 - `ROUTE53_HOSTED_ZONE_ID` is set
 - the EC2 instance role can change Route53 records
 - the AWS user/role you use to create the scheduler can manage EC2 and Scheduler
-
+- stop/start schedule is managed by EventBridge as the single source of truth
