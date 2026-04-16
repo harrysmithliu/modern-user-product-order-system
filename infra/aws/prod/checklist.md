@@ -48,3 +48,10 @@
 - RDS and ElastiCache integration
 - External Secrets integration
 - GitHub Actions deployment workflow
+
+## Deferred Security Hardening Backlog
+
+- [ ] Protect `main` and deployment branches with branch protection and required PR review.
+- [ ] Bind the production deploy job to a GitHub Environment and enable required reviewers.
+- [ ] Replace long-lived AWS AK/SK with GitHub OIDC short-lived credentials.
+- [ ] Rotate AWS credentials and repository secrets on a fixed schedule.
