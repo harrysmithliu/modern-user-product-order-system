@@ -69,6 +69,11 @@ upsert_schedule() {
   local expression="$2"
   local target_arn="$3"
   local input_json="$4"
+  local escaped_input=""
+  local target_payload=""
+
+  escaped_input="$(printf '%s' "${input_json}" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+  target_payload="{\"RoleArn\":\"${ROLE_ARN}\",\"Arn\":\"${target_arn}\",\"Input\":\"${escaped_input}\"}"
 
   if aws scheduler get-schedule --name "${name}" >/dev/null 2>&1; then
     aws scheduler update-schedule \
@@ -77,7 +82,7 @@ upsert_schedule() {
       --schedule-expression "${expression}" \
       --schedule-expression-timezone "${TIMEZONE}" \
       --flexible-time-window '{"Mode":"OFF"}' \
-      --target "{\"RoleArn\":\"${ROLE_ARN}\",\"Arn\":\"${target_arn}\",\"Input\":\"${input_json}\"}" >/dev/null
+      --target "${target_payload}" >/dev/null
   else
     aws scheduler create-schedule \
       --name "${name}" \
@@ -85,7 +90,7 @@ upsert_schedule() {
       --schedule-expression "${expression}" \
       --schedule-expression-timezone "${TIMEZONE}" \
       --flexible-time-window '{"Mode":"OFF"}' \
-      --target "{\"RoleArn\":\"${ROLE_ARN}\",\"Arn\":\"${target_arn}\",\"Input\":\"${input_json}\"}" >/dev/null
+      --target "${target_payload}" >/dev/null
   fi
 }
 

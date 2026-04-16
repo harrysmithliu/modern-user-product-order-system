@@ -423,7 +423,7 @@ Sandbox:
 - Sandbox Redis: `localhost:6380`
 - Sandbox RabbitMQ AMQP: `localhost:5673`
 - Sandbox RabbitMQ management: `http://localhost:15673`
-- Sandbox MongoDB: `mongodb://admin:admin123@localhost:27018`
+- Sandbox MongoDB: `mongodb://<mongo_user>:<mongo_password>@localhost:27018`
 
 Dev compose:
 
@@ -548,10 +548,10 @@ Reference screenshots:
 
 ![Grafana Overview](docs/screenshots/screen_grafana.png)
 
-Grafana default credentials:
+Grafana credentials:
 
-- username: `admin`
-- password: `admin123`
+- username: `<set-in-local-env>`
+- password: `<set-in-local-env>`
 
 Recommended monitoring checks:
 
