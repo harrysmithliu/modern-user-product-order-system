@@ -239,6 +239,16 @@ Shared CI and split CD:
 - production deployment route
   - `main` now has [deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml) as a manual baseline for future ECR and EKS rollout automation
 
+### CI/CD Snapshot
+
+![CI/CD Workflow Snapshot](docs/screenshots/ci_cd.png)
+
+This snapshot shows the current pipeline split in practice:
+
+- shared CI validates `dev`, `sandbox`, `main`, `dev-*`, and `sandbox-ec2-online`
+- `sandbox-ec2-online` runs EC2 demo deployment through `deploy-sandbox-ec2.yml`
+- `main` keeps a separate production deployment baseline through `deploy-aws-prod.yml`
+
 ## Local Run
 
 ### Sandbox Compose Run
@@ -413,7 +423,7 @@ Sandbox:
 - Sandbox Redis: `localhost:6380`
 - Sandbox RabbitMQ AMQP: `localhost:5673`
 - Sandbox RabbitMQ management: `http://localhost:15673`
-- Sandbox MongoDB: `mongodb://admin:admin123@localhost:27018`
+- Sandbox MongoDB: `mongodb://<mongo_user>:<mongo_password>@localhost:27018`
 
 Dev compose:
 
@@ -538,10 +548,10 @@ Reference screenshots:
 
 ![Grafana Overview](docs/screenshots/screen_grafana.png)
 
-Grafana default credentials:
+Grafana credentials:
 
-- username: `admin`
-- password: `admin123`
+- username: `<set-in-local-env>`
+- password: `<set-in-local-env>`
 
 Recommended monitoring checks:
 

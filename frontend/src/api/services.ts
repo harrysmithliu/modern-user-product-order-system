@@ -109,3 +109,15 @@ export async function updateProductStock(productId: number, stock: number) {
   const response = await apiClient.put<ApiResponse<Product>>(`/api/admin/products/${productId}/stock`, { stock });
   return response.data.data;
 }
+
+export async function importProducts(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiClient.post<ApiResponse<unknown>>(
+    "/api/admin/products/import",
+    formData,
+  );
+
+  return response.data.data;
+}
