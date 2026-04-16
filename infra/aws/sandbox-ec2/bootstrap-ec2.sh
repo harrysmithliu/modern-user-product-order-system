@@ -10,7 +10,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get install -y ca-certificates curl gnupg git unzip gettext-base
+apt-get install -y ca-certificates curl gnupg git unzip gettext-base awscli
 
 install -m 0755 -d /etc/apt/keyrings
 if [[ ! -f /etc/apt/keyrings/docker.asc ]]; then

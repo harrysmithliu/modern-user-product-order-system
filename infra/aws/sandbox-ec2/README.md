@@ -49,7 +49,7 @@ It intentionally differs from the cloud-native production material in
 - `nginx/default.https.conf`
   - HTTPS reverse proxy config after certificates exist
 - `bootstrap-ec2.sh`
-  - installs Docker, Compose plugin, Git, and prepares host directories
+  - installs Docker, Compose plugin, Git, awscli, and prepares host directories
 - `deploy.sh`
   - renders the active Nginx config and runs `docker compose up -d --build`
 - `issue-certificate.sh`
@@ -118,6 +118,17 @@ The important values are:
 
 This env file must stay local to the EC2 host and must not be committed.
 
+Additional optional values for weekday cost optimization:
+
+- `AWS_REGION`
+- `ROUTE53_HOSTED_ZONE_ID`
+- `ROUTE53_RECORD_TTL`
+- `AUTO_CERTBOT_ON_STARTUP`
+- `EC2_APP_USER`
+- `WORKDAY_TIMEZONE`
+- `WORKDAY_STOP_HOUR`
+- `WORKDAY_STOP_MINUTE`
+
 ## Deploy the Stack
 
 From the repository root on the EC2 host:
@@ -144,6 +155,98 @@ This script:
 - writes certs to the shared LetsEncrypt volume
 - switches Nginx from HTTP to HTTPS config
 - reloads the reverse proxy
+
+## Workday Cost-Optimized Mode (No Elastic IP)
+
+This mode is for a lower monthly bill:
+
+- keep demo online only on weekdays during business hours
+- avoid Elastic IP recurring IPv4 cost
+- auto-update Route53 `A` record to the current EC2 public IPv4 on startup
+- auto-stop the instance after work hours
+
+### Added Scripts
+
+- `sync-route53-record.sh`
+  - UPSERT Route53 `A` record using current EC2 public IPv4
+- `workday-startup.sh`
+  - deploy stack, sync DNS, and optionally run cert check
+- `install-workday-automation.sh`
+  - installs systemd startup unit and cron automation on EC2
+- `setup-ec2-workday-scheduler.sh`
+  - creates AWS EventBridge Scheduler start/stop schedules
+
+### IAM Requirements
+
+EC2 instance profile should allow:
+
+- `route53:ChangeResourceRecordSets` on your hosted zone
+
+The IAM identity running `setup-ec2-workday-scheduler.sh` should allow:
+
+- `scheduler:CreateSchedule`
+- `scheduler:UpdateSchedule`
+- `scheduler:GetSchedule`
+- `iam:CreateRole`
+- `iam:PutRolePolicy`
+- `iam:GetRole`
+- `ec2:StartInstances`
+- `ec2:StopInstances`
+
+### Deployment Steps
+
+1. Prepare environment values on EC2:
+
+```bash
+cp infra/aws/sandbox-ec2/env.example infra/aws/sandbox-ec2/.env.ec2.local
+```
+
+At minimum set:
+
+- `APP_DOMAIN`
+- `AWS_REGION`
+- `ROUTE53_HOSTED_ZONE_ID`
+
+2. Run first deployment:
+
+```bash
+source infra/aws/sandbox-ec2/.env.ec2.local
+bash infra/aws/sandbox-ec2/deploy.sh infra/aws/sandbox-ec2/.env.ec2.local
+```
+
+3. Install startup + weekday automation on EC2:
+
+```bash
+bash infra/aws/sandbox-ec2/install-workday-automation.sh infra/aws/sandbox-ec2/.env.ec2.local
+```
+
+4. Create AWS weekday schedules (from a machine with AWS CLI credentials):
+
+```bash
+bash infra/aws/sandbox-ec2/setup-ec2-workday-scheduler.sh i-0123456789abcdef0 us-east-1 America/Toronto
+```
+
+Default schedule produced by this script:
+
+- start: weekdays `09:00` (America/Toronto)
+- stop: weekdays `17:35` (America/Toronto)
+
+5. Verify:
+
+```bash
+systemctl status modern-upo-online-startup.service --no-pager
+sudo cat /etc/cron.d/modern-upo-online-cost
+curl -I https://${APP_DOMAIN}
+curl -fsS https://${APP_DOMAIN}/api/health
+```
+
+### Cost Notes
+
+- This mode can significantly reduce `EC2 - Compute` cost by turning off
+  instance hours outside demo time.
+- It avoids permanent Elastic IP charges, but requires Route53 dynamic record
+  updates.
+- If you need the simplest networking behavior, use Elastic IP instead.
 
 ## URLs After HTTPS
 
@@ -184,7 +287,8 @@ For the current deployment baseline, use:
 
 - `SANDBOX_EC2_HOST`
   - the SSH host for the EC2 instance
-  - recommended current value: the public IPv4 address, such as `3.96.161.74`
+  - recommended value in no-EIP mode: your domain, for example `demo.example.com`
+  - recommended value in EIP mode: the fixed EIP IPv4
 - `SANDBOX_EC2_USER`
   - `ubuntu`
 - `SANDBOX_EC2_SSH_KEY`
