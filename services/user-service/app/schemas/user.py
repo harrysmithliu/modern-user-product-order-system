@@ -28,3 +28,21 @@ class LoginPolicyResponse(BaseModel):
 
 class LoginPolicyRequest(BaseModel):
     user_login_enabled: bool
+
+
+class AdminUserListItem(BaseModel):
+    id: int
+    userno: str
+    username: str
+    nickname: str | None
+    phone: str | None
+    email: str | None
+    role: str
+    login_enabled: bool
+
+
+class AdminUserPageResponse(BaseModel):
+    page: int
+    size: int
+    total: int
+    items: list[AdminUserListItem]
