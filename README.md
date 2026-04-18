@@ -273,16 +273,6 @@ This snapshot shows the current pipeline split in practice:
 - `main` keeps the AWS / EKS production deployment baseline through `deploy-aws-prod.yml`
 - `sandbox-ec2-online` runs the EC2 demo deployment through `deploy-sandbox-ec2.yml`
 
-### CI/CD Snapshot
-
-![CI/CD Workflow Snapshot](docs/screenshots/ci_cd.png)
-
-This snapshot shows the current pipeline split in practice:
-
-- shared CI validates `dev`, `sandbox`, `main`, `dev-*`, and `sandbox-ec2-online`
-- `sandbox-ec2-online` runs EC2 demo deployment through `deploy-sandbox-ec2.yml`
-- `main` keeps a separate production deployment baseline through `deploy-aws-prod.yml`
-
 ## Local Run
 
 ### Sandbox Compose Run

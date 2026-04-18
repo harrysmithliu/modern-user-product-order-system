@@ -63,4 +63,4 @@ This helper keeps the following paths out of the EC2 demo sync:
 
 It is intended for the release path where shared sandbox changes are promoted to
 the long-running EC2 demo line without overwriting EC2-specific deployment
-files.
+files. It syncs shared file additions, updates, and removals.

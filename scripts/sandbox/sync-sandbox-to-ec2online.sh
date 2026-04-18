@@ -24,9 +24,14 @@ git fetch origin --prune
 git checkout "${TARGET_BRANCH}"
 git pull --ff-only origin "${TARGET_BRANCH}"
 
-mapfile -t candidates < <(git diff --name-only "origin/${TARGET_BRANCH}..origin/${SOURCE_BRANCH}")
+candidates=()
+while IFS= read -r path; do
+  [[ -n "${path}" ]] || continue
+  candidates+=("${path}")
+done < <(git diff --name-only "origin/${TARGET_BRANCH}..origin/${SOURCE_BRANCH}")
 
 picked_paths=()
+removed_paths=()
 skipped_paths=()
 
 for path in "${candidates[@]}"; do
@@ -41,16 +46,23 @@ for path in "${candidates[@]}"; do
     git checkout "origin/${SOURCE_BRANCH}" -- "${path}"
     picked_paths+=("${path}")
   else
-    skipped_paths+=("${path}")
+    if git cat-file -e "origin/${TARGET_BRANCH}:${path}" 2>/dev/null; then
+      git rm -f -- "${path}"
+      removed_paths+=("${path}")
+    else
+      skipped_paths+=("${path}")
+    fi
   fi
 done
 
-if [[ "${#picked_paths[@]}" -eq 0 ]]; then
+if [[ "${#picked_paths[@]}" -eq 0 && "${#removed_paths[@]}" -eq 0 ]]; then
   echo "No shared files need to be synced."
   exit 0
 fi
 
-git add -- "${picked_paths[@]}"
+if [[ "${#picked_paths[@]}" -gt 0 ]]; then
+  git add -- "${picked_paths[@]}"
+fi
 
 echo "Picked paths:"
 printf '  %s\n' "${picked_paths[@]}"
@@ -58,6 +70,11 @@ printf '  %s\n' "${picked_paths[@]}"
 if [[ "${#skipped_paths[@]}" -gt 0 ]]; then
   echo "Skipped paths:"
   printf '  %s\n' "${skipped_paths[@]}"
+fi
+
+if [[ "${#removed_paths[@]}" -gt 0 ]]; then
+  echo "Removed paths:"
+  printf '  %s\n' "${removed_paths[@]}"
 fi
 
 git commit -m "${COMMIT_MESSAGE}"
