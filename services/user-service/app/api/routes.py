@@ -5,8 +5,8 @@ from app.core.security import get_current_claims, get_current_token_with_claims
 from app.db.session import get_db
 from app.schemas.auth import LoginRequest
 from app.schemas.common import ApiResponse
-from app.schemas.user import ChangePasswordRequest, UpdateProfileRequest, UserProfileResponse
-from app.services.auth_service import change_password, get_user_by_id, login, logout, update_profile
+from app.schemas.user import ChangePasswordRequest, LoginPolicyRequest, LoginPolicyResponse, UpdateProfileRequest, UserProfileResponse
+from app.services.auth_service import change_password, get_user_login_enabled, get_user_by_id, login, logout, set_user_login_enabled, update_profile
 
 router = APIRouter()
 
@@ -67,6 +67,31 @@ def change_my_password(
     user = get_user_by_id(db, int(claims["user_id"]))
     change_password(db, user, payload.old_password, payload.new_password)
     return ApiResponse(message="password updated")
+
+
+@router.get("/admin/users/login-policy", response_model=ApiResponse)
+def get_login_policy(
+    db: Session = Depends(get_db), 
+    x_user_role: str | None = Header(default=None),
+):
+    if x_user_role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
+    
+    enabled = get_user_login_enabled(db)
+    return ApiResponse(data=LoginPolicyResponse(user_login_enabled=enabled))
+
+
+@router.put("/admin/users/login-policy", response_model=ApiResponse)
+def update_login_policy(
+    payload: LoginPolicyRequest, 
+    db: Session = Depends(get_db), 
+    x_user_role: str | None = Header(default=None),
+):
+    if x_user_role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
+    
+    enabled = set_user_login_enabled(db, payload.user_login_enabled)
+    return ApiResponse(data=LoginPolicyResponse(user_login_enabled=enabled))
 
 
 @router.get("/admin/users/{user_id}", response_model=ApiResponse)

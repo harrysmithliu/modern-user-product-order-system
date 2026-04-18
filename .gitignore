@@ -21,3 +21,4 @@ target/
 **/.vscode/settings.json
 infra/aws/sandbox-ec2/nginx/active.conf
 infra/aws/sandbox-ec2/runtime/
+docs/presentation/
