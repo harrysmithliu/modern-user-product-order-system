@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
+
 from app.core.cache import (
     bump_catalog_version,
     get_cached_json,

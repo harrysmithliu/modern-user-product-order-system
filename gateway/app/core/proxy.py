@@ -13,7 +13,7 @@ router = APIRouter()
 def resolve_target(path: str) -> str:
     if path.startswith("/api/auth"):
         return f"{settings.user_service_url}{path.replace('/api', '', 1)}"
-    if path.startswith("/api/users"):
+    if path.startswith("/api/users") or path.startswith("/api/admin/users"):
         return f"{settings.user_service_url}{path.replace('/api', '', 1)}"
     if path.startswith("/api/products") or path.startswith("/api/admin/products"):
         return f"{settings.product_service_url}{path.replace('/api', '', 1)}"

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS t_user (
   create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation Time',
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update Time',
   version INT NOT NULL DEFAULT 0,
+  login_enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1=login allowed, 0=login disabled',
   PRIMARY KEY (id),
   UNIQUE KEY userno (userno),
   UNIQUE KEY uk_username (username),
@@ -35,21 +36,22 @@ CREATE TABLE IF NOT EXISTS t_system_config (
   PRIMARY KEY (config_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='System Config Table';
 
-INSERT INTO t_user (userno, username, password, nickname, phone, email, role, version)
+INSERT INTO t_user (userno, username, password, nickname, phone, email, role, version, login_enabled)
 VALUES
-  ('U0001', 'john_smith', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'John', '13800000001', 'john.smith@example.com', 'USER', 1),
-  ('U0002', 'emily_johnson', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'Emily', '13800000002', 'emily.johnson@example.com', 'USER', 1),
-  ('U0003', 'michael_brown', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'Michael', '13800000003', 'michael.brown@example.com', 'USER', 1),
-  ('U0004', 'sarah_davis', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'Sarah', '13800000004', 'sarah.davis@example.com', 'USER', 1),
-  ('U0005', 'david_miller', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'David', '13800000005', 'david.miller@example.com', 'USER', 1),
-  ('U9999', 'admin', '$2b$10$72sGKhdfKdep1rYAEVfhD.jfwFsX5OzXVfH.mIn.xsE8gErpaPO4a', 'System Admin', '13900000000', 'admin@example.com', 'ADMIN', 0)
+  ('U0001', 'john_smith', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'John', '13800000001', 'john.smith@example.com', 'USER', 1, 1),
+  ('U0002', 'emily_johnson', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'Emily', '13800000002', 'emily.johnson@example.com', 'USER', 1, 1),
+  ('U0003', 'michael_brown', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'Michael', '13800000003', 'michael.brown@example.com', 'USER', 1, 1),
+  ('U0004', 'sarah_davis', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'Sarah', '13800000004', 'sarah.davis@example.com', 'USER', 1, 1),
+  ('U0005', 'david_miller', '$2b$10$u3dDBjHhxOmVL13D16hso..mXTxr3g/X.AFX5sbPAzq61t8ELj84G', 'David', '13800000005', 'david.miller@example.com', 'USER', 1, 1),
+  ('U9999', 'admin', '$2b$10$72sGKhdfKdep1rYAEVfhD.jfwFsX5OzXVfH.mIn.xsE8gErpaPO4a', 'System Admin', '13900000000', 'admin@example.com', 'ADMIN', 0, 1)
 ON DUPLICATE KEY UPDATE
   password = VALUES(password),
   nickname = VALUES(nickname),
   phone = VALUES(phone),
   email = VALUES(email),
   role = VALUES(role),
-  version = VALUES(version);
+  version = VALUES(version),
+  login_enabled = VALUES(login_enabled);
 
 INSERT INTO t_system_config (config_key, config_value)
 VALUES
