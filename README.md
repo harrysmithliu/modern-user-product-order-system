@@ -176,6 +176,8 @@ modern-user-product-order-system/
 
 ## Environment Strategy
 
+The repository now follows a primary AWS / EKS deployment line, with a secondary EC2 online demo line for cost-efficient public hosting.
+
 - `dev`
   - day-to-day developer iteration
   - may use direct local process startup or `infra/docker/docker-compose.dev.yml`
@@ -185,12 +187,16 @@ modern-user-product-order-system/
   - uses `infra/docker/docker-compose.sandbox.yml`
   - includes MySQL, Redis, RabbitMQ, and MongoDB containers
 - `prod`
-  - reserved for future Kubernetes and cloud deployment
-  - configuration placeholders live under `infra/k8s/` and `infra/aws/`
+  - AWS / EKS baseline for the main deployment line
+  - configuration placeholders live under `infra/k8s/prod/` and `infra/aws/prod/`
+- `sandbox-ec2-online`
+  - auxiliary low-cost public demo environment
+  - uses a single EC2 host with Docker Compose, Nginx, Let's Encrypt, and GitHub Actions
+  - deployment assets live under `infra/aws/sandbox-ec2`
 
 ## Branching and Promotion Strategy
 
-This repository is intended to follow three long-lived branches that mirror the three environment tiers:
+This repository is intended to follow three long-lived branches that mirror the main delivery line:
 
 - `dev`
   - the active development trunk
@@ -201,12 +207,24 @@ This repository is intended to follow three long-lived branches that mirror the 
   - changes are promoted from `dev` into `sandbox` after a coherent feature batch is ready for end-to-end verification
 - `main`
   - the most stable showcase branch
-  - intended to represent the latest approved release candidate for portfolio presentation and future production promotion
+  - intended to represent the latest approved release candidate for portfolio presentation and AWS / EKS promotion
+
+Auxiliary public demo branch:
+
+- `sandbox-ec2-online`
+  - the long-running low-cost public demo branch
+  - intended to stay close to sandbox-approved changes while using the EC2 runtime path
 
 Recommended branch flow:
 
 ```text
 feature/* -> dev -> sandbox -> main
+```
+
+Supplementary demo flow:
+
+```text
+sandbox -> sandbox-ec2-online
 ```
 
 Recommended collaboration rules:
@@ -216,12 +234,14 @@ Recommended collaboration rules:
 - promote `dev` into `sandbox` when the integration set is ready for smoke tests, screenshots, and demo review
 - promote `sandbox` into `main` only after validation passes
 - treat `main` as the branch that should stay the cleanest and most presentation-ready
+- selectively cherry-pick sandbox-approved changes into `sandbox-ec2-online` for the public EC2 demo line
 
 Current practical meaning:
 
 - merging into `dev` means the work is ready for developer iteration
 - merging into `sandbox` means the work is ready for full Compose-based integration and demo validation
-- merging into `main` means the work is stable enough to be presented as the current best version of the project
+- merging into `main` means the work is stable enough to be presented as the current best version of the project and promoted through the AWS / EKS path
+- merging into `sandbox-ec2-online` means the work is ready for the low-cost EC2 demo deployment path
 
 Future CI/CD mapping:
 
@@ -230,16 +250,28 @@ Future CI/CD mapping:
 - `sandbox`
   - run integration build, smoke test, and sandbox deployment
 - `main`
-  - run release build and future production deployment workflow
+  - run release build and the AWS / EKS deployment workflow
+- `sandbox-ec2-online`
+  - run the EC2 demo deployment workflow
 
 Shared CI and split CD:
 
 - shared CI
   - `dev`, `sandbox`, `main`, `dev-*`, and `sandbox-ec2-online` use the common [ci.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/ci.yml) workflow for frontend build, Python test execution, and Java package validation
-- demo deployment route
+- AWS / EKS deployment route
+  - `main` uses [deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml) as the production deployment baseline for ECR and EKS rollout automation
+- EC2 demo deployment route
   - `sandbox-ec2-online` uses [deploy-sandbox-ec2.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-sandbox-ec2.yml) for low-cost always-on EC2 deployment over SSH
-- production deployment route
-  - `main` now has [deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml) as a manual baseline for future ECR and EKS rollout automation
+
+### CI/CD Snapshot
+
+![CI/CD Workflow Snapshot](docs/screenshots/ci_cd.png)
+
+This snapshot shows the current pipeline split in practice:
+
+- shared CI validates `dev`, `sandbox`, `main`, `dev-*`, and `sandbox-ec2-online`
+- `main` keeps the AWS / EKS production deployment baseline through `deploy-aws-prod.yml`
+- `sandbox-ec2-online` runs the EC2 demo deployment through `deploy-sandbox-ec2.yml`
 
 ### CI/CD Snapshot
 
@@ -545,6 +577,8 @@ Open and verify:
 - Grafana: `http://localhost:3000`
 
 Reference screenshots:
+
+![Sandbox Docker Desktop](docs/screenshots/docker.png)
 
 ![Prometheus Targets](docs/screenshots/screen_prometheus.png)
 
