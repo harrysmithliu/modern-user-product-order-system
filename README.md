@@ -394,46 +394,31 @@ Frontend URL:
 
 - `http://localhost:5173`
 
-### 3. Run the Phase 1 smoke test
+### 3. Sandbox smoke tests and promotion
 
-After the four backend services are up, run:
+The sandbox-only smoke tests and EC2 promotion flow now live in
+[scripts/sandbox/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/scripts/sandbox/README.md).
 
-```bash
-python3 scripts/dev/smoke-test-phase1.py
-```
+Use that guide for:
 
-To run the same smoke test against the dev compose stack:
+- Phase 1 sandbox smoke test
+- Phase 2 sandbox smoke test
+- optional RabbitMQ smoke test
+- optional MongoDB audit smoke test
+- selective sync into `sandbox-ec2-online`
 
-```bash
-SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase1.py
-```
+Reference screenshots:
 
-### 4. Run the Phase 2 Redis smoke test
+![Sandbox Docker Desktop](docs/screenshots/docker.png)
 
-After Redis-backed logout revocation is enabled, run:
+![Prometheus Targets](docs/screenshots/screen_prometheus.png)
 
-```bash
-python3 scripts/dev/smoke-test-phase2.py
-```
+![Grafana Overview](docs/screenshots/screen_grafana.png)
 
-To run it against the dev compose stack:
+Grafana credentials:
 
-```bash
-SMOKE_TEST_BASE_URL=http://127.0.0.1:8010 python3 scripts/dev/smoke-test-phase2.py
-```
-
-This validates:
-
-- user and admin login
-- product listing
-- create order
-- cancel order
-- approve order
-- reject order
-- latest-first order sorting
-- pending review queue behavior
-
-The script writes sample orders into the local development database so the review and history screens show realistic data.
+- username: `<set-in-local-env>`
+- password: `<set-in-local-env>`
 
 ## Local Access Points
 
@@ -492,10 +477,8 @@ Typical checks during development:
 - prefer validating feature work in the local `dev` runtime first
 - use `infra/docker/docker-compose.dev.yml` when the batch depends on host-managed local services such as `local-mysql` or `rmq`
 - run local service-specific checks
-- run `python3 scripts/dev/smoke-test-phase1.py` when the core order flow is affected
-- run `python3 scripts/dev/smoke-test-phase2.py` when Redis-backed auth or rate limiting is affected
 - inspect `modern-upo-dev-notification-service` logs when RabbitMQ event flow changes
-- run `python3 scripts/dev/smoke-test-rabbitmq-dev.py` when validating local RabbitMQ event flow against IDE-started services
+- use the sandbox smoke tests in [scripts/sandbox/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/scripts/sandbox/README.md) when the batch is ready to promote from `dev` into `sandbox`
 
 ### 5. Merge the feature branch back into `dev`
 
@@ -507,91 +490,8 @@ git push origin dev
 
 ### 6. Promote the validated `dev` branch into `sandbox`
 
-After the `dev` branch is stable, continue with the `Sandbox Promotion Runbook` above.
-
-## Sandbox Promotion Runbook
-
-Use this flow when a batch of work is ready to move from `dev` into `sandbox` for integration verification.
-
-### 1. Switch to `sandbox` and merge `dev`
-
-```bash
-git checkout sandbox
-git merge dev
-```
-
-### 2. Start or refresh the sandbox stack
-
-```bash
-docker compose --env-file infra/docker/.env.sandbox.example -f infra/docker/docker-compose.sandbox.yml up -d --build
-```
-
-### 3. Run the Phase 1 business smoke test
-
-```bash
-python3 scripts/dev/smoke-test-phase1.py
-```
-
-### 4. Run the Phase 2 Redis smoke test
-
-```bash
-python3 scripts/dev/smoke-test-phase2.py
-```
-
-### 5. Perform manual sandbox checks
-
-Open and verify:
-
-- Frontend: `http://localhost:5173`
-- User service docs: `http://localhost:8001/docs`
-- Product service docs: `http://localhost:8002/docs`
-- Order service docs: `http://localhost:8080/swagger-ui/index.html`
-
-Recommended manual checks:
-
-- sign in as `john_smith` and confirm product browsing still works
-- sign in as `admin` and confirm order review and product admin pages still load
-- sign out once and confirm the session is cleared cleanly
-
-### 6. Perform monitoring checks
-
-If the monitoring stack is part of the current validation batch, start or refresh it:
-
-```bash
-docker compose --env-file infra/docker/.env.monitoring.example -f infra/docker/docker-compose.monitoring.yml up -d
-```
-
-Open and verify:
-
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
-
-Reference screenshots:
-
-![Sandbox Docker Desktop](docs/screenshots/docker.png)
-
-![Prometheus Targets](docs/screenshots/screen_prometheus.png)
-
-![Grafana Overview](docs/screenshots/screen_grafana.png)
-
-Grafana credentials:
-
-- username: `<set-in-local-env>`
-- password: `<set-in-local-env>`
-
-Recommended monitoring checks:
-
-- in Prometheus, open `Status` -> `Targets` and confirm the sandbox targets on `localhost:8000`, `localhost:8001`, `localhost:8002`, and `localhost:8080` are `UP`
-- in Prometheus, run the `up` query and confirm the sandbox service metrics are visible
-- in Grafana, open the provisioned `Modern UPO Overview` dashboard and confirm panels load without datasource errors
-
-### 7. Push the validated `sandbox` branch
-
-```bash
-git push origin sandbox
-```
-
-After the sandbox branch is validated and pushed, open the pull request from `sandbox` into `main`.
+After the `dev` branch is stable, continue with the sandbox guide in
+[scripts/sandbox/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/scripts/sandbox/README.md).
 
 ## Demo Accounts
 

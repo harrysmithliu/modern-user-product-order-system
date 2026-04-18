@@ -8,8 +8,8 @@ import urllib.error
 import urllib.request
 
 
-PRODUCT_SERVICE_URL = os.getenv("DEV_PRODUCT_SERVICE_URL", "http://127.0.0.1:8002")
-ORDER_SERVICE_URL = os.getenv("DEV_ORDER_SERVICE_URL", "http://127.0.0.1:8080")
+PRODUCT_SERVICE_URL = os.getenv("SANDBOX_PRODUCT_SERVICE_URL", "http://127.0.0.1:8002")
+ORDER_SERVICE_URL = os.getenv("SANDBOX_ORDER_SERVICE_URL", "http://127.0.0.1:8080")
 
 USER_HEADERS = {
     "X-User-Id": "1",
@@ -65,7 +65,7 @@ def create_order(product_id: int, suffix: str) -> dict:
 
 
 def main():
-    print("Dev RabbitMQ smoke test started.")
+    print("Sandbox RabbitMQ smoke test started.")
 
     _, products = request(PRODUCT_SERVICE_URL, "GET", "/products?page=1&size=3")
     items = products["data"]["items"]
@@ -119,7 +119,7 @@ def main():
         ORDER_SERVICE_URL,
         "POST",
         f"/admin/orders/{rejected_order['id']}/reject",
-        data={"reject_reason": "Dev RabbitMQ smoke test"},
+        data={"reject_reason": "Sandbox RabbitMQ smoke test"},
         headers=ADMIN_HEADERS,
     )
     expect(
@@ -136,7 +136,7 @@ def main():
     print(f"- order.approved for {approved_order['order_no']}")
     print(f"- order.created  for {rejected_order['order_no']}")
     print(f"- order.rejected for {rejected_order['order_no']}")
-    print("Dev RabbitMQ smoke test finished successfully.")
+    print("Sandbox RabbitMQ smoke test finished successfully.")
 
 
 if __name__ == "__main__":
