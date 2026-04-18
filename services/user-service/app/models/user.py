@@ -23,4 +23,5 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+    login_enabled: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

@@ -6,7 +6,7 @@ from app.core.security import create_access_token, hash_password, revoke_token, 
 from app.models.system_config import SystemConfig
 from app.models.user import User
 from app.schemas.auth import LoginResponse
-from app.schemas.user import UpdateProfileRequest
+from app.schemas.user import AdminUserListItem, AdminUserPageResponse, UpdateProfileRequest
 
 USER_LOGIN_ENABLED_KEY = "USER_LOGIN_ENABLED"
 
@@ -18,6 +18,9 @@ def login(db: Session, username: str, password: str) -> LoginResponse:
     if user.role == "USER" and not get_user_login_enabled(db):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User login is currently disabled")
 
+    if user.login_enabled == 0:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your account is disabled")
+
     token = create_access_token(user.id, user.username, user.role)
     return LoginResponse(
         access_token=token,
@@ -25,6 +28,42 @@ def login(db: Session, username: str, password: str) -> LoginResponse:
         user_id=user.id,
         username=user.username,
         role=user.role,
+    )
+
+
+def list_users_by_admin(db: Session, page: int, size: int) -> AdminUserPageResponse: 
+    page = max(page, 1)
+    size = max(min(size, 100), 1)
+
+    total = db.query(User).count()
+
+    rows = (
+        db.query(User)
+        .order_by(User.id)
+        .offset((page - 1) * size)
+        .limit(size)
+        .all()
+    )
+
+    items = [
+        AdminUserListItem(
+            id=user.id,
+            userno=user.userno,
+            username=user.username,
+            nickname=user.nickname,
+            phone=user.phone,
+            email=user.email,
+            role=user.role,
+            login_enabled=bool(user.login_enabled),
+        )
+        for user in rows
+    ]
+
+    return AdminUserPageResponse(
+        page=page,
+        size=size,
+        total=total,
+        items=items,
     )
 
 
@@ -63,6 +102,20 @@ def get_user_by_id(db: Session, user_id: int) -> User:
     user = db.query(User).filter(User.id == user_id).one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
+def set_user_login_enabled_by_admin(db: Session, user_id: int, enabled: bool) -> User:
+    user = get_user_by_id(db, user_id)
+
+    if user.role != "USER":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only USER accounts can be enabled/disabled")
+
+    user.login_enabled = 1 if enabled else 0
+    user.version += 1
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
 
 

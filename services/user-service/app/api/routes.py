@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_claims, get_current_token_with_claims
@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.schemas.auth import LoginRequest
 from app.schemas.common import ApiResponse
 from app.schemas.user import ChangePasswordRequest, LoginPolicyRequest, LoginPolicyResponse, UpdateProfileRequest, UserProfileResponse
-from app.services.auth_service import change_password, get_user_login_enabled, get_user_by_id, login, logout, set_user_login_enabled, update_profile
+from app.services.auth_service import change_password, get_user_login_enabled, get_user_by_id, list_users_by_admin, login, logout, set_user_login_enabled, set_user_login_enabled_by_admin, update_profile
 
 router = APIRouter()
 
@@ -104,3 +104,36 @@ def get_user_by_admin(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
     user = get_user_by_id(db, user_id)
     return ApiResponse(data=UserProfileResponse.model_validate(user, from_attributes=True))
+
+
+@router.get("/admin/users", response_model=ApiResponse)
+def list_users_endpoint(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    x_user_role: str | None = Header(default=None),
+):
+    if x_user_role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
+    response = list_users_by_admin(db, page, size)
+    return ApiResponse(data=response)
+
+
+@router.put("/admin/users/{user_id}/login-policy", response_model=ApiResponse)
+def update_user_login_policy(
+    user_id: int,
+    payload: LoginPolicyRequest, 
+    db: Session = Depends(get_db),
+    x_user_role: str | None = Header(default=None),
+):
+    if x_user_role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
+    
+    user = set_user_login_enabled_by_admin(db, user_id, payload.user_login_enabled)
+    return ApiResponse(
+        data={
+            "user_id": user.id,
+            "user_login_enabled": bool(user.login_enabled),
+        }
+    )
+    
