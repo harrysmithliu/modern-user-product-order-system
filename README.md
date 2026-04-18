@@ -568,6 +568,8 @@ Open and verify:
 
 Reference screenshots:
 
+![Sandbox Docker Desktop](docs/screenshots/docker.png)
+
 ![Prometheus Targets](docs/screenshots/screen_prometheus.png)
 
 ![Grafana Overview](docs/screenshots/screen_grafana.png)
