@@ -3,15 +3,20 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import create_access_token, hash_password, revoke_token, verify_password
+from app.models.system_config import SystemConfig
 from app.models.user import User
 from app.schemas.auth import LoginResponse
 from app.schemas.user import UpdateProfileRequest
 
+USER_LOGIN_ENABLED_KEY = "USER_LOGIN_ENABLED"
 
 def login(db: Session, username: str, password: str) -> LoginResponse:
     user = db.query(User).filter(User.username == username).one_or_none()
     if not user or not verify_password(password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
+
+    if user.role == "USER" and not get_user_login_enabled(db):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User login is currently disabled")
 
     token = create_access_token(user.id, user.username, user.role)
     return LoginResponse(
@@ -21,6 +26,37 @@ def login(db: Session, username: str, password: str) -> LoginResponse:
         username=user.username,
         role=user.role,
     )
+
+
+def get_user_login_enabled(db: Session) -> bool:
+    config = (
+        db.query(SystemConfig)
+        .filter(SystemConfig.config_key == USER_LOGIN_ENABLED_KEY)
+        .one_or_none()
+    )
+    if not config:
+        return True
+    return config.config_value == "1"
+
+
+def set_user_login_enabled(db: Session, enabled: bool) -> bool:
+    config = (
+        db.query(SystemConfig)
+        .filter(SystemConfig.config_key == USER_LOGIN_ENABLED_KEY)
+        .one_or_none()
+    )
+    if config:
+        config.config_value = "1" if enabled else "0"
+        db.add(config)
+    else:
+        db.add(
+            SystemConfig(
+                config_key=USER_LOGIN_ENABLED_KEY, 
+                config_value="1" if enabled else "0"
+            )
+        )
+    db.commit()
+    return enabled
 
 
 def get_user_by_id(db: Session, user_id: int) -> User:

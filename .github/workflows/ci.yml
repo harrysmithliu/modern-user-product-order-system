@@ -1,5 +1,7 @@
 name: CI
 
+# Shared CI for both the AWS/EKS line and the EC2 online demo line.
+# Deployment stays in separate workflows.
 on:
   push:
     branches:
