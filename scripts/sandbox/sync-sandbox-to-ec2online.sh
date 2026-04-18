@@ -24,7 +24,11 @@ git fetch origin --prune
 git checkout "${TARGET_BRANCH}"
 git pull --ff-only origin "${TARGET_BRANCH}"
 
-mapfile -t candidates < <(git diff --name-only "origin/${TARGET_BRANCH}..origin/${SOURCE_BRANCH}")
+candidates=()
+while IFS= read -r path; do
+  [[ -n "${path}" ]] || continue
+  candidates+=("${path}")
+done < <(git diff --name-only "origin/${TARGET_BRANCH}..origin/${SOURCE_BRANCH}")
 
 picked_paths=()
 skipped_paths=()
