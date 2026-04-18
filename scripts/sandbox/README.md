@@ -42,6 +42,9 @@ python3 scripts/sandbox/smoke-test-mongodb.py
 
 The MongoDB smoke test is optional, but it is the right check when the batch
 touches notification audit persistence or side-channel audit lookup.
+It uses the sandbox Mongo connection settings from
+`infra/docker/.env.sandbox.example`, so the local sandbox stack must be up
+before you run it.
 
 ## 3. Sync shared sandbox changes into EC2 online
 

@@ -14,6 +14,7 @@ import urllib.request
 BASE_URL = os.getenv("SMOKE_TEST_BASE_URL", "http://127.0.0.1:8000")
 COMPOSE_FILE = os.getenv("SANDBOX_COMPOSE_FILE", "infra/docker/docker-compose.sandbox.yml")
 MONGO_SERVICE = os.getenv("SANDBOX_MONGO_COMPOSE_SERVICE", "mongodb")
+MONGO_URI = os.getenv("SANDBOX_MONGO_URI", "mongodb://admin:admin123@mongodb:27017/admin?authSource=admin")
 MONGO_DATABASE = os.getenv("SANDBOX_MONGO_DATABASE", "upo_audit")
 MONGO_COLLECTION = os.getenv("SANDBOX_MONGO_COLLECTION", "order_event_timeline")
 POLL_TIMEOUT_SECONDS = int(os.getenv("SMOKE_TEST_MONGO_TIMEOUT_SECONDS", "30"))
@@ -81,6 +82,7 @@ def mongo_eval(expression: str) -> str:
         "-T",
         MONGO_SERVICE,
         "mongosh",
+        MONGO_URI,
         "--quiet",
         "--eval",
         expression,
