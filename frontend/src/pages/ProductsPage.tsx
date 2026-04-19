@@ -1,9 +1,13 @@
 import { App as AntApp, Button, Card, Form, Input, InputNumber, Modal, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useDeferredValue, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getApiErrorMessage } from "../api/errors";
 import { createOrder, listProducts } from "../api/services";
+import { ORDER_STATUS } from "../api/types";
 import type { Product } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
+import { formatCny } from "../utils/formatters";
 
 export function ProductsPage() {
   const [items, setItems] = useState<Product[]>([]);
@@ -58,7 +62,7 @@ export function ProductsPage() {
     {
       title: "Price",
       dataIndex: "price",
-      render: (value: number) => `CNY ${value}`,
+      render: (value: number) => formatCny(value),
     },
     {
       title: "Stock",
@@ -132,6 +136,7 @@ function CreateOrderModal(props: {
 }) {
   const [form] = Form.useForm<{ quantity: number }>();
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
   const { message } = AntApp.useApp();
 
   async function handleSubmit(values: { quantity: number }) {
@@ -141,16 +146,21 @@ function CreateOrderModal(props: {
 
     setSubmitting(true);
     try {
-      await createOrder({
+      const createdOrder = await createOrder({
         request_no: crypto.randomUUID(),
         product_id: props.product.id,
         quantity: values.quantity,
       });
-      message.success("Order created and waiting for admin review.");
+      if (createdOrder.status === ORDER_STATUS.PAYING) {
+        message.success("Order created. Continue payment in My Orders.");
+      } else {
+        message.success("Order created.");
+      }
       form.resetFields();
       props.onSuccess();
+      navigate("/orders");
     } catch (error) {
-      message.error("Failed to create order. Please try again.");
+      message.error(getApiErrorMessage(error) || "Failed to create order. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -167,7 +177,7 @@ function CreateOrderModal(props: {
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ quantity: 1 }}>
         <Form.Item label="Unit Price">
-          <Typography.Text>{props.product ? `CNY ${props.product.price}` : "-"}</Typography.Text>
+          <Typography.Text>{props.product ? formatCny(props.product.price) : "-"}</Typography.Text>
         </Form.Item>
         <Form.Item
           label="Quantity"

@@ -55,6 +55,11 @@ export async function cancelOrder(orderId: number) {
   return response.data.data;
 }
 
+export async function payOrder(orderId: number) {
+  const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${orderId}/pay`);
+  return response.data.data;
+}
+
 export async function listAdminOrders(page: number, size: number, status?: number) {
   const response = await apiClient.get<ApiResponse<PageResponse<Order>>>("/api/admin/orders", {
     params: { page, size, status },

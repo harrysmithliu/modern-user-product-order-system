@@ -51,14 +51,34 @@ export interface Order {
   product_id: number;
   quantity: number;
   total_amount: number;
+  origin_amount: number | null;
+  discount_amount: number | null;
+  final_amount: number | null;
   status: number;
   status_label: string;
   reject_reason: string | null;
+  payment_time: string | null;
+  ship_time: string | null;
+  expected_delivery_time: string | null;
+  complete_time: string | null;
+  refund_time: string | null;
   approve_time: string | null;
   cancel_time: string | null;
   create_time: string | null;
   update_time: string | null;
 }
+
+export const ORDER_STATUS = {
+  PENDING_APPROVAL: 0,
+  APPROVED: 1,
+  REJECTED: 2,
+  CANCELLED: 3,
+  PAYING: 4,
+  PAID_PENDING_APPROVAL: 5,
+  SHIPPING: 6,
+  COMPLETED: 7,
+  REFUNDING: 8,
+} as const;
 
 export interface PageResponse<T> {
   items: T[];

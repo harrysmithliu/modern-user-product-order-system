@@ -1,17 +1,41 @@
-import { App as AntApp, Button, Card, Form, Modal, Select, Space, Table, Tag } from "antd";
+import { App as AntApp, Button, Card, Form, Modal, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
+import { getApiErrorMessage } from "../api/errors";
 import { approveOrder, listAdminOrders, rejectOrder } from "../api/services";
+import { ORDER_STATUS } from "../api/types";
 import type { Order } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
+import { formatCny, formatLocalDateTime } from "../utils/formatters";
 
 const statusOptions = [
-  { label: "All Statuses", value: undefined },
-  { label: "Pending Approval", value: 0 },
-  { label: "Approved", value: 1 },
-  { label: "Rejected", value: 2 },
-  { label: "Cancelled", value: 3 },
+  { label: "All Statuses", value: null },
+  { label: "PENDING_APPROVAL", value: ORDER_STATUS.PENDING_APPROVAL },
+  { label: "PAYING", value: ORDER_STATUS.PAYING },
+  { label: "PAID_PENDING_APPROVAL", value: ORDER_STATUS.PAID_PENDING_APPROVAL },
+  { label: "APPROVED", value: ORDER_STATUS.APPROVED },
+  { label: "SHIPPING", value: ORDER_STATUS.SHIPPING },
+  { label: "REFUNDING", value: ORDER_STATUS.REFUNDING },
+  { label: "REJECTED", value: ORDER_STATUS.REJECTED },
+  { label: "CANCELLED", value: ORDER_STATUS.CANCELLED },
+  { label: "COMPLETED", value: ORDER_STATUS.COMPLETED },
 ];
+
+const statusColorMap: Record<string, string> = {
+  PENDING_APPROVAL: "gold",
+  APPROVED: "green",
+  REJECTED: "red",
+  CANCELLED: "default",
+  PAYING: "orange",
+  PAID_PENDING_APPROVAL: "processing",
+  SHIPPING: "blue",
+  COMPLETED: "green",
+  REFUNDING: "volcano",
+};
+
+function canReview(status: number): boolean {
+  return status === ORDER_STATUS.PENDING_APPROVAL || status === ORDER_STATUS.PAID_PENDING_APPROVAL;
+}
 
 export function AdminOrdersPage() {
   const [items, setItems] = useState<Order[]>([]);
@@ -19,20 +43,20 @@ export function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<number | null>(null);
   const [rejectingOrder, setRejectingOrder] = useState<Order | null>(null);
   const { message } = AntApp.useApp();
 
   async function loadOrders(nextPage = page, nextSize = size, nextStatus = statusFilter) {
     setLoading(true);
     try {
-      const data = await listAdminOrders(nextPage, nextSize, nextStatus);
+      const data = await listAdminOrders(nextPage, nextSize, nextStatus ?? undefined);
       setItems(data.items);
       setPage(data.page);
       setSize(data.size);
       setTotal(data.total);
     } catch (error) {
-      message.error("Failed to load order review data.");
+      message.error(getApiErrorMessage(error) || "Failed to load order review data.");
     } finally {
       setLoading(false);
     }
@@ -49,68 +73,82 @@ export function AdminOrdersPage() {
     { title: "Quantity", dataIndex: "quantity" },
     {
       title: "Amount",
-      dataIndex: "total_amount",
-      render: (value: number) => `CNY ${value}`,
+      key: "amount",
+      render: (_, record) => formatCny(record.final_amount ?? record.total_amount),
     },
     {
       title: "Status",
       dataIndex: "status_label",
-      render: (value: string) => {
-        const color =
-          value === "APPROVED"
-            ? "green"
-            : value === "REJECTED"
-              ? "red"
-              : value === "PENDING_APPROVAL"
-                ? "gold"
-                : "default";
-        return <Tag color={color}>{value}</Tag>;
-      },
+      render: (value: string) => <Tag color={statusColorMap[value] || "default"}>{value}</Tag>,
+    },
+    {
+      title: "Payment Time",
+      dataIndex: "payment_time",
+      render: (value: string | null) => formatLocalDateTime(value),
+    },
+    {
+      title: "Ship Time",
+      dataIndex: "ship_time",
+      render: (value: string | null) => formatLocalDateTime(value),
+    },
+    {
+      title: "Delivery ETA",
+      dataIndex: "expected_delivery_time",
+      render: (value: string | null) => formatLocalDateTime(value),
+    },
+    {
+      title: "Refund Time",
+      dataIndex: "refund_time",
+      render: (value: string | null) => formatLocalDateTime(value),
     },
     {
       title: "Created At",
       dataIndex: "create_time",
-      render: (value: string | null) => value || "-",
+      render: (value: string | null) => formatLocalDateTime(value),
     },
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            disabled={record.status_label !== "PENDING_APPROVAL"}
-            onClick={async () => {
-              try {
-                await approveOrder(record.id);
-                message.success("Order approved.");
-                void loadOrders(page, size, statusFilter);
-              } catch (error) {
-                message.error("Approval failed.");
-              }
-            }}
-          >
-            Approve
-          </Button>
-          <Button
-            danger
-            disabled={record.status_label !== "PENDING_APPROVAL"}
-            onClick={() => setRejectingOrder(record)}
-          >
-            Reject
-          </Button>
-        </Space>
-      ),
+      render: (_, record) => {
+        if (!canReview(record.status)) {
+          return <Typography.Text type="secondary">-</Typography.Text>;
+        }
+
+        return (
+          <Space>
+            <Button
+              type="primary"
+              onClick={async () => {
+                try {
+                  await approveOrder(record.id);
+                  message.success("Approved. Order moved to SHIPPING.");
+                  void loadOrders(page, size, statusFilter);
+                } catch (error) {
+                  message.error(getApiErrorMessage(error) || "Approve action failed.");
+                }
+              }}
+            >
+              Approve & Ship
+            </Button>
+            <Button danger onClick={() => setRejectingOrder(record)}>
+              Reject & Refund
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
-      <PageHeader title="Order Review" subtitle="Review all orders, filter pending items, and approve or reject them from the admin console." />
+      <PageHeader
+        title="Order Review"
+        subtitle="Approve transitions the order to SHIPPING. Reject triggers refund and then moves to REJECTED."
+      />
       <Card bordered={false}>
         <Space direction="vertical" size={16} style={{ width: "100%" }}>
-          <Select
-            style={{ width: 220 }}
+          <Select<number | null>
+            style={{ width: 260 }}
             options={statusOptions}
             value={statusFilter}
             onChange={(value) => setStatusFilter(value)}
@@ -171,11 +209,11 @@ function RejectOrderModal(props: {
           setSubmitting(true);
           try {
             await rejectOrder(props.order.id, values.rejectReason);
-            message.success("Order rejected.");
+            message.success("Rejected. Refund completed and order moved to REJECTED.");
             form.resetFields();
             props.onSuccess();
           } catch (error) {
-            message.error("Reject action failed.");
+            message.error(getApiErrorMessage(error) || "Reject action failed.");
           } finally {
             setSubmitting(false);
           }
