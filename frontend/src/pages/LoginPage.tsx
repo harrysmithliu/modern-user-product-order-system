@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/services";
 import { useAuth } from "../modules/auth/AuthProvider";
+import axios from "axios";
 
 export function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -19,12 +20,37 @@ export function LoginPage() {
       message.success("Signed in successfully.");
       navigate(user?.role === "ADMIN" ? "/admin/orders" : "/products");
     } catch (error: unknown) {
-      message.error("Sign-in failed. Please check your username and password.");
+      // if (axios.isAxiosError<{ detail?: string }>(error)) {
+      //   const detail = error.response?.data?.detail;
+      //   message.error(detail || "Sign-in failed. Please try again later.");
+      //   return;
+      // }
+      // message.error("Sign-in failed. Please try again later.");
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const detail = error.response?.data?.detail;
+
+        if (status === 422 && Array.isArray(detail)) {
+          const firstMsg = detail[0]?.msg;
+          message.error(firstMsg || "Username or password format is invalid.");
+          return;
+        }
+
+        if (typeof detail === "string") {
+          message.error(detail);
+          return;
+        }
+
+        message.error("Sign-in failed. Please try again later.");
+        return;
+      }
+
+      message.error("Sign-in failed. Please try again later.");
+      
     } finally {
       setLoading(false);
     }
   }
-
   return (
     <div className="login-page">
       <div className="login-shell">
