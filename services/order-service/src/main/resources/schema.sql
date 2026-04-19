@@ -110,3 +110,21 @@ CREATE TABLE IF NOT EXISTS t_order_outbox (
   KEY idx_status_id (status, id),
   KEY idx_create_time (create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Order outbox table';
+
+CREATE TABLE IF NOT EXISTS t_order_coupon_issue_task (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  order_id BIGINT NOT NULL COMMENT 'Order id',
+  order_no VARCHAR(64) NOT NULL COMMENT 'Order number',
+  user_id BIGINT NOT NULL COMMENT 'User id',
+  order_amount DECIMAL(10,2) NOT NULL COMMENT 'Order amount for coupon issue',
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING / SUCCESS / FAILED',
+  retry_count INT NOT NULL DEFAULT 0 COMMENT 'Retry count',
+  next_retry_time DATETIME NOT NULL COMMENT 'Next retry time',
+  last_error VARCHAR(500) DEFAULT NULL COMMENT 'Last error',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_order_no (order_no),
+  KEY idx_status_retry_time (status, next_retry_time),
+  KEY idx_order_id (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Coupon issue retry tasks';

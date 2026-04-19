@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -77,6 +78,7 @@ public class OrderEntity {
     @Column(name = "update_time", insertable = false, updatable = false)
     private LocalDateTime updateTime;
 
+    @Version
     @Column(nullable = false)
     private Integer version;
 

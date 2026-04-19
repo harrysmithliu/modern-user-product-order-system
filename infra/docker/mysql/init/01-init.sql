@@ -107,10 +107,18 @@ CREATE TABLE IF NOT EXISTS t_order (
   product_id BIGINT NOT NULL COMMENT 'Product ID',
   quantity INT NOT NULL COMMENT 'Quantity',
   total_amount DECIMAL(10,2) NOT NULL COMMENT 'Total Amount',
-  status TINYINT NOT NULL DEFAULT 0 COMMENT '0=PENDING_APPROVAL 1=APPROVED 2=REJECTED 3=CANCELLED',
+  origin_amount DECIMAL(10,2) DEFAULT NULL COMMENT 'Original order amount before discount',
+  discount_amount DECIMAL(10,2) DEFAULT NULL COMMENT 'Discount amount from coupon',
+  final_amount DECIMAL(10,2) DEFAULT NULL COMMENT 'Final payable amount after discount',
+  status TINYINT NOT NULL DEFAULT 0 COMMENT '0=PENDING_APPROVAL(legacy) 1=APPROVED(legacy) 2=REJECTED 3=CANCELLED 4=PAYING 5=PAID_PENDING_APPROVAL 6=SHIPPING 7=COMPLETED 8=REFUNDING',
   reject_reason VARCHAR(255) DEFAULT NULL COMMENT 'Reject reason',
   approve_time DATETIME DEFAULT NULL COMMENT 'Approve time',
   cancel_time DATETIME DEFAULT NULL COMMENT 'Cancel time',
+  payment_time DATETIME DEFAULT NULL COMMENT 'Payment completion time',
+  ship_time DATETIME DEFAULT NULL COMMENT 'Shipping start time',
+  expected_delivery_time DATETIME DEFAULT NULL COMMENT 'Expected delivery time',
+  complete_time DATETIME DEFAULT NULL COMMENT 'Order completion time',
+  refund_time DATETIME DEFAULT NULL COMMENT 'Refund completion time',
   create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation Time',
   update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update Time',
   version INT NOT NULL DEFAULT 0,
@@ -129,6 +137,24 @@ CREATE TABLE IF NOT EXISTS t_order (
   CONSTRAINT chk_order_quantity_positive CHECK ((quantity > 0)),
   CONSTRAINT chk_order_total_amount_nonnegative CHECK ((total_amount >= 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Order Table';
+
+CREATE TABLE IF NOT EXISTS t_order_coupon_issue_task (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  order_id BIGINT NOT NULL COMMENT 'Order id',
+  order_no VARCHAR(64) NOT NULL COMMENT 'Order number',
+  user_id BIGINT NOT NULL COMMENT 'User id',
+  order_amount DECIMAL(10,2) NOT NULL COMMENT 'Order amount for coupon issue',
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING / SUCCESS / FAILED',
+  retry_count INT NOT NULL DEFAULT 0 COMMENT 'Retry count',
+  next_retry_time DATETIME NOT NULL COMMENT 'Next retry time',
+  last_error VARCHAR(500) DEFAULT NULL COMMENT 'Last error',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_order_no (order_no),
+  KEY idx_status_retry_time (status, next_retry_time),
+  KEY idx_order_id (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Coupon issue retry tasks';
 
 CREATE TABLE IF NOT EXISTS t_message_consume_log (
   id BIGINT NOT NULL AUTO_INCREMENT,

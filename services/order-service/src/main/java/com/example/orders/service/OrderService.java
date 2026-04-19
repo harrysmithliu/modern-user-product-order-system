@@ -43,6 +43,9 @@ public class OrderService {
     private final PaymentPlatformClient paymentPlatformClient;
     private final CouponPlatformProperties couponPlatformProperties;
     private final PaymentPlatformProperties paymentPlatformProperties;
+    private final ExternalCallGuard externalCallGuard;
+    private final OrderInFlightLockManager orderInFlightLockManager;
+    private final CouponIssueRetryService couponIssueRetryService;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -51,7 +54,10 @@ public class OrderService {
             CouponPlatformClient couponPlatformClient,
             PaymentPlatformClient paymentPlatformClient,
             CouponPlatformProperties couponPlatformProperties,
-            PaymentPlatformProperties paymentPlatformProperties
+            PaymentPlatformProperties paymentPlatformProperties,
+            ExternalCallGuard externalCallGuard,
+            OrderInFlightLockManager orderInFlightLockManager,
+            CouponIssueRetryService couponIssueRetryService
     ) {
         this.orderRepository = orderRepository;
         this.productClient = productClient;
@@ -60,6 +66,9 @@ public class OrderService {
         this.paymentPlatformClient = paymentPlatformClient;
         this.couponPlatformProperties = couponPlatformProperties;
         this.paymentPlatformProperties = paymentPlatformProperties;
+        this.externalCallGuard = externalCallGuard;
+        this.orderInFlightLockManager = orderInFlightLockManager;
+        this.couponIssueRetryService = couponIssueRetryService;
     }
 
     @Transactional
@@ -103,29 +112,9 @@ public class OrderService {
         }
     }
 
+    @Transactional
     public OrderResponse payOrder(RequestUser requestUser, Long orderId) {
-        OrderEntity entity = orderRepository.findByIdAndUserId(orderId, requestUser.userId())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order not found"));
-
-        if (isPaidOrPendingApprovalStatus(entity.getStatus())) {
-            return toResponse(entity);
-        }
-        if (!isPayingStatus(entity.getStatus())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Order is not waiting for payment");
-        }
-
-        entity = ensurePayableAmountPrepared(entity, requestUser.userId());
-        BigDecimal finalAmount = resolvePayableAmount(entity);
-        PaymentResult paymentResult = requestPayment(entity.getOrderNo(), requestUser.userId(), finalAmount);
-
-        entity.setStatus(OrderStatus.PAID_PENDING_APPROVAL.getCode());
-        entity.setPaymentTime(toLocalDateTime(paymentResult.completedAt()));
-        entity.setTotalAmount(finalAmount);
-        entity.setVersion(entity.getVersion() + 1);
-        OrderEntity saved = orderRepository.save(entity);
-        orderEventPublisher.publishCreated(saved, requestUser);
-        issueCouponAfterOrder(requestUser.userId(), finalAmount, saved.getOrderNo());
-        return toResponse(saved);
+        return orderInFlightLockManager.withOrderLock(orderId, () -> doPayOrder(requestUser, orderId));
     }
 
     @Transactional
@@ -139,7 +128,6 @@ public class OrderService {
 
         entity.setStatus(OrderStatus.CANCELLED.getCode());
         entity.setCancelTime(LocalDateTime.now());
-        entity.setVersion(entity.getVersion() + 1);
         OrderEntity saved = orderRepository.save(entity);
         productClient.releaseStock(saved.getProductId(), saved.getQuantity());
         orderEventPublisher.publishCancelled(saved, requestUser);
@@ -178,7 +166,6 @@ public class OrderService {
         entity.setApproveTime(shipTime);
         entity.setShipTime(shipTime);
         entity.setExpectedDeliveryTime(shipTime.plusDays(1));
-        entity.setVersion(entity.getVersion() + 1);
         OrderEntity saved = orderRepository.save(entity);
         orderEventPublisher.publishApproved(saved, requestUser);
         return toResponse(saved);
@@ -196,7 +183,6 @@ public class OrderService {
 
         entity.setStatus(OrderStatus.REFUNDING.getCode());
         entity.setRejectReason(request.rejectReason());
-        entity.setVersion(entity.getVersion() + 1);
         OrderEntity refunding = orderRepository.save(entity);
 
         BigDecimal refundAmount = resolveRefundAmount(refunding);
@@ -209,7 +195,6 @@ public class OrderService {
 
         refunding.setStatus(OrderStatus.REJECTED.getCode());
         refunding.setRefundTime(toLocalDateTime(refundResult.completedAt()));
-        refunding.setVersion(refunding.getVersion() + 1);
         OrderEntity saved = orderRepository.save(refunding);
         productClient.releaseStock(saved.getProductId(), saved.getQuantity());
         orderEventPublisher.publishRejected(saved, requestUser, request.rejectReason());
@@ -240,7 +225,10 @@ public class OrderService {
         if (!couponPlatformProperties.enabled()) {
             return new DiscountBreakdown(originAmount, ZERO);
         }
-        CouponClaimResult claim = couponPlatformClient.claimBestCoupon(userId, originAmount, orderNo);
+        CouponClaimResult claim = externalCallGuard.callSync(
+                "coupon-claim",
+                () -> couponPlatformClient.claimBestCoupon(userId, originAmount, orderNo)
+        );
         BigDecimal discountAmount = claim.discountAmount() == null ? ZERO : claim.discountAmount();
         BigDecimal finalAmount = claim.finalAmount() == null ? originAmount : claim.finalAmount();
         return new DiscountBreakdown(finalAmount, discountAmount);
@@ -250,25 +238,36 @@ public class OrderService {
         if (!paymentPlatformProperties.enabled()) {
             return new PaymentResult(true, "pay_skipped_" + orderNo, finalAmount, Instant.now(), "Payment skipped");
         }
-        return paymentPlatformClient.pay(orderNo, userId, finalAmount);
+        return externalCallGuard.callSync(
+                "payment-pay",
+                () -> paymentPlatformClient.pay(orderNo, userId, finalAmount)
+        );
     }
 
     private RefundResult refundOrder(String orderNo, Long userId, BigDecimal refundAmount, String reason) {
         if (!paymentPlatformProperties.enabled()) {
             return new RefundResult(true, "refund_skipped_" + orderNo, refundAmount, Instant.now(), "Refund skipped");
         }
-        return paymentPlatformClient.refund(orderNo, userId, refundAmount, reason);
+        return externalCallGuard.callSync(
+                "payment-refund",
+                () -> paymentPlatformClient.refund(orderNo, userId, refundAmount, reason)
+        );
     }
 
-    private void issueCouponAfterOrder(Long userId, BigDecimal orderAmount, String orderNo) {
+    private void issueCouponAfterOrder(Long orderId, Long userId, BigDecimal orderAmount, String orderNo) {
         if (!couponPlatformProperties.enabled()) {
             return;
         }
-        try {
-            couponPlatformClient.issueCoupon(userId, orderAmount, orderNo);
-        } catch (RuntimeException ex) {
-            log.warn("coupon issue failed user_id={} amount={} error={}", userId, orderAmount, ex.getMessage());
-        }
+        externalCallGuard.callAsync(
+                "coupon-issue",
+                () -> {
+                    couponPlatformClient.issueCoupon(userId, orderAmount, orderNo);
+                },
+                ex -> {
+                    log.warn("coupon issue failed user_id={} amount={} order_no={} error={}", userId, orderAmount, orderNo, ex.getMessage());
+                    couponIssueRetryService.scheduleRetry(orderId, orderNo, userId, orderAmount, ex.getMessage());
+                }
+        );
     }
 
     private LocalDateTime toLocalDateTime(Instant instant) {
@@ -285,7 +284,6 @@ public class OrderService {
         entity.setDiscountAmount(discount.discountAmount());
         entity.setFinalAmount(discount.finalAmount());
         entity.setTotalAmount(discount.finalAmount());
-        entity.setVersion(entity.getVersion() + 1);
         return orderRepository.save(entity);
     }
 
@@ -317,6 +315,30 @@ public class OrderService {
     }
 
     private record DiscountBreakdown(BigDecimal finalAmount, BigDecimal discountAmount) {
+    }
+
+    private OrderResponse doPayOrder(RequestUser requestUser, Long orderId) {
+        OrderEntity entity = orderRepository.findByIdAndUserId(orderId, requestUser.userId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        if (isPaidOrPendingApprovalStatus(entity.getStatus())) {
+            return toResponse(entity);
+        }
+        if (!isPayingStatus(entity.getStatus())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Order is not waiting for payment");
+        }
+
+        entity = ensurePayableAmountPrepared(entity, requestUser.userId());
+        BigDecimal finalAmount = resolvePayableAmount(entity);
+        PaymentResult paymentResult = requestPayment(entity.getOrderNo(), requestUser.userId(), finalAmount);
+
+        entity.setStatus(OrderStatus.PAID_PENDING_APPROVAL.getCode());
+        entity.setPaymentTime(toLocalDateTime(paymentResult.completedAt()));
+        entity.setTotalAmount(finalAmount);
+        OrderEntity saved = orderRepository.save(entity);
+        orderEventPublisher.publishCreated(saved, requestUser);
+        issueCouponAfterOrder(saved.getId(), requestUser.userId(), finalAmount, saved.getOrderNo());
+        return toResponse(saved);
     }
 
     private Pageable buildPageRequest(int page, int size) {

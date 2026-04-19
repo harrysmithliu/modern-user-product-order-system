@@ -26,6 +26,7 @@ Notes
   - payment step is skipped but pay API still returns success
 - Payment simulation has a 30% random timeout probability (`HTTP 504`)
 - Coupon issue may also fail (for example 30% failure on upstream side); current design is best-effort and non-blocking for checkout success
+- When coupon issue fails, backend now schedules retry tasks asynchronously (frontend flow stays unchanged)
 
 
 2. Admin Workflow
@@ -137,8 +138,8 @@ Order object (`data`) includes:
 
 7. Order Status Dictionary (`status` / `status_label`)
 ------------------------------------------------------
-- `0` = `PENDING_APPROVAL`
-- `1` = `APPROVED`
+- `0` = `PENDING_APPROVAL` (legacy)
+- `1` = `APPROVED` (legacy)
 - `2` = `REJECTED`
 - `3` = `CANCELLED`
 - `4` = `PAYING`
@@ -146,6 +147,9 @@ Order object (`data`) includes:
 - `6` = `SHIPPING`
 - `7` = `COMPLETED`
 - `8` = `REFUNDING`
+
+Compatibility note:
+- status `0/1` is kept for historical-order compatibility; new checkout flow should create `4 (PAYING)` first, then move to `5/6/2/3/8` based on later actions.
 
 Frontend recommendation:
 - use `status_label` for display text

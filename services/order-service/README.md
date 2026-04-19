@@ -47,6 +47,7 @@ Phase 3 workflow preparation columns:
 Additional Phase 2 table:
 
 - `t_order_outbox`
+- `t_order_coupon_issue_task`
 
 ## Important Environment Requirement
 
@@ -130,6 +131,14 @@ Workflow integration toggles (Phase 3 preparation, disabled by default):
 - `APP_PAYMENT_PLATFORM_REFUND_DELAY_MS`
 - `APP_PAYMENT_PLATFORM_CONNECT_TIMEOUT_MS`
 - `APP_PAYMENT_PLATFORM_READ_TIMEOUT_MS`
+- `APP_WORKFLOW_EXECUTOR_CORE_POOL_SIZE`
+- `APP_WORKFLOW_EXECUTOR_MAX_POOL_SIZE`
+- `APP_WORKFLOW_EXECUTOR_QUEUE_CAPACITY`
+- `APP_WORKFLOW_EXTERNAL_SEMAPHORE_PERMITS`
+- `APP_WORKFLOW_SEMAPHORE_ACQUIRE_TIMEOUT_MS`
+- `APP_WORKFLOW_COUPON_ISSUE_RETRY_FIXED_DELAY_MS`
+- `APP_WORKFLOW_COUPON_ISSUE_RETRY_DELAY_SECONDS`
+- `APP_WORKFLOW_COUPON_ISSUE_MAX_RETRIES`
 
 ## Docker
 
@@ -155,6 +164,100 @@ Workflow integration toggles (Phase 3 preparation, disabled by default):
 - Coupon claim and payment simulation run during the pay step, not the create step.
 - If order persistence fails after stock reservation, the service currently attempts stock release as compensation.
 - RabbitMQ delivery now goes through `t_order_outbox`, so order transactions and event staging happen together before relay publishing.
+
+## Concurrency Flow
+
+The pay path uses a dedicated workflow thread pool, a semaphore guard for external calls, and a per-order lock for the same `order_id`.
+This keeps concurrent retries safe while still allowing different orders to proceed in parallel.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as "FrontEnd"
+    participant OS as "OrderService"
+    participant LKM as "OrderInFlightLockManager"
+    participant EAG as "ExternalCallGuard"
+    participant TP as "orderWorkflowExecutor"
+    participant SEM as "orderExternalCallSemaphore"
+    participant CP as "CouponPlatformClient"
+    participant PP as "PaymentPlatformClient"
+    participant RY as "CouponIssueRetryService"
+
+    FE->>OS: POST /orders/{id}/pay
+    OS->>LKM: withOrderLock(orderId)
+    LKM->>OS: doPayOrder()
+
+    OS->>EAG: callSync("coupon-claim")
+    EAG->>SEM: tryAcquire()
+    SEM-->>EAG: permit acquired
+    EAG->>TP: submit task
+    TP->>CP: claimBestCoupon(...)
+    CP-->>TP: coupon result
+    TP-->>EAG: result
+    EAG->>SEM: release()
+
+    OS->>EAG: callSync("payment-pay")
+    EAG->>SEM: tryAcquire()
+    SEM-->>EAG: permit acquired
+    EAG->>TP: submit task
+    TP->>PP: pay(...)
+    PP-->>TP: payment result
+    TP-->>EAG: result
+    EAG->>SEM: release()
+
+    OS->>OS: save status = PAID_PENDING_APPROVAL
+
+    OS->>EAG: callAsync("coupon-issue")
+    EAG->>SEM: tryAcquire()
+    SEM-->>EAG: permit acquired
+    EAG->>TP: submit task
+    TP->>CP: issueCoupon(...)
+    alt success
+        CP-->>TP: success
+        TP->>SEM: release()
+    else failure
+        CP-->>TP: error
+        TP->>SEM: release()
+        TP-->>RY: onFailure(error)
+        RY->>RY: write retry task and schedule retry
+    end
+```
+
+## Component Map
+
+This map shows how the concurrency-related pieces in `order-service` relate to each other.
+`WorkflowConcurrencyConfig` creates the shared executor and semaphore, `OrderInFlightLockManager` protects the same order id, and `ExternalCallGuard` wraps all external calls through the shared concurrency tools.
+
+```mermaid
+flowchart LR
+    FE["FrontEnd / Gateway"]
+    OS["OrderService"]
+    CFG["WorkflowConcurrencyConfig"]
+    PROP["WorkflowProperties"]
+    TP["orderWorkflowExecutor"]
+    SEM["orderExternalCallSemaphore"]
+    LKM["OrderInFlightLockManager"]
+    EAG["ExternalCallGuard"]
+    CP["CouponPlatformClient"]
+    PP["PaymentPlatformClient"]
+    RY["CouponIssueRetryService"]
+
+    PROP --> CFG
+    CFG --> TP
+    CFG --> SEM
+    OS --> LKM
+    OS --> EAG
+    EAG --> TP
+    EAG --> SEM
+    OS --> CP
+    OS --> PP
+    OS --> RY
+    FE --> OS
+
+    style CFG fill:#eef6ff,stroke:#4b82c3,stroke-width:1px
+    style EAG fill:#fff4e6,stroke:#d98c00,stroke-width:1px
+    style LKM fill:#eefaf0,stroke:#3a9d5d,stroke-width:1px
+```
 
 ## Near-Term TODO
 
