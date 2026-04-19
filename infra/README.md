@@ -97,11 +97,11 @@ These files are designed to turn the current local Kubernetes validation into a 
 The infrastructure automation now follows a shared validation layer with two separate deployment targets:
 
 - shared CI
-  - [ci.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/ci.yml) validates the frontend, Python services, and Java order service across the mainline branches and the EC2 demo branch
+  - [ci.yml](../.github/workflows/ci.yml) validates the frontend, Python services, and Java order service across the mainline branches and the EC2 demo branch
 - AWS / EKS deployment route
-  - [deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml) is a manual production deployment skeleton for the `main` branch ECR and EKS rollout automation
+  - [deploy-aws-prod.yml](../.github/workflows/deploy-aws-prod.yml) is a manual production deployment skeleton for the `main` branch ECR and EKS rollout automation
 - EC2 online demo CD
-  - [deploy-sandbox-ec2.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-sandbox-ec2.yml) deploys the `sandbox-ec2-online` branch to the long-running EC2 demo environment
+  - [deploy-sandbox-ec2.yml](../.github/workflows/deploy-sandbox-ec2.yml) deploys the `sandbox-ec2-online` branch to the long-running EC2 demo environment
 
 ## Branch Mapping
 

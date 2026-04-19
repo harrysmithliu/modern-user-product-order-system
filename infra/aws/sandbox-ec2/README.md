@@ -256,7 +256,7 @@ curl -fsS https://${APP_DOMAIN}/api/health
 
 For the shortest operator checklist, see:
 
-- [workday-operations-quickstart.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/infra/aws/sandbox-ec2/workday-operations-quickstart.md)
+- [workday-operations-quickstart.md](workday-operations-quickstart.md)
 
 ## URLs After HTTPS
 
@@ -405,5 +405,5 @@ demo environment.
 
 For the full cloud-native production track, keep using:
 
-- [infra/aws/prod/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/infra/aws/prod/README.md)
-- [infra/k8s/prod/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/infra/k8s/prod/README.md)
+- [infra/aws/prod/README.md](../prod/README.md)
+- [infra/k8s/prod/README.md](../../k8s/prod/README.md)

@@ -20,7 +20,7 @@ RabbitMQ event development should be validated in the local `dev` runtime first:
 docker compose --env-file infra/docker/.env.dev.example -f infra/docker/docker-compose.dev.yml up -d --build
 ```
 
-The `dev` stack is allowed to reuse host-managed infrastructure, including local containers such as `local-mysql` and `rmq`.
+The `dev` stack is allowed to reuse host-managed infrastructure, including local containers such as `local-mysql`, `rmq`, `local-mongodb`, and `local-redis`.
 
 For RabbitMQ event work, inspect the local notification worker after you trigger order actions:
 

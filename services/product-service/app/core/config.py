@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     redis_db: int = 0
     redis_password: str | None = None
     redis_cache_ttl_seconds: int = 120
+    internal_api_token: str = "change-me-internal-token"
+    coupon_rate_limit_window_seconds: int = 60
+    coupon_issue_rate_limit_max_requests: int = 30
+    coupon_claim_rate_limit_max_requests: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",
