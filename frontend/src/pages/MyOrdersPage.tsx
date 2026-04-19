@@ -1,10 +1,22 @@
-import { App as AntApp, Button, Card, Popconfirm, Space, Table, Tag, Typography } from "antd";
+import { App as AntApp, Button, Card, Descriptions, Modal, Popconfirm, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import { getApiErrorMessage, getApiErrorStatus } from "../api/errors";
-import { cancelOrder, listMyOrders, payOrder } from "../api/services";
+import {
+  cancelOrder,
+  fetchIssuedCouponByOrder,
+  fetchMyCouponBalances,
+  fetchSelectedCouponByOrder,
+  listMyOrders,
+  payOrder,
+} from "../api/services";
 import { ORDER_STATUS } from "../api/types";
-import type { Order } from "../api/types";
+import type {
+  Order,
+  OrderIssuedCouponResponse,
+  OrderSelectedCouponResponse,
+  UserCouponBalanceResponse,
+} from "../api/types";
 import { PageHeader } from "../components/PageHeader";
 import { formatCny, formatLocalDateTime } from "../utils/formatters";
 
@@ -20,6 +32,12 @@ const statusColorMap: Record<string, string> = {
   REFUNDING: "volcano",
 };
 
+const couponTypeLabels: Record<number, string> = {
+  10: "10% Coupon",
+  20: "20% Coupon",
+  30: "30% Coupon",
+};
+
 function canCancelOrder(status: number): boolean {
   return (
     status === ORDER_STATUS.PAYING ||
@@ -28,12 +46,31 @@ function canCancelOrder(status: number): boolean {
   );
 }
 
+function formatRate(rate: string | undefined): string {
+  if (!rate) {
+    return "-";
+  }
+  const parsed = Number(rate);
+  if (Number.isNaN(parsed)) {
+    return rate;
+  }
+  return `${Math.round(parsed * 100)}%`;
+}
+
 export function MyOrdersPage() {
   const [items, setItems] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [couponBalances, setCouponBalances] = useState<UserCouponBalanceResponse | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponDetailOrderNo, setCouponDetailOrderNo] = useState<string | null>(null);
+  const [couponDetailLoading, setCouponDetailLoading] = useState(false);
+  const [issuedCoupon, setIssuedCoupon] = useState<OrderIssuedCouponResponse | null>(null);
+  const [selectedCoupon, setSelectedCoupon] = useState<OrderSelectedCouponResponse | null>(null);
+  const [issuedCouponNotFound, setIssuedCouponNotFound] = useState(false);
+  const [selectedCouponNotFound, setSelectedCouponNotFound] = useState(false);
   const { message } = AntApp.useApp();
 
   async function loadOrders(nextPage = page, nextSize = size) {
@@ -51,8 +88,59 @@ export function MyOrdersPage() {
     }
   }
 
+  async function loadCouponBalances() {
+    setCouponLoading(true);
+    try {
+      const data = await fetchMyCouponBalances();
+      setCouponBalances(data);
+    } catch (error) {
+      message.error(getApiErrorMessage(error) || "Failed to load coupon balances.");
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  async function openCouponDetail(orderNo: string) {
+    setCouponDetailOrderNo(orderNo);
+    setCouponDetailLoading(true);
+    setIssuedCoupon(null);
+    setSelectedCoupon(null);
+    setIssuedCouponNotFound(false);
+    setSelectedCouponNotFound(false);
+
+    const [issuedResult, selectedResult] = await Promise.allSettled([
+      fetchIssuedCouponByOrder(orderNo),
+      fetchSelectedCouponByOrder(orderNo),
+    ]);
+
+    if (issuedResult.status === "fulfilled") {
+      setIssuedCoupon(issuedResult.value);
+    } else {
+      const status = getApiErrorStatus(issuedResult.reason);
+      if (status === 404) {
+        setIssuedCouponNotFound(true);
+      } else {
+        message.error(getApiErrorMessage(issuedResult.reason) || "Failed to query issued coupon record.");
+      }
+    }
+
+    if (selectedResult.status === "fulfilled") {
+      setSelectedCoupon(selectedResult.value);
+    } else {
+      const status = getApiErrorStatus(selectedResult.reason);
+      if (status === 404) {
+        setSelectedCouponNotFound(true);
+      } else {
+        message.error(getApiErrorMessage(selectedResult.reason) || "Failed to query selected coupon record.");
+      }
+    }
+
+    setCouponDetailLoading(false);
+  }
+
   useEffect(() => {
     void loadOrders();
+    void loadCouponBalances();
   }, []);
 
   const columns: ColumnsType<Order> = [
@@ -114,12 +202,9 @@ export function MyOrdersPage() {
         const canPay = record.status === ORDER_STATUS.PAYING;
         const canCancel = canCancelOrder(record.status);
 
-        if (!canPay && !canCancel) {
-          return <Typography.Text type="secondary">-</Typography.Text>;
-        }
-
         return (
-          <Space>
+          <Space wrap>
+            <Button onClick={() => void openCouponDetail(record.order_no)}>Coupon Detail</Button>
             {canPay ? (
               <Popconfirm
                 title="Confirm payment?"
@@ -138,6 +223,7 @@ export function MyOrdersPage() {
                     }
                   } finally {
                     void loadOrders(page, size);
+                    void loadCouponBalances();
                   }
                 }}
               >
@@ -170,12 +256,27 @@ export function MyOrdersPage() {
     },
   ];
 
+  const couponItems = couponBalances?.items ?? [];
+  const couponQuantityByType = new Map<number, number>(couponItems.map((item) => [item.coupon_type, item.quantity]));
+  const couponRateByType = new Map<number, string>(couponItems.map((item) => [item.coupon_type, item.discount_rate]));
+
   return (
     <Space direction="vertical" size={20} style={{ width: "100%" }}>
       <PageHeader
         title="My Orders"
         subtitle="Create order then pay in this list. Payment timeout can be retried, and shipping ETA/refund details are shown here."
       />
+      <Card title="Coupon Center" bordered={false} loading={couponLoading}>
+        <Space wrap size={10}>
+          {[10, 20, 30].map((couponType) => (
+            <Tag key={couponType} color={(couponQuantityByType.get(couponType) || 0) > 0 ? "green" : "default"}>
+              {`${couponTypeLabels[couponType]} (${formatRate(couponRateByType.get(couponType))}) · Remaining ${
+                couponQuantityByType.get(couponType) || 0
+              }`}
+            </Tag>
+          ))}
+        </Space>
+      </Card>
       <Card bordered={false}>
         <Table
           rowKey="id"
@@ -192,6 +293,72 @@ export function MyOrdersPage() {
           }}
         />
       </Card>
+      <CouponOrderDetailModal
+        orderNo={couponDetailOrderNo}
+        loading={couponDetailLoading}
+        issuedCoupon={issuedCoupon}
+        selectedCoupon={selectedCoupon}
+        issuedCouponNotFound={issuedCouponNotFound}
+        selectedCouponNotFound={selectedCouponNotFound}
+        onClose={() => setCouponDetailOrderNo(null)}
+      />
     </Space>
+  );
+}
+
+function CouponOrderDetailModal(props: {
+  orderNo: string | null;
+  loading: boolean;
+  issuedCoupon: OrderIssuedCouponResponse | null;
+  selectedCoupon: OrderSelectedCouponResponse | null;
+  issuedCouponNotFound: boolean;
+  selectedCouponNotFound: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <Modal
+      open={Boolean(props.orderNo)}
+      title={props.orderNo ? `Coupon Detail · ${props.orderNo}` : "Coupon Detail"}
+      footer={null}
+      onCancel={props.onClose}
+    >
+      {props.loading ? (
+        <Typography.Text type="secondary">Loading coupon records...</Typography.Text>
+      ) : (
+        <Space direction="vertical" size={16} style={{ width: "100%" }}>
+          <Card size="small" title="Selected For Payment">
+            {props.selectedCoupon ? (
+              <Descriptions size="small" column={1}>
+                <Descriptions.Item label="Claimed">{props.selectedCoupon.claimed ? "Yes" : "No"}</Descriptions.Item>
+                <Descriptions.Item label="Coupon Type">{props.selectedCoupon.coupon_type}</Descriptions.Item>
+                <Descriptions.Item label="Discount Rate">{formatRate(props.selectedCoupon.discount_rate)}</Descriptions.Item>
+                <Descriptions.Item label="Discount Amount">{`CNY ${props.selectedCoupon.discount_amount}`}</Descriptions.Item>
+                <Descriptions.Item label="Final Amount">{`CNY ${props.selectedCoupon.final_amount}`}</Descriptions.Item>
+                <Descriptions.Item label="Message">{props.selectedCoupon.message}</Descriptions.Item>
+              </Descriptions>
+            ) : (
+              <Typography.Text type="secondary">
+                {props.selectedCouponNotFound ? "No coupon selection record for this order." : "No data."}
+              </Typography.Text>
+            )}
+          </Card>
+          <Card size="small" title="Issued After Payment">
+            {props.issuedCoupon ? (
+              <Descriptions size="small" column={1}>
+                <Descriptions.Item label="Issued">{props.issuedCoupon.issued ? "Yes" : "No"}</Descriptions.Item>
+                <Descriptions.Item label="Coupon Type">{props.issuedCoupon.coupon_type}</Descriptions.Item>
+                <Descriptions.Item label="Discount Rate">{formatRate(props.issuedCoupon.discount_rate)}</Descriptions.Item>
+                <Descriptions.Item label="Balance After Issue">{props.issuedCoupon.balance_after_issue}</Descriptions.Item>
+                <Descriptions.Item label="Message">{props.issuedCoupon.message}</Descriptions.Item>
+              </Descriptions>
+            ) : (
+              <Typography.Text type="secondary">
+                {props.issuedCouponNotFound ? "No coupon issue record for this order." : "No data."}
+              </Typography.Text>
+            )}
+          </Card>
+        </Space>
+      )}
+    </Modal>
   );
 }

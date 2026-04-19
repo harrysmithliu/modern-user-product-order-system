@@ -68,6 +68,40 @@ export interface Order {
   update_time: string | null;
 }
 
+export interface UserCouponBalanceItem {
+  coupon_type: number;
+  discount_rate: string;
+  quantity: number;
+}
+
+export interface UserCouponBalanceResponse {
+  user_id: number;
+  items: UserCouponBalanceItem[];
+}
+
+export interface OrderIssuedCouponResponse {
+  user_id: number;
+  order_no: string;
+  order_amount: string;
+  issued: boolean;
+  coupon_type: number;
+  discount_rate: string;
+  balance_after_issue: number;
+  message: string;
+}
+
+export interface OrderSelectedCouponResponse {
+  user_id: number;
+  order_no: string;
+  order_amount: string;
+  claimed: boolean;
+  coupon_type: number;
+  discount_rate: string;
+  discount_amount: string;
+  final_amount: string;
+  message: string;
+}
+
 export const ORDER_STATUS = {
   PENDING_APPROVAL: 0,
   APPROVED: 1,
