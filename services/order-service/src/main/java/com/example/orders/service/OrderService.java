@@ -1,8 +1,12 @@
 package com.example.orders.service;
 
+import com.example.orders.config.CouponPlatformProperties;
+import com.example.orders.config.PaymentPlatformProperties;
+import com.example.orders.dto.CouponClaimResult;
 import com.example.orders.dto.CreateOrderRequest;
 import com.example.orders.dto.OrderResponse;
 import com.example.orders.dto.PageResponse;
+import com.example.orders.dto.PaymentResult;
 import com.example.orders.dto.ProductSnapshot;
 import com.example.orders.dto.ReviewOrderRequest;
 import com.example.orders.entity.OrderEntity;
@@ -12,8 +16,11 @@ import com.example.orders.repository.OrderRepository;
 import com.example.orders.security.RequestUser;
 import com.example.orders.util.OrderNoGenerator;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,18 +32,33 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+    private static final BigDecimal ZERO = BigDecimal.ZERO;
+
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
     private final OrderEventPublisher orderEventPublisher;
+    private final CouponPlatformClient couponPlatformClient;
+    private final PaymentPlatformClient paymentPlatformClient;
+    private final CouponPlatformProperties couponPlatformProperties;
+    private final PaymentPlatformProperties paymentPlatformProperties;
 
     public OrderService(
             OrderRepository orderRepository,
             ProductClient productClient,
-            OrderEventPublisher orderEventPublisher
+            OrderEventPublisher orderEventPublisher,
+            CouponPlatformClient couponPlatformClient,
+            PaymentPlatformClient paymentPlatformClient,
+            CouponPlatformProperties couponPlatformProperties,
+            PaymentPlatformProperties paymentPlatformProperties
     ) {
         this.orderRepository = orderRepository;
         this.productClient = productClient;
         this.orderEventPublisher = orderEventPublisher;
+        this.couponPlatformClient = couponPlatformClient;
+        this.paymentPlatformClient = paymentPlatformClient;
+        this.couponPlatformProperties = couponPlatformProperties;
+        this.paymentPlatformProperties = paymentPlatformProperties;
     }
 
     @Transactional
@@ -56,23 +78,33 @@ public class OrderService {
         }
 
         ProductSnapshot reserved = productClient.reserveStock(request.productId(), request.quantity());
+        String orderNo = OrderNoGenerator.next();
+        BigDecimal originAmount = reserved.price().multiply(BigDecimal.valueOf(request.quantity()));
+        DiscountBreakdown discount = claimBestCoupon(requestUser.userId(), originAmount);
+        PaymentResult paymentResult = payOrder(orderNo, requestUser.userId(), discount.finalAmount());
 
         try {
             OrderEntity entity = new OrderEntity();
-            entity.setOrderNo(OrderNoGenerator.next());
+            entity.setOrderNo(orderNo);
             entity.setRequestNo(request.requestNo());
             entity.setUserId(requestUser.userId());
             entity.setProductId(request.productId());
             entity.setQuantity(request.quantity());
-            entity.setTotalAmount(reserved.price().multiply(BigDecimal.valueOf(request.quantity())));
-            entity.setStatus(OrderStatus.PENDING_APPROVAL.getCode());
+            entity.setTotalAmount(discount.finalAmount());
+            entity.setOriginAmount(originAmount);
+            entity.setDiscountAmount(discount.discountAmount());
+            entity.setFinalAmount(discount.finalAmount());
+            entity.setStatus(OrderStatus.PAID_PENDING_APPROVAL.getCode());
+            entity.setPaymentTime(toLocalDateTime(paymentResult.completedAt()));
             entity.setVersion(0);
 
             OrderEntity saved = orderRepository.save(entity);
             orderEventPublisher.publishCreated(saved, requestUser);
+            issueCouponAfterOrder(requestUser.userId(), discount.finalAmount());
             return toResponse(saved);
         } catch (RuntimeException ex) {
             productClient.releaseStock(request.productId(), request.quantity());
+            tryRefundAfterPersistFailure(orderNo, requestUser.userId(), discount.finalAmount());
             throw ex;
         }
     }
@@ -82,7 +114,7 @@ public class OrderService {
         OrderEntity entity = orderRepository.findByIdAndUserId(orderId, requestUser.userId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order not found"));
 
-        if (!entity.getStatus().equals(OrderStatus.PENDING_APPROVAL.getCode())) {
+        if (!isPendingApprovalStatus(entity.getStatus())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Only pending approval orders can be cancelled");
         }
 
@@ -118,7 +150,7 @@ public class OrderService {
         OrderEntity entity = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order not found"));
 
-        if (!entity.getStatus().equals(OrderStatus.PENDING_APPROVAL.getCode())) {
+        if (!isPendingApprovalStatus(entity.getStatus())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Order is not pending approval");
         }
 
@@ -136,7 +168,7 @@ public class OrderService {
         OrderEntity entity = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order not found"));
 
-        if (!entity.getStatus().equals(OrderStatus.PENDING_APPROVAL.getCode())) {
+        if (!isPendingApprovalStatus(entity.getStatus())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Order is not pending approval");
         }
 
@@ -153,6 +185,58 @@ public class OrderService {
         if (!requestUser.isAdmin()) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Admin role required");
         }
+    }
+
+    private boolean isPendingApprovalStatus(Integer status) {
+        return status != null
+                && (OrderStatus.PENDING_APPROVAL.getCode() == status
+                || OrderStatus.PAID_PENDING_APPROVAL.getCode() == status);
+    }
+
+    private DiscountBreakdown claimBestCoupon(Long userId, BigDecimal originAmount) {
+        if (!couponPlatformProperties.enabled()) {
+            return new DiscountBreakdown(originAmount, ZERO);
+        }
+        CouponClaimResult claim = couponPlatformClient.claimBestCoupon(userId, originAmount);
+        BigDecimal discountAmount = claim.discountAmount() == null ? ZERO : claim.discountAmount();
+        BigDecimal finalAmount = claim.finalAmount() == null ? originAmount : claim.finalAmount();
+        return new DiscountBreakdown(finalAmount, discountAmount);
+    }
+
+    private PaymentResult payOrder(String orderNo, Long userId, BigDecimal finalAmount) {
+        if (!paymentPlatformProperties.enabled()) {
+            return new PaymentResult(true, "pay_skipped_" + orderNo, finalAmount, Instant.now(), "Payment skipped");
+        }
+        return paymentPlatformClient.pay(orderNo, userId, finalAmount);
+    }
+
+    private void issueCouponAfterOrder(Long userId, BigDecimal orderAmount) {
+        if (!couponPlatformProperties.enabled()) {
+            return;
+        }
+        try {
+            couponPlatformClient.issueCoupon(userId, orderAmount);
+        } catch (RuntimeException ex) {
+            log.warn("coupon issue failed user_id={} amount={} error={}", userId, orderAmount, ex.getMessage());
+        }
+    }
+
+    private void tryRefundAfterPersistFailure(String orderNo, Long userId, BigDecimal finalAmount) {
+        if (!paymentPlatformProperties.enabled()) {
+            return;
+        }
+        try {
+            paymentPlatformClient.refund(orderNo, userId, finalAmount, "order persistence failure");
+        } catch (RuntimeException ex) {
+            log.warn("payment refund failed order_no={} user_id={} error={}", orderNo, userId, ex.getMessage());
+        }
+    }
+
+    private LocalDateTime toLocalDateTime(Instant instant) {
+        return instant == null ? LocalDateTime.now() : LocalDateTime.ofInstant(instant, java.time.ZoneOffset.UTC);
+    }
+
+    private record DiscountBreakdown(BigDecimal finalAmount, BigDecimal discountAmount) {
     }
 
     private Pageable buildPageRequest(int page, int size) {
