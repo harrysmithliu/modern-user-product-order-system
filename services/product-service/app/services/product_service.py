@@ -10,16 +10,25 @@ from sqlalchemy.orm import Session
 from app.core.cache import (
     bump_catalog_version,
     claim_best_coupon_balance,
+    get_coupon_balance_snapshot,
+    get_coupon_claim_record,
+    get_coupon_issue_record,
     increment_rate_limit,
     issue_coupon_balance,
+    set_coupon_claim_record,
+    set_coupon_issue_record,
 )
 from app.core.config import settings
 from app.models.product import Product
 from app.schemas.product import (
+    CouponBalanceItem,
     CouponClaimBestResponse,
     CouponIssueResponse,
     ProductCreateRequest,
     ProductUpdateRequest,
+    UserCouponBalanceResponse,
+    UserOrderCouponIssueResponse,
+    UserOrderCouponSelectionResponse,
 )
 
 COUPON_RATE_MAP: dict[int, Decimal] = {
@@ -149,7 +158,12 @@ def _claim_allowed_coupon_types(order_amount: Decimal) -> list[int]:
     return []
 
 
-def issue_coupon_for_order(_: Session, user_id: int, order_amount: Decimal) -> CouponIssueResponse:
+def issue_coupon_for_order(
+    _: Session,
+    user_id: int,
+    order_amount: Decimal,
+    order_no: str | None = None,
+) -> CouponIssueResponse:
     amount = _round_money(order_amount)
     rate_limit_key = f"product-service:coupon:ratelimit:issue:user:{user_id}"
     current = increment_rate_limit(rate_limit_key, settings.coupon_rate_limit_window_seconds)
@@ -158,18 +172,26 @@ def issue_coupon_for_order(_: Session, user_id: int, order_amount: Decimal) -> C
 
     coupon_type = _select_issue_coupon_type(amount)
     if coupon_type is None:
-        return CouponIssueResponse(
+        response = CouponIssueResponse(
             user_id=user_id,
             order_amount=amount,
             issued=False,
             message="Order amount does not meet issue threshold",
         )
+        if order_no:
+            set_coupon_issue_record(
+                user_id=user_id,
+                order_no=order_no,
+                payload=response.model_dump(mode="json"),
+                ttl_seconds=settings.coupon_order_record_ttl_seconds,
+            )
+        return response
 
     balance_after_issue = issue_coupon_balance(user_id, coupon_type)
     if balance_after_issue is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Coupon engine unavailable")
 
-    return CouponIssueResponse(
+    response = CouponIssueResponse(
         user_id=user_id,
         order_amount=amount,
         issued=True,
@@ -178,9 +200,22 @@ def issue_coupon_for_order(_: Session, user_id: int, order_amount: Decimal) -> C
         balance_after_issue=balance_after_issue,
         message="Coupon issued",
     )
+    if order_no:
+        set_coupon_issue_record(
+            user_id=user_id,
+            order_no=order_no,
+            payload=response.model_dump(mode="json"),
+            ttl_seconds=settings.coupon_order_record_ttl_seconds,
+        )
+    return response
 
 
-def claim_best_coupon_for_order(_: Session, user_id: int, order_amount: Decimal) -> CouponClaimBestResponse:
+def claim_best_coupon_for_order(
+    _: Session,
+    user_id: int,
+    order_amount: Decimal,
+    order_no: str | None = None,
+) -> CouponClaimBestResponse:
     amount = _round_money(order_amount)
     rate_limit_key = f"product-service:coupon:ratelimit:claim:user:{user_id}"
     current = increment_rate_limit(rate_limit_key, settings.coupon_rate_limit_window_seconds)
@@ -189,32 +224,48 @@ def claim_best_coupon_for_order(_: Session, user_id: int, order_amount: Decimal)
 
     allowed_types = _claim_allowed_coupon_types(amount)
     if not allowed_types:
-        return CouponClaimBestResponse(
+        response = CouponClaimBestResponse(
             user_id=user_id,
             order_amount=amount,
             claimed=False,
             final_amount=amount,
             message="Order amount does not meet claim threshold",
         )
+        if order_no:
+            set_coupon_claim_record(
+                user_id=user_id,
+                order_no=order_no,
+                payload=response.model_dump(mode="json"),
+                ttl_seconds=settings.coupon_order_record_ttl_seconds,
+            )
+        return response
 
     claimed_coupon_type = claim_best_coupon_balance(user_id, allowed_types)
     if claimed_coupon_type is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Coupon engine unavailable")
     if claimed_coupon_type == 0:
-        return CouponClaimBestResponse(
+        response = CouponClaimBestResponse(
             user_id=user_id,
             order_amount=amount,
             claimed=False,
             final_amount=amount,
             message="No eligible coupon available",
         )
+        if order_no:
+            set_coupon_claim_record(
+                user_id=user_id,
+                order_no=order_no,
+                payload=response.model_dump(mode="json"),
+                ttl_seconds=settings.coupon_order_record_ttl_seconds,
+            )
+        return response
     if claimed_coupon_type not in COUPON_RATE_MAP:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Invalid coupon type claimed")
 
     discount_rate = COUPON_RATE_MAP[claimed_coupon_type]
     discount_amount = _round_money(amount * discount_rate)
     final_amount = _round_money(amount - discount_amount)
-    return CouponClaimBestResponse(
+    response = CouponClaimBestResponse(
         user_id=user_id,
         order_amount=amount,
         claimed=True,
@@ -224,6 +275,43 @@ def claim_best_coupon_for_order(_: Session, user_id: int, order_amount: Decimal)
         final_amount=final_amount,
         message="Coupon claimed",
     )
+    if order_no:
+        set_coupon_claim_record(
+            user_id=user_id,
+            order_no=order_no,
+            payload=response.model_dump(mode="json"),
+            ttl_seconds=settings.coupon_order_record_ttl_seconds,
+        )
+    return response
+
+
+def get_user_coupon_balances(_: Session, user_id: int) -> UserCouponBalanceResponse:
+    snapshot = get_coupon_balance_snapshot(user_id)
+    if snapshot is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Coupon engine unavailable")
+    items = [
+        CouponBalanceItem(
+            coupon_type=coupon_type,
+            discount_rate=COUPON_RATE_MAP[coupon_type],
+            quantity=max(snapshot.get(coupon_type, 0), 0),
+        )
+        for coupon_type in sorted(COUPON_RATE_MAP)
+    ]
+    return UserCouponBalanceResponse(user_id=user_id, items=items)
+
+
+def get_user_coupon_issue_by_order(_: Session, user_id: int, order_no: str) -> UserOrderCouponIssueResponse:
+    record = get_coupon_issue_record(user_id, order_no)
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Coupon issue record not found")
+    return UserOrderCouponIssueResponse(order_no=order_no, **record)
+
+
+def get_user_coupon_selection_by_order(_: Session, user_id: int, order_no: str) -> UserOrderCouponSelectionResponse:
+    record = get_coupon_claim_record(user_id, order_no)
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Coupon selection record not found")
+    return UserOrderCouponSelectionResponse(order_no=order_no, **record)
 
 
 def import_products_from_csv(db: Session, filename: str | None, raw: bytes) -> dict[str, object]: 

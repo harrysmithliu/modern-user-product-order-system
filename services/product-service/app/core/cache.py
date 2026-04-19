@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 CATALOG_VERSION_KEY = "product-service:catalog:version"
 COUPON_BALANCE_KEY_PREFIX = "product-service:coupon:balance:user:"
+COUPON_ISSUE_RECORD_KEY_PREFIX = "product-service:coupon:issue:user:"
+COUPON_CLAIM_RECORD_KEY_PREFIX = "product-service:coupon:claim:user:"
 
 CLAIM_BEST_COUPON_LUA = """
 for i = 1, #ARGV do
@@ -101,6 +103,14 @@ def make_coupon_balance_key(user_id: int) -> str:
     return f"{COUPON_BALANCE_KEY_PREFIX}{user_id}"
 
 
+def make_coupon_issue_record_key(user_id: int, order_no: str) -> str:
+    return f"{COUPON_ISSUE_RECORD_KEY_PREFIX}{user_id}:order:{order_no}"
+
+
+def make_coupon_claim_record_key(user_id: int, order_no: str) -> str:
+    return f"{COUPON_CLAIM_RECORD_KEY_PREFIX}{user_id}:order:{order_no}"
+
+
 def increment_rate_limit(key: str, window_seconds: int) -> int | None:
     current = _safe_execute("rate limit incr", lambda client: client.incr(key))
     if current is None:
@@ -132,3 +142,51 @@ def claim_best_coupon_balance(user_id: int, coupon_types: list[int]) -> int | No
     if raw_result is None:
         return None
     return int(raw_result)
+
+
+def get_coupon_balance_snapshot(user_id: int) -> dict[int, int] | None:
+    key = make_coupon_balance_key(user_id)
+    raw_result = _safe_execute("coupon balance snapshot", lambda client: client.hgetall(key))
+    if raw_result is None:
+        return None
+    snapshot: dict[int, int] = {}
+    for raw_coupon_type, raw_quantity in raw_result.items():
+        try:
+            snapshot[int(raw_coupon_type)] = int(raw_quantity)
+        except (TypeError, ValueError):
+            continue
+    return snapshot
+
+
+def set_coupon_issue_record(user_id: int, order_no: str, payload: dict[str, Any], ttl_seconds: int) -> bool:
+    key = make_coupon_issue_record_key(user_id, order_no)
+    result = _safe_execute(
+        "coupon issue record set",
+        lambda client: client.setex(key, ttl_seconds, json.dumps(payload)),
+    )
+    return bool(result)
+
+
+def set_coupon_claim_record(user_id: int, order_no: str, payload: dict[str, Any], ttl_seconds: int) -> bool:
+    key = make_coupon_claim_record_key(user_id, order_no)
+    result = _safe_execute(
+        "coupon claim record set",
+        lambda client: client.setex(key, ttl_seconds, json.dumps(payload)),
+    )
+    return bool(result)
+
+
+def get_coupon_issue_record(user_id: int, order_no: str) -> dict[str, Any] | None:
+    key = make_coupon_issue_record_key(user_id, order_no)
+    raw_result = _safe_execute("coupon issue record get", lambda client: client.get(key))
+    if not raw_result:
+        return None
+    return json.loads(raw_result)
+
+
+def get_coupon_claim_record(user_id: int, order_no: str) -> dict[str, Any] | None:
+    key = make_coupon_claim_record_key(user_id, order_no)
+    raw_result = _safe_execute("coupon claim record get", lambda client: client.get(key))
+    if not raw_result:
+        return None
+    return json.loads(raw_result)

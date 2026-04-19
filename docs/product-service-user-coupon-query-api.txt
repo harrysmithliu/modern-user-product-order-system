@@ -1,0 +1,172 @@
+Product-Service User Coupon Query API Contract (Frontend Facing)
+================================================================
+
+Version
+-------
+- Scope: current product-service user coupon query APIs
+- Entry point: Gateway only, with `/api` prefix
+- Purpose: frontend integration for coupon center and order coupon details
+
+
+1. User Coupon Query Flow
+-------------------------
+1) Frontend reads current coupon balances:
+   - `GET /api/products/me/coupons`
+2) Frontend reads which coupon was issued by a specific order:
+   - `GET /api/products/me/coupons/orders/{order_no}/issued`
+3) Frontend reads which coupon was selected for payment by a specific order:
+   - `GET /api/products/me/coupons/orders/{order_no}/selected`
+
+Notes
+- These are user-authenticated APIs (not public product APIs).
+- Gateway injects `x-user-id` based on JWT and product-service uses that value as current user.
+- Frontend must not send internal user headers manually.
+
+
+2. Gateway API List (Frontend Calls)
+------------------------------------
+- `GET /api/products/me/coupons`
+- `GET /api/products/me/coupons/orders/{order_no}/issued`
+- `GET /api/products/me/coupons/orders/{order_no}/selected`
+
+
+3. Unified Response Envelope
+----------------------------
+Success:
+{
+  "code": 0,
+  "message": "success",
+  "data": { ... },
+  "traceId": "-",
+  "timestamp": "2026-04-19T20:00:00Z"
+}
+
+Failure example:
+{
+  "detail": "Coupon issue record not found"
+}
+
+Notes:
+- `code = 0` means success.
+- These three APIs return `ApiResponse` envelope on success.
+- On FastAPI exception, response is `{"detail": ...}`.
+
+
+4. API Details
+--------------
+4.1 Query current user coupon balances
+`GET /api/products/me/coupons`
+
+Success response example:
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "items": [
+      {
+        "coupon_type": 10,
+        "discount_rate": "0.10",
+        "quantity": 2
+      },
+      {
+        "coupon_type": 20,
+        "discount_rate": "0.20",
+        "quantity": 1
+      },
+      {
+        "coupon_type": 30,
+        "discount_rate": "0.30",
+        "quantity": 0
+      }
+    ]
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T20:00:00Z"
+}
+
+Field notes:
+- `items` are fixed coupon types (10/20/30) in ascending order
+- `quantity` is current remaining count for each type
+
+
+4.2 Query coupon issued by an order
+`GET /api/products/me/coupons/orders/{order_no}/issued`
+
+Success response example:
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "order_no": "ORD-20260419-0001",
+    "order_amount": "520.00",
+    "issued": true,
+    "coupon_type": 20,
+    "discount_rate": "0.20",
+    "balance_after_issue": 1,
+    "message": "Coupon issued"
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T20:00:00Z"
+}
+
+Not found example:
+{
+  "detail": "Coupon issue record not found"
+}
+
+
+4.3 Query coupon selected for payment by an order
+`GET /api/products/me/coupons/orders/{order_no}/selected`
+
+Success response example:
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "order_no": "ORD-20260419-0001",
+    "order_amount": "680.00",
+    "claimed": true,
+    "coupon_type": 20,
+    "discount_rate": "0.20",
+    "discount_amount": "136.00",
+    "final_amount": "544.00",
+    "message": "Coupon claimed"
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T20:00:00Z"
+}
+
+Not found example:
+{
+  "detail": "Coupon selection record not found"
+}
+
+
+5. Frontend Integration Recommendations
+---------------------------------------
+Coupon center page:
+- Call `GET /api/products/me/coupons` after login
+- Display three cards/chips by `coupon_type` and `quantity`
+
+Order detail page:
+- When order has `order_no`, call:
+  - `/issued` to show "this order granted which coupon"
+  - `/selected` to show "this order used which coupon for pay"
+- If either API returns `404`, show "No coupon record for this order"
+
+
+6. Common Error Codes and Frontend Handling
+-------------------------------------------
+- `401`: unauthenticated (redirect to login)
+- `404`: order coupon record not found (show empty-state text)
+- `503`: coupon engine unavailable (show retry hint)
+
+
+7. Important Notes
+------------------
+- Order-level query APIs rely on upstream internal calls carrying `order_no`.
+- If order-service does not pass `order_no` to internal issue/claim-best, order-level query APIs will return `404`.
+- Datetime in response envelope timestamp is UTC; frontend should render in local timezone.

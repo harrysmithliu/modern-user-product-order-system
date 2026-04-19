@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 import httpx
@@ -25,7 +26,9 @@ def resolve_target(path: str) -> str:
 def is_public_route(request: Request) -> bool:
     if request.url.path == "/api/auth/login":
         return True
-    if request.method == "GET" and request.url.path.startswith("/api/products"):
+    if request.method == "GET" and request.url.path == "/api/products":
+        return True
+    if request.method == "GET" and re.fullmatch(r"/api/products/\d+", request.url.path):
         return True
     return request.url.path in {"/health", "/ready", "/live"}
 

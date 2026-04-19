@@ -29,6 +29,9 @@ from app.schemas.product import (
 from app.services.product_service import (
     claim_best_coupon_for_order,
     create_product,
+    get_user_coupon_balances,
+    get_user_coupon_issue_by_order,
+    get_user_coupon_selection_by_order,
     get_product_or_404,
     import_products_from_csv,
     issue_coupon_for_order,
@@ -52,6 +55,15 @@ def _should_simulate_coupon_issue_failure() -> bool:
     if ratio >= 1:
         return True
     return random.random() < ratio
+
+
+def _require_request_user_id(x_user_id: str | None = Header(default=None)) -> int:
+    if not x_user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    try:
+        return int(x_user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid x-user-id header") from exc
 
 
 @router.get("/health", include_in_schema=False)
@@ -104,6 +116,35 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     product = get_product_or_404(db, product_id)
     payload = ProductResponse.model_validate(product, from_attributes=True)
     set_cached_json(cache_key, payload.model_dump(mode="json"))
+    return ApiResponse(data=payload)
+
+
+@router.get("/products/me/coupons", response_model=ApiResponse)
+def get_my_coupon_balances(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(_require_request_user_id),
+):
+    payload = get_user_coupon_balances(db, user_id)
+    return ApiResponse(data=payload)
+
+
+@router.get("/products/me/coupons/orders/{order_no}/issued", response_model=ApiResponse)
+def get_my_coupon_issue_by_order(
+    order_no: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(_require_request_user_id),
+):
+    payload = get_user_coupon_issue_by_order(db, user_id, order_no)
+    return ApiResponse(data=payload)
+
+
+@router.get("/products/me/coupons/orders/{order_no}/selected", response_model=ApiResponse)
+def get_my_coupon_selection_by_order(
+    order_no: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(_require_request_user_id),
+):
+    payload = get_user_coupon_selection_by_order(db, user_id, order_no)
     return ApiResponse(data=payload)
 
 
@@ -206,7 +247,7 @@ def issue_coupon_endpoint(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Simulated coupon issue failure",
         )
-    result = issue_coupon_for_order(db, userId, payload.order_amount)
+    result = issue_coupon_for_order(db, userId, payload.order_amount, payload.order_no)
     return ApiResponse(data=result)
 
 
@@ -220,5 +261,5 @@ def claim_best_coupon_endpoint(
     payload: CouponClaimBestRequest,
     db: Session = Depends(get_db),
 ):
-    result = claim_best_coupon_for_order(db, userId, payload.order_amount)
+    result = claim_best_coupon_for_order(db, userId, payload.order_amount, payload.order_no)
     return ApiResponse(data=result)
