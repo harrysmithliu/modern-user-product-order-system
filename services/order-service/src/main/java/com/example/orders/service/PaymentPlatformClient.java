@@ -6,6 +6,7 @@ import com.example.orders.dto.RefundResult;
 import com.example.orders.exception.BusinessException;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,9 @@ public class PaymentPlatformClient {
     public PaymentResult pay(String orderNo, Long userId, BigDecimal amount) {
         ensureEnabled();
         simulateDelay(properties.payDelayMs(), "pay");
+        if (shouldSimulatePaymentTimeout()) {
+            throw new BusinessException(HttpStatus.GATEWAY_TIMEOUT, "Payment-platform timeout (simulated)");
+        }
         return new PaymentResult(
                 true,
                 "pay_" + UUID.randomUUID(),
@@ -56,5 +60,9 @@ public class PaymentPlatformClient {
             Thread.currentThread().interrupt();
             throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "Payment-platform " + operation + " interrupted");
         }
+    }
+
+    private boolean shouldSimulatePaymentTimeout() {
+        return ThreadLocalRandom.current().nextInt(100) < 30;
     }
 }

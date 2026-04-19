@@ -64,6 +64,7 @@ Without that grant, the service cannot boot because JPA cannot initialize agains
 ## Current Endpoints
 
 - `POST /orders`
+- `POST /orders/{id}/pay`
 - `POST /orders/{id}/cancel`
 - `GET /orders/my`
 - `GET /admin/orders`
@@ -72,6 +73,11 @@ Without that grant, the service cannot boot because JPA cannot initialize agains
 - `GET /health`
 - `GET /ready`
 - `GET /live`
+
+Admin workflow semantics (Phase 3):
+
+- `approve` transitions order to shipping state, with expected delivery time set to next day at the same clock time
+- `reject` now triggers refund flow first; after refund success, order transitions to `REJECTED`
 
 ## Event Publishing
 
@@ -143,7 +149,10 @@ Workflow integration toggles (Phase 3 preparation, disabled by default):
 
 - JSON output uses `snake_case` to align with the current frontend contract.
 - The service trusts gateway-provided request headers for user context in Phase 1.
-- Create-order logic is intentionally synchronous for now: reserve stock first, then persist order.
+- Create-order now follows a two-step checkout model:
+  - create order first (`PAYING`)
+  - then user triggers pay endpoint to complete payment and move to `PAID_PENDING_APPROVAL`
+- Coupon claim and payment simulation run during the pay step, not the create step.
 - If order persistence fails after stock reservation, the service currently attempts stock release as compensation.
 - RabbitMQ delivery now goes through `t_order_outbox`, so order transactions and event staging happen together before relay publishing.
 

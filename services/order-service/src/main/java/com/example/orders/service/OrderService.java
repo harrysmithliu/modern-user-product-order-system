@@ -8,6 +8,7 @@ import com.example.orders.dto.OrderResponse;
 import com.example.orders.dto.PageResponse;
 import com.example.orders.dto.PaymentResult;
 import com.example.orders.dto.ProductSnapshot;
+import com.example.orders.dto.RefundResult;
 import com.example.orders.dto.ReviewOrderRequest;
 import com.example.orders.entity.OrderEntity;
 import com.example.orders.enums.OrderStatus;
@@ -80,8 +81,6 @@ public class OrderService {
         ProductSnapshot reserved = productClient.reserveStock(request.productId(), request.quantity());
         String orderNo = OrderNoGenerator.next();
         BigDecimal originAmount = reserved.price().multiply(BigDecimal.valueOf(request.quantity()));
-        DiscountBreakdown discount = claimBestCoupon(requestUser.userId(), originAmount);
-        PaymentResult paymentResult = payOrder(orderNo, requestUser.userId(), discount.finalAmount());
 
         try {
             OrderEntity entity = new OrderEntity();
@@ -90,23 +89,43 @@ public class OrderService {
             entity.setUserId(requestUser.userId());
             entity.setProductId(request.productId());
             entity.setQuantity(request.quantity());
-            entity.setTotalAmount(discount.finalAmount());
+            entity.setTotalAmount(originAmount);
             entity.setOriginAmount(originAmount);
-            entity.setDiscountAmount(discount.discountAmount());
-            entity.setFinalAmount(discount.finalAmount());
-            entity.setStatus(OrderStatus.PAID_PENDING_APPROVAL.getCode());
-            entity.setPaymentTime(toLocalDateTime(paymentResult.completedAt()));
+            entity.setDiscountAmount(null);
+            entity.setFinalAmount(null);
+            entity.setStatus(OrderStatus.PAYING.getCode());
             entity.setVersion(0);
 
-            OrderEntity saved = orderRepository.save(entity);
-            orderEventPublisher.publishCreated(saved, requestUser);
-            issueCouponAfterOrder(requestUser.userId(), discount.finalAmount());
-            return toResponse(saved);
+            return toResponse(orderRepository.save(entity));
         } catch (RuntimeException ex) {
             productClient.releaseStock(request.productId(), request.quantity());
-            tryRefundAfterPersistFailure(orderNo, requestUser.userId(), discount.finalAmount());
             throw ex;
         }
+    }
+
+    public OrderResponse payOrder(RequestUser requestUser, Long orderId) {
+        OrderEntity entity = orderRepository.findByIdAndUserId(orderId, requestUser.userId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        if (isPaidOrPendingApprovalStatus(entity.getStatus())) {
+            return toResponse(entity);
+        }
+        if (!isPayingStatus(entity.getStatus())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Order is not waiting for payment");
+        }
+
+        entity = ensurePayableAmountPrepared(entity, requestUser.userId());
+        BigDecimal finalAmount = resolvePayableAmount(entity);
+        PaymentResult paymentResult = requestPayment(entity.getOrderNo(), requestUser.userId(), finalAmount);
+
+        entity.setStatus(OrderStatus.PAID_PENDING_APPROVAL.getCode());
+        entity.setPaymentTime(toLocalDateTime(paymentResult.completedAt()));
+        entity.setTotalAmount(finalAmount);
+        entity.setVersion(entity.getVersion() + 1);
+        OrderEntity saved = orderRepository.save(entity);
+        orderEventPublisher.publishCreated(saved, requestUser);
+        issueCouponAfterOrder(requestUser.userId(), finalAmount);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -114,8 +133,8 @@ public class OrderService {
         OrderEntity entity = orderRepository.findByIdAndUserId(orderId, requestUser.userId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order not found"));
 
-        if (!isPendingApprovalStatus(entity.getStatus())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Only pending approval orders can be cancelled");
+        if (!isPendingApprovalStatus(entity.getStatus()) && !isPayingStatus(entity.getStatus())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Only paying or pending approval orders can be cancelled");
         }
 
         entity.setStatus(OrderStatus.CANCELLED.getCode());
@@ -154,8 +173,11 @@ public class OrderService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Order is not pending approval");
         }
 
-        entity.setStatus(OrderStatus.APPROVED.getCode());
-        entity.setApproveTime(LocalDateTime.now());
+        LocalDateTime shipTime = LocalDateTime.now();
+        entity.setStatus(OrderStatus.SHIPPING.getCode());
+        entity.setApproveTime(shipTime);
+        entity.setShipTime(shipTime);
+        entity.setExpectedDeliveryTime(shipTime.plusDays(1));
         entity.setVersion(entity.getVersion() + 1);
         OrderEntity saved = orderRepository.save(entity);
         orderEventPublisher.publishApproved(saved, requestUser);
@@ -172,10 +194,23 @@ public class OrderService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Order is not pending approval");
         }
 
-        entity.setStatus(OrderStatus.REJECTED.getCode());
+        entity.setStatus(OrderStatus.REFUNDING.getCode());
         entity.setRejectReason(request.rejectReason());
         entity.setVersion(entity.getVersion() + 1);
-        OrderEntity saved = orderRepository.save(entity);
+        OrderEntity refunding = orderRepository.save(entity);
+
+        BigDecimal refundAmount = resolveRefundAmount(refunding);
+        RefundResult refundResult = refundOrder(
+                refunding.getOrderNo(),
+                refunding.getUserId(),
+                refundAmount,
+                request.rejectReason()
+        );
+
+        refunding.setStatus(OrderStatus.REJECTED.getCode());
+        refunding.setRefundTime(toLocalDateTime(refundResult.completedAt()));
+        refunding.setVersion(refunding.getVersion() + 1);
+        OrderEntity saved = orderRepository.save(refunding);
         productClient.releaseStock(saved.getProductId(), saved.getQuantity());
         orderEventPublisher.publishRejected(saved, requestUser, request.rejectReason());
         return toResponse(saved);
@@ -193,6 +228,14 @@ public class OrderService {
                 || OrderStatus.PAID_PENDING_APPROVAL.getCode() == status);
     }
 
+    private boolean isPaidOrPendingApprovalStatus(Integer status) {
+        return isPendingApprovalStatus(status);
+    }
+
+    private boolean isPayingStatus(Integer status) {
+        return status != null && OrderStatus.PAYING.getCode() == status;
+    }
+
     private DiscountBreakdown claimBestCoupon(Long userId, BigDecimal originAmount) {
         if (!couponPlatformProperties.enabled()) {
             return new DiscountBreakdown(originAmount, ZERO);
@@ -203,11 +246,18 @@ public class OrderService {
         return new DiscountBreakdown(finalAmount, discountAmount);
     }
 
-    private PaymentResult payOrder(String orderNo, Long userId, BigDecimal finalAmount) {
+    private PaymentResult requestPayment(String orderNo, Long userId, BigDecimal finalAmount) {
         if (!paymentPlatformProperties.enabled()) {
             return new PaymentResult(true, "pay_skipped_" + orderNo, finalAmount, Instant.now(), "Payment skipped");
         }
         return paymentPlatformClient.pay(orderNo, userId, finalAmount);
+    }
+
+    private RefundResult refundOrder(String orderNo, Long userId, BigDecimal refundAmount, String reason) {
+        if (!paymentPlatformProperties.enabled()) {
+            return new RefundResult(true, "refund_skipped_" + orderNo, refundAmount, Instant.now(), "Refund skipped");
+        }
+        return paymentPlatformClient.refund(orderNo, userId, refundAmount, reason);
     }
 
     private void issueCouponAfterOrder(Long userId, BigDecimal orderAmount) {
@@ -221,19 +271,49 @@ public class OrderService {
         }
     }
 
-    private void tryRefundAfterPersistFailure(String orderNo, Long userId, BigDecimal finalAmount) {
-        if (!paymentPlatformProperties.enabled()) {
-            return;
-        }
-        try {
-            paymentPlatformClient.refund(orderNo, userId, finalAmount, "order persistence failure");
-        } catch (RuntimeException ex) {
-            log.warn("payment refund failed order_no={} user_id={} error={}", orderNo, userId, ex.getMessage());
-        }
-    }
-
     private LocalDateTime toLocalDateTime(Instant instant) {
         return instant == null ? LocalDateTime.now() : LocalDateTime.ofInstant(instant, java.time.ZoneOffset.UTC);
+    }
+
+    private OrderEntity ensurePayableAmountPrepared(OrderEntity entity, Long userId) {
+        if (entity.getFinalAmount() != null && entity.getDiscountAmount() != null && entity.getOriginAmount() != null) {
+            return entity;
+        }
+        BigDecimal originAmount = resolveOriginAmount(entity);
+        DiscountBreakdown discount = claimBestCoupon(userId, originAmount);
+        entity.setOriginAmount(originAmount);
+        entity.setDiscountAmount(discount.discountAmount());
+        entity.setFinalAmount(discount.finalAmount());
+        entity.setTotalAmount(discount.finalAmount());
+        entity.setVersion(entity.getVersion() + 1);
+        return orderRepository.save(entity);
+    }
+
+    private BigDecimal resolvePayableAmount(OrderEntity entity) {
+        if (entity.getFinalAmount() != null) {
+            return entity.getFinalAmount();
+        }
+        return resolveOriginAmount(entity);
+    }
+
+    private BigDecimal resolveOriginAmount(OrderEntity entity) {
+        if (entity.getOriginAmount() != null) {
+            return entity.getOriginAmount();
+        }
+        if (entity.getTotalAmount() != null) {
+            return entity.getTotalAmount();
+        }
+        return ZERO;
+    }
+
+    private BigDecimal resolveRefundAmount(OrderEntity entity) {
+        if (entity.getFinalAmount() != null) {
+            return entity.getFinalAmount();
+        }
+        if (entity.getTotalAmount() != null) {
+            return entity.getTotalAmount();
+        }
+        return ZERO;
     }
 
     private record DiscountBreakdown(BigDecimal finalAmount, BigDecimal discountAmount) {
