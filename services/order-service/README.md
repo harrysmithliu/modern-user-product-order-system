@@ -33,6 +33,17 @@ Important columns currently used:
 - `cancel_time`
 - `version`
 
+Phase 3 workflow preparation columns:
+
+- `origin_amount`
+- `discount_amount`
+- `final_amount`
+- `payment_time`
+- `ship_time`
+- `expected_delivery_time`
+- `complete_time`
+- `refund_time`
+
 Additional Phase 2 table:
 
 - `t_order_outbox`

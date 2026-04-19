@@ -1,3 +1,99 @@
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'origin_amount'),
+    'ALTER TABLE t_order ADD COLUMN origin_amount DECIMAL(10,2) DEFAULT NULL COMMENT ''Original order amount before discount'' AFTER total_amount',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'discount_amount'),
+    'ALTER TABLE t_order ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT NULL COMMENT ''Discount amount from coupon'' AFTER origin_amount',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'final_amount'),
+    'ALTER TABLE t_order ADD COLUMN final_amount DECIMAL(10,2) DEFAULT NULL COMMENT ''Final payable amount after discount'' AFTER discount_amount',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'payment_time'),
+    'ALTER TABLE t_order ADD COLUMN payment_time DATETIME DEFAULT NULL COMMENT ''Payment completion time'' AFTER cancel_time',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'ship_time'),
+    'ALTER TABLE t_order ADD COLUMN ship_time DATETIME DEFAULT NULL COMMENT ''Shipping start time'' AFTER payment_time',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'expected_delivery_time'),
+    'ALTER TABLE t_order ADD COLUMN expected_delivery_time DATETIME DEFAULT NULL COMMENT ''Expected delivery time'' AFTER ship_time',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'complete_time'),
+    'ALTER TABLE t_order ADD COLUMN complete_time DATETIME DEFAULT NULL COMMENT ''Order completion time'' AFTER expected_delivery_time',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND COLUMN_NAME = 'refund_time'),
+    'ALTER TABLE t_order ADD COLUMN refund_time DATETIME DEFAULT NULL COMMENT ''Refund completion time'' AFTER complete_time',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 CREATE TABLE IF NOT EXISTS t_order_outbox (
   id BIGINT NOT NULL AUTO_INCREMENT,
   message_id VARCHAR(64) NOT NULL COMMENT 'Unique event message id',

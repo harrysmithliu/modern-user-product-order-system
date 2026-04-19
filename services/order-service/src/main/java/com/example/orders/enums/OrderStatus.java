@@ -4,7 +4,12 @@ public enum OrderStatus {
     PENDING_APPROVAL(0),
     APPROVED(1),
     REJECTED(2),
-    CANCELLED(3);
+    CANCELLED(3),
+    PAYING(4),
+    PAID_PENDING_APPROVAL(5),
+    SHIPPING(6),
+    COMPLETED(7),
+    REFUNDING(8);
 
     private final int code;
 
