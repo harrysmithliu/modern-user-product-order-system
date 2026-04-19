@@ -1,3 +1,5 @@
+import random
+
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -8,6 +10,7 @@ from app.core.cache import (
     make_product_list_cache_key,
     set_cached_json,
 )
+from app.core.config import settings
 from app.core.security import require_admin, require_internal_caller
 from app.db.session import get_db
 from app.schemas.common import ApiResponse
@@ -38,6 +41,17 @@ from app.services.product_service import (
 )
 
 router = APIRouter()
+
+
+def _should_simulate_coupon_issue_failure() -> bool:
+    if not settings.coupon_issue_fail_sim_enabled:
+        return False
+    ratio = settings.coupon_issue_fail_sim_ratio
+    if ratio <= 0:
+        return False
+    if ratio >= 1:
+        return True
+    return random.random() < ratio
 
 
 @router.get("/health", include_in_schema=False)
@@ -187,6 +201,11 @@ def issue_coupon_endpoint(
     payload: CouponIssueRequest,
     db: Session = Depends(get_db),
 ):
+    if _should_simulate_coupon_issue_failure():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Simulated coupon issue failure",
+        )
     result = issue_coupon_for_order(db, userId, payload.order_amount)
     return ApiResponse(data=result)
 
