@@ -12,6 +12,19 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 CATALOG_VERSION_KEY = "product-service:catalog:version"
+COUPON_BALANCE_KEY_PREFIX = "product-service:coupon:balance:user:"
+
+CLAIM_BEST_COUPON_LUA = """
+for i = 1, #ARGV do
+  local coupon_type = ARGV[i]
+  local qty = tonumber(redis.call('HGET', KEYS[1], coupon_type) or '0')
+  if qty > 0 then
+    redis.call('HINCRBY', KEYS[1], coupon_type, -1)
+    return coupon_type
+  end
+end
+return "0"
+"""
 
 
 def _encode_fragment(value: str | None) -> str:
@@ -82,3 +95,40 @@ def get_cached_json(key: str) -> dict[str, Any] | None:
 def set_cached_json(key: str, payload: dict[str, Any], ttl_seconds: int | None = None) -> None:
     ttl = ttl_seconds or settings.redis_cache_ttl_seconds
     _safe_execute("set cache", lambda client: client.setex(key, ttl, json.dumps(payload)))
+
+
+def make_coupon_balance_key(user_id: int) -> str:
+    return f"{COUPON_BALANCE_KEY_PREFIX}{user_id}"
+
+
+def increment_rate_limit(key: str, window_seconds: int) -> int | None:
+    current = _safe_execute("rate limit incr", lambda client: client.incr(key))
+    if current is None:
+        return None
+    if int(current) == 1:
+        _safe_execute("rate limit expire", lambda client: client.expire(key, window_seconds))
+    return int(current)
+
+
+def issue_coupon_balance(user_id: int, coupon_type: int) -> int | None:
+    key = make_coupon_balance_key(user_id)
+    result = _safe_execute(
+        "coupon issue",
+        lambda client: client.hincrby(key, str(coupon_type), 1),
+    )
+    if result is None:
+        return None
+    return int(result)
+
+
+def claim_best_coupon_balance(user_id: int, coupon_types: list[int]) -> int | None:
+    if not coupon_types:
+        return 0
+    key = make_coupon_balance_key(user_id)
+    raw_result = _safe_execute(
+        "coupon claim best",
+        lambda client: client.eval(CLAIM_BEST_COUPON_LUA, 1, key, *[str(item) for item in coupon_types]),
+    )
+    if raw_result is None:
+        return None
+    return int(raw_result)

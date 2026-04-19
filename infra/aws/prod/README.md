@@ -197,8 +197,8 @@ Recommended options:
 
 The scripts in this directory are meant to be used together with:
 
-- [infra/k8s/prod/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/infra/k8s/prod/README.md)
-- [infra/k8s/prod/kustomization.yaml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/infra/k8s/prod/kustomization.yaml)
+- [infra/k8s/prod/README.md](../../k8s/prod/README.md)
+- [infra/k8s/prod/kustomization.yaml](../../k8s/prod/kustomization.yaml)
 
 The AWS scripts handle:
 
@@ -226,9 +226,9 @@ The Kubernetes production skeleton handles:
 
 The repository now separates validation and deployment responsibilities:
 
-- [/.github/workflows/ci.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/ci.yml)
+- [/.github/workflows/ci.yml](../../../.github/workflows/ci.yml)
   - shared CI for frontend, Python services, and the Java order service
-- [/.github/workflows/deploy-sandbox-ec2.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-sandbox-ec2.yml)
+- [/.github/workflows/deploy-sandbox-ec2.yml](../../../.github/workflows/deploy-sandbox-ec2.yml)
   - always-on EC2 demo deployment for the `sandbox-ec2-online` branch
-- [/.github/workflows/deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml)
+- [/.github/workflows/deploy-aws-prod.yml](../../../.github/workflows/deploy-aws-prod.yml)
   - manual AWS production deployment baseline for future `main` branch ECR and EKS rollout automation

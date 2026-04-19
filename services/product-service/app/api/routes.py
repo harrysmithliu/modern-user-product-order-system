@@ -8,10 +8,12 @@ from app.core.cache import (
     make_product_list_cache_key,
     set_cached_json,
 )
-from app.core.security import require_admin
+from app.core.security import require_admin, require_internal_caller
 from app.db.session import get_db
 from app.schemas.common import ApiResponse
 from app.schemas.product import (
+    CouponClaimBestRequest,
+    CouponIssueRequest,
     ProductCreateRequest,
     ProductInternalResponse,
     ProductPageResponse,
@@ -22,9 +24,11 @@ from app.schemas.product import (
     UpdateProductStockRequest,
 )
 from app.services.product_service import (
+    claim_best_coupon_for_order,
     create_product,
     get_product_or_404,
     import_products_from_csv,
+    issue_coupon_for_order,
     paginate_products,
     release_stock,
     reserve_stock,
@@ -171,3 +175,31 @@ def release_stock_endpoint(
     product = release_stock(db, product_id, payload.quantity)
     bump_catalog_version()
     return ApiResponse(data=ProductInternalResponse.model_validate(product, from_attributes=True))
+
+
+@router.post(
+    "/internal/products/{userId}/coupons/issue",
+    response_model=ApiResponse,
+    dependencies=[Depends(require_internal_caller)],
+)
+def issue_coupon_endpoint(
+    userId: int,
+    payload: CouponIssueRequest,
+    db: Session = Depends(get_db),
+):
+    result = issue_coupon_for_order(db, userId, payload.order_amount)
+    return ApiResponse(data=result)
+
+
+@router.post(
+    "/internal/products/{userId}/coupons/claim-best",
+    response_model=ApiResponse,
+    dependencies=[Depends(require_internal_caller)],
+)
+def claim_best_coupon_endpoint(
+    userId: int,
+    payload: CouponClaimBestRequest,
+    db: Session = Depends(get_db),
+):
+    result = claim_best_coupon_for_order(db, userId, payload.order_amount)
+    return ApiResponse(data=result)

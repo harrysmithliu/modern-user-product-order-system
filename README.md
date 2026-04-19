@@ -257,11 +257,11 @@ Future CI/CD mapping:
 Shared CI and split CD:
 
 - shared CI
-  - `dev`, `sandbox`, `main`, `dev-*`, and `sandbox-ec2-online` use the common [ci.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/ci.yml) workflow for frontend build, Python test execution, and Java package validation
+  - `dev`, `sandbox`, `main`, `dev-*`, and `sandbox-ec2-online` use the common [ci.yml](.github/workflows/ci.yml) workflow for frontend build, Python test execution, and Java package validation
 - AWS / EKS deployment route
-  - `main` uses [deploy-aws-prod.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-aws-prod.yml) as the production deployment baseline for ECR and EKS rollout automation
+  - `main` uses [deploy-aws-prod.yml](.github/workflows/deploy-aws-prod.yml) as the production deployment baseline for ECR and EKS rollout automation
 - EC2 demo deployment route
-  - `sandbox-ec2-online` uses [deploy-sandbox-ec2.yml](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/.github/workflows/deploy-sandbox-ec2.yml) for low-cost always-on EC2 deployment over SSH
+  - `sandbox-ec2-online` uses [deploy-sandbox-ec2.yml](.github/workflows/deploy-sandbox-ec2.yml) for low-cost always-on EC2 deployment over SSH
 
 ### CI/CD Snapshot
 
@@ -306,7 +306,7 @@ From the repository root:
 docker compose --env-file infra/docker/.env.dev.example -f infra/docker/docker-compose.dev.yml up --build
 ```
 
-This lightweight stack expects host-managed infrastructure, such as your existing local MySQL and RabbitMQ containers.
+This lightweight stack expects host-managed infrastructure, such as your existing local MySQL, RabbitMQ, MongoDB, and Redis (`local-redis`) containers.
 
 ### Monitoring Compose Run
 
@@ -397,7 +397,7 @@ Frontend URL:
 ### 3. Sandbox smoke tests and promotion
 
 The sandbox-only smoke tests and EC2 promotion flow now live in
-[scripts/sandbox/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/scripts/sandbox/README.md).
+[scripts/sandbox/README.md](scripts/sandbox/README.md).
 
 Use that guide for:
 
@@ -475,10 +475,10 @@ git push -u origin dev-xxx
 Typical checks during development:
 
 - prefer validating feature work in the local `dev` runtime first
-- use `infra/docker/docker-compose.dev.yml` when the batch depends on host-managed local services such as `local-mysql` or `rmq`
+- use `infra/docker/docker-compose.dev.yml` when the batch depends on host-managed local services such as `local-mysql`, `rmq`, `local-mongodb`, or `local-redis`
 - run local service-specific checks
 - inspect `modern-upo-dev-notification-service` logs when RabbitMQ event flow changes
-- use the sandbox smoke tests in [scripts/sandbox/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/scripts/sandbox/README.md) when the batch is ready to promote from `dev` into `sandbox`
+- use the sandbox smoke tests in [scripts/sandbox/README.md](scripts/sandbox/README.md) when the batch is ready to promote from `dev` into `sandbox`
 
 ### 5. Merge the feature branch back into `dev`
 
@@ -491,7 +491,7 @@ git push origin dev
 ### 6. Promote the validated `dev` branch into `sandbox`
 
 After the `dev` branch is stable, continue with the sandbox guide in
-[scripts/sandbox/README.md](/Users/harryliu/Documents/workspace/portfolio/pj-modern-user-product-order-system/modern-user-product-order-system/scripts/sandbox/README.md).
+[scripts/sandbox/README.md](scripts/sandbox/README.md).
 
 ## Demo Accounts
 
