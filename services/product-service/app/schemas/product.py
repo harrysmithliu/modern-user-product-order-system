@@ -57,3 +57,32 @@ class ProductInternalResponse(BaseModel):
     price: Decimal
     stock: int
     status: int
+
+
+class CouponIssueRequest(BaseModel):
+    order_amount: Decimal = Field(gt=0)
+
+
+class CouponIssueResponse(BaseModel):
+    user_id: int
+    order_amount: Decimal
+    issued: bool
+    coupon_type: int | None = None
+    discount_rate: Decimal | None = None
+    balance_after_issue: int | None = None
+    message: str
+
+
+class CouponClaimBestRequest(BaseModel):
+    order_amount: Decimal = Field(gt=0)
+
+
+class CouponClaimBestResponse(BaseModel):
+    user_id: int
+    order_amount: Decimal
+    claimed: bool
+    coupon_type: int | None = None
+    discount_rate: Decimal = Decimal("0")
+    discount_amount: Decimal = Decimal("0")
+    final_amount: Decimal
+    message: str

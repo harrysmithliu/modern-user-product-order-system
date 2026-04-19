@@ -1,3 +1,4 @@
+import hmac
 from typing import Optional
 
 import jwt
@@ -22,3 +23,12 @@ def require_admin(
             except jwt.PyJWTError:
                 pass
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
+
+
+def require_internal_caller(
+    x_internal_token: Optional[str] = Header(default=None),
+) -> None:
+    if not x_internal_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Internal token required")
+    if not hmac.compare_digest(x_internal_token, settings.internal_api_token):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid internal token")
