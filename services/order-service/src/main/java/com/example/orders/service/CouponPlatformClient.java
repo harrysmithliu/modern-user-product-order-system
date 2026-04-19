@@ -6,6 +6,7 @@ import com.example.orders.dto.CouponIssueResult;
 import com.example.orders.exception.BusinessException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -35,25 +36,30 @@ public class CouponPlatformClient {
         this.objectMapper = objectMapper;
     }
 
-    public CouponIssueResult issueCoupon(Long userId, BigDecimal orderAmount) {
+    public CouponIssueResult issueCoupon(Long userId, BigDecimal orderAmount, String orderNo) {
         ensureEnabled();
         String url = buildUrl(properties.issuePathTemplate(), userId);
-        ResponseEntity<Map> response = post(url, orderAmount);
+        ResponseEntity<Map> response = post(url, orderAmount, orderNo);
         return extractResponseData(response, CouponIssueResult.class);
     }
 
-    public CouponClaimResult claimBestCoupon(Long userId, BigDecimal orderAmount) {
+    public CouponClaimResult claimBestCoupon(Long userId, BigDecimal orderAmount, String orderNo) {
         ensureEnabled();
         String url = buildUrl(properties.claimBestPathTemplate(), userId);
-        ResponseEntity<Map> response = post(url, orderAmount);
+        ResponseEntity<Map> response = post(url, orderAmount, orderNo);
         return extractResponseData(response, CouponClaimResult.class);
     }
 
-    private ResponseEntity<Map> post(String url, BigDecimal orderAmount) {
+    private ResponseEntity<Map> post(String url, BigDecimal orderAmount, String orderNo) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("X-Internal-Token", properties.internalToken());
-        HttpEntity<Map<String, BigDecimal>> request = new HttpEntity<>(Map.of("order_amount", orderAmount), headers);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("order_amount", orderAmount);
+        if (orderNo != null && !orderNo.isBlank()) {
+            payload.put("order_no", orderNo);
+        }
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
         try {
             return restTemplate.exchange(url, HttpMethod.POST, request, Map.class);
         } catch (HttpStatusCodeException ex) {
@@ -128,4 +134,5 @@ public class CouponPlatformClient {
         }
         return responseBody;
     }
+
 }

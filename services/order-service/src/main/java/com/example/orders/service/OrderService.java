@@ -124,7 +124,7 @@ public class OrderService {
         entity.setVersion(entity.getVersion() + 1);
         OrderEntity saved = orderRepository.save(entity);
         orderEventPublisher.publishCreated(saved, requestUser);
-        issueCouponAfterOrder(requestUser.userId(), finalAmount);
+        issueCouponAfterOrder(requestUser.userId(), finalAmount, saved.getOrderNo());
         return toResponse(saved);
     }
 
@@ -236,11 +236,11 @@ public class OrderService {
         return status != null && OrderStatus.PAYING.getCode() == status;
     }
 
-    private DiscountBreakdown claimBestCoupon(Long userId, BigDecimal originAmount) {
+    private DiscountBreakdown claimBestCoupon(Long userId, BigDecimal originAmount, String orderNo) {
         if (!couponPlatformProperties.enabled()) {
             return new DiscountBreakdown(originAmount, ZERO);
         }
-        CouponClaimResult claim = couponPlatformClient.claimBestCoupon(userId, originAmount);
+        CouponClaimResult claim = couponPlatformClient.claimBestCoupon(userId, originAmount, orderNo);
         BigDecimal discountAmount = claim.discountAmount() == null ? ZERO : claim.discountAmount();
         BigDecimal finalAmount = claim.finalAmount() == null ? originAmount : claim.finalAmount();
         return new DiscountBreakdown(finalAmount, discountAmount);
@@ -260,12 +260,12 @@ public class OrderService {
         return paymentPlatformClient.refund(orderNo, userId, refundAmount, reason);
     }
 
-    private void issueCouponAfterOrder(Long userId, BigDecimal orderAmount) {
+    private void issueCouponAfterOrder(Long userId, BigDecimal orderAmount, String orderNo) {
         if (!couponPlatformProperties.enabled()) {
             return;
         }
         try {
-            couponPlatformClient.issueCoupon(userId, orderAmount);
+            couponPlatformClient.issueCoupon(userId, orderAmount, orderNo);
         } catch (RuntimeException ex) {
             log.warn("coupon issue failed user_id={} amount={} error={}", userId, orderAmount, ex.getMessage());
         }
@@ -280,7 +280,7 @@ public class OrderService {
             return entity;
         }
         BigDecimal originAmount = resolveOriginAmount(entity);
-        DiscountBreakdown discount = claimBestCoupon(userId, originAmount);
+        DiscountBreakdown discount = claimBestCoupon(userId, originAmount, entity.getOrderNo());
         entity.setOriginAmount(originAmount);
         entity.setDiscountAmount(discount.discountAmount());
         entity.setFinalAmount(discount.finalAmount());
