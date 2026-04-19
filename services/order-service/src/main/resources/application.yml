@@ -42,6 +42,20 @@ management:
 app:
   product-service:
     base-url: ${APP_PRODUCT_SERVICE_BASE_URL:http://localhost:8002}
+  coupon-platform:
+    enabled: ${APP_COUPON_PLATFORM_ENABLED:false}
+    base-url: ${APP_COUPON_PLATFORM_BASE_URL:http://localhost:8002}
+    issue-path-template: ${APP_COUPON_PLATFORM_ISSUE_PATH_TEMPLATE:/internal/products/%d/coupons/issue}
+    claim-best-path-template: ${APP_COUPON_PLATFORM_CLAIM_BEST_PATH_TEMPLATE:/internal/products/%d/coupons/claim-best}
+    internal-token: ${APP_COUPON_PLATFORM_INTERNAL_TOKEN:change-me}
+    connect-timeout-ms: ${APP_COUPON_PLATFORM_CONNECT_TIMEOUT_MS:1500}
+    read-timeout-ms: ${APP_COUPON_PLATFORM_READ_TIMEOUT_MS:4000}
+  payment-platform:
+    enabled: ${APP_PAYMENT_PLATFORM_ENABLED:false}
+    pay-delay-ms: ${APP_PAYMENT_PLATFORM_PAY_DELAY_MS:3000}
+    refund-delay-ms: ${APP_PAYMENT_PLATFORM_REFUND_DELAY_MS:5000}
+    connect-timeout-ms: ${APP_PAYMENT_PLATFORM_CONNECT_TIMEOUT_MS:1000}
+    read-timeout-ms: ${APP_PAYMENT_PLATFORM_READ_TIMEOUT_MS:6000}
   order-events:
     exchange: ${APP_ORDER_EVENTS_EXCHANGE:order.events}
     outbox-batch-size: ${APP_ORDER_EVENTS_OUTBOX_BATCH_SIZE:50}
