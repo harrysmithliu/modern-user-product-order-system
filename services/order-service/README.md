@@ -187,30 +187,33 @@ sequenceDiagram
     OS->>LKM: withOrderLock(orderId)
     LKM->>OS: doPayOrder()
 
-    OS->>EAG: callSync("coupon-claim")
-    EAG->>SEM: tryAcquire()
-    SEM-->>EAG: permit acquired
-    EAG->>TP: submit task
-    TP->>CP: claimBestCoupon(...)
-    CP-->>TP: coupon result
-    TP-->>EAG: result
-    EAG->>SEM: release()
+    critical Locked by orderId
+        OS->>EAG: callSync("coupon-claim")
+        EAG->>SEM: tryAcquire()
+        SEM-->>EAG: permit acquired
+        EAG->>TP: submit task
+        TP->>CP: claimBestCoupon(...)
+        CP-->>TP: coupon result
+        TP-->>EAG: result
+        EAG->>SEM: release()
 
-    OS->>EAG: callSync("payment-pay")
-    EAG->>SEM: tryAcquire()
-    SEM-->>EAG: permit acquired
-    EAG->>TP: submit task
-    TP->>PP: pay(...)
-    PP-->>TP: payment result
-    TP-->>EAG: result
-    EAG->>SEM: release()
+        OS->>EAG: callSync("payment-pay")
+        EAG->>SEM: tryAcquire()
+        SEM-->>EAG: permit acquired
+        EAG->>TP: submit task
+        TP->>PP: pay(...)
+        PP-->>TP: payment result
+        TP-->>EAG: result
+        EAG->>SEM: release()
 
-    OS->>OS: save status = PAID_PENDING_APPROVAL
+        OS->>OS: save status = PAID_PENDING_APPROVAL
 
-    OS->>EAG: callAsync("coupon-issue")
-    EAG->>SEM: tryAcquire()
-    SEM-->>EAG: permit acquired
-    EAG->>TP: submit task
+        OS->>EAG: callAsync("coupon-issue")
+        EAG->>SEM: tryAcquire()
+        SEM-->>EAG: permit acquired
+        EAG->>TP: submit task
+    end
+
     TP->>CP: issueCoupon(...)
     alt success
         CP-->>TP: success
@@ -221,6 +224,8 @@ sequenceDiagram
         TP-->>RY: onFailure(error)
         RY->>RY: write retry task and schedule retry
     end
+
+    Note over OS,TP: `callAsync` is submitted inside the lock, but the coupon issue job itself runs after the lock is released.
 ```
 
 ## Component Map
