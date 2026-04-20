@@ -35,7 +35,9 @@ Approve flow:
 - `POST /api/admin/orders/{order_id}/approve`
 - status transitions to `SHIPPING`
 - `ship_time` is set
-- `expected_delivery_time = now + 1 day` (same clock time)
+- `expected_delivery_time = next workday 09:15` (fixed business checkpoint)
+- backend scheduler automatically transitions `SHIPPING -> COMPLETED` when expected delivery time is reached and writes `complete_time`
+- scheduler strategy: workday `09:15` main trigger + hourly compensation scan for missed windows
 
 Reject flow:
 - `POST /api/admin/orders/{order_id}/reject`
@@ -198,5 +200,5 @@ Admin review page:
 10. Important Notes
 -------------------
 - datetime fields are serialized in UTC; frontend should render in local timezone
-- `complete_time` is currently reserved; automatic "next-day delivered => completed" scheduler will be added in later batch
+- `complete_time` is filled by backend auto-complete scheduler after expected delivery time is reached
 - Gateway injects user context headers for downstream services; frontend should not send internal user headers manually

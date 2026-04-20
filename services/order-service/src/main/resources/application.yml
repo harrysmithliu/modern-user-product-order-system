@@ -65,6 +65,10 @@ app:
     coupon-issue-retry-fixed-delay-ms: ${APP_WORKFLOW_COUPON_ISSUE_RETRY_FIXED_DELAY_MS:3000}
     coupon-issue-retry-delay-seconds: ${APP_WORKFLOW_COUPON_ISSUE_RETRY_DELAY_SECONDS:30}
     coupon-issue-max-retries: ${APP_WORKFLOW_COUPON_ISSUE_MAX_RETRIES:8}
+    order-auto-complete-main-cron: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_MAIN_CRON:0 15 9 * * MON-FRI}
+    order-auto-complete-zone: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_ZONE:America/Toronto}
+    order-auto-complete-compensation-fixed-delay-ms: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_COMPENSATION_FIXED_DELAY_MS:3600000}
+    order-auto-complete-batch-size: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_BATCH_SIZE:100}
   order-events:
     exchange: ${APP_ORDER_EVENTS_EXCHANGE:order.events}
     outbox-batch-size: ${APP_ORDER_EVENTS_OUTBOX_BATCH_SIZE:50}

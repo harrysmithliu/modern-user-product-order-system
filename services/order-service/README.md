@@ -77,8 +77,9 @@ Without that grant, the service cannot boot because JPA cannot initialize agains
 
 Admin workflow semantics (Phase 3):
 
-- `approve` transitions order to shipping state, with expected delivery time set to next day at the same clock time
+- `approve` transitions order to shipping state, with expected delivery time set to next workday at `09:15`
 - `reject` now triggers refund flow first; after refund success, order transitions to `REJECTED`
+- shipped orders are auto-completed by scheduler with a main trigger at workdays `09:15` and hourly compensation scanning
 
 ## Event Publishing
 
@@ -139,6 +140,10 @@ Workflow integration toggles (Phase 3 preparation, disabled by default):
 - `APP_WORKFLOW_COUPON_ISSUE_RETRY_FIXED_DELAY_MS`
 - `APP_WORKFLOW_COUPON_ISSUE_RETRY_DELAY_SECONDS`
 - `APP_WORKFLOW_COUPON_ISSUE_MAX_RETRIES`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_MAIN_CRON`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_ZONE`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_COMPENSATION_FIXED_DELAY_MS`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_BATCH_SIZE`
 
 ## Docker
 

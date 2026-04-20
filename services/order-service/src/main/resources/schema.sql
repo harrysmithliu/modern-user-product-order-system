@@ -94,6 +94,18 @@ PREPARE stmt FROM @ddl;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @ddl = (
+  SELECT IF(
+    EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order')
+    AND NOT EXISTS (SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 't_order' AND INDEX_NAME = 'idx_status_expected_delivery_id'),
+    'ALTER TABLE t_order ADD KEY idx_status_expected_delivery_id (status, expected_delivery_time, id)',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 CREATE TABLE IF NOT EXISTS t_order_outbox (
   id BIGINT NOT NULL AUTO_INCREMENT,
   message_id VARCHAR(64) NOT NULL COMMENT 'Unique event message id',

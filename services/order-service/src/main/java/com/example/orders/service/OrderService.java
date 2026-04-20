@@ -17,8 +17,11 @@ import com.example.orders.repository.OrderRepository;
 import com.example.orders.security.RequestUser;
 import com.example.orders.util.OrderNoGenerator;
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,7 @@ public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private static final BigDecimal ZERO = BigDecimal.ZERO;
+    private static final LocalTime BUSINESS_COMPLETE_TIME = LocalTime.of(9, 15);
 
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
@@ -165,7 +169,7 @@ public class OrderService {
         entity.setStatus(OrderStatus.SHIPPING.getCode());
         entity.setApproveTime(shipTime);
         entity.setShipTime(shipTime);
-        entity.setExpectedDeliveryTime(shipTime.plusDays(1));
+        entity.setExpectedDeliveryTime(nextWorkdayAtFixedTime(shipTime));
         OrderEntity saved = orderRepository.save(entity);
         orderEventPublisher.publishApproved(saved, requestUser);
         return toResponse(saved);
@@ -219,6 +223,15 @@ public class OrderService {
 
     private boolean isPayingStatus(Integer status) {
         return status != null && OrderStatus.PAYING.getCode() == status;
+    }
+
+    private LocalDateTime nextWorkdayAtFixedTime(LocalDateTime baseTime) {
+        LocalDate deliveryDate = baseTime.toLocalDate().plusDays(1);
+        while (deliveryDate.getDayOfWeek() == DayOfWeek.SATURDAY
+                || deliveryDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            deliveryDate = deliveryDate.plusDays(1);
+        }
+        return LocalDateTime.of(deliveryDate, BUSINESS_COMPLETE_TIME);
     }
 
     private DiscountBreakdown claimBestCoupon(Long userId, BigDecimal originAmount, String orderNo) {

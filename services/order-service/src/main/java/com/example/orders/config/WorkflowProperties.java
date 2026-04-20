@@ -11,6 +11,10 @@ public record WorkflowProperties(
         int semaphoreAcquireTimeoutMs,
         int couponIssueRetryFixedDelayMs,
         int couponIssueRetryDelaySeconds,
-        int couponIssueMaxRetries
+        int couponIssueMaxRetries,
+        String orderAutoCompleteMainCron,
+        String orderAutoCompleteZone,
+        int orderAutoCompleteCompensationFixedDelayMs,
+        int orderAutoCompleteBatchSize
 ) {
 }

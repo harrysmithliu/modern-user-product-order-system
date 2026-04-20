@@ -134,6 +134,7 @@ CREATE TABLE IF NOT EXISTS t_order (
   KEY idx_create_time_status (create_time, status),
   KEY idx_product_status_time (product_id, status, create_time),
   KEY idx_status_create_time (status, create_time),
+  KEY idx_status_expected_delivery_id (status, expected_delivery_time, id),
   CONSTRAINT chk_order_quantity_positive CHECK ((quantity > 0)),
   CONSTRAINT chk_order_total_amount_nonnegative CHECK ((total_amount >= 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Order Table';
