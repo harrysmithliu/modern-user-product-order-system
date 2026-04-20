@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -35,6 +36,15 @@ public class OrderEntity {
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
+    @Column(name = "origin_amount")
+    private BigDecimal originAmount;
+
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
+
+    @Column(name = "final_amount")
+    private BigDecimal finalAmount;
+
     @Column(nullable = false)
     private Integer status;
 
@@ -47,12 +57,28 @@ public class OrderEntity {
     @Column(name = "cancel_time")
     private LocalDateTime cancelTime;
 
+    @Column(name = "payment_time")
+    private LocalDateTime paymentTime;
+
+    @Column(name = "ship_time")
+    private LocalDateTime shipTime;
+
+    @Column(name = "expected_delivery_time")
+    private LocalDateTime expectedDeliveryTime;
+
+    @Column(name = "complete_time")
+    private LocalDateTime completeTime;
+
+    @Column(name = "refund_time")
+    private LocalDateTime refundTime;
+
     @Column(name = "create_time", insertable = false, updatable = false)
     private LocalDateTime createTime;
 
     @Column(name = "update_time", insertable = false, updatable = false)
     private LocalDateTime updateTime;
 
+    @Version
     @Column(nullable = false)
     private Integer version;
 
@@ -108,6 +134,30 @@ public class OrderEntity {
         this.totalAmount = totalAmount;
     }
 
+    public BigDecimal getOriginAmount() {
+        return originAmount;
+    }
+
+    public void setOriginAmount(BigDecimal originAmount) {
+        this.originAmount = originAmount;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public BigDecimal getFinalAmount() {
+        return finalAmount;
+    }
+
+    public void setFinalAmount(BigDecimal finalAmount) {
+        this.finalAmount = finalAmount;
+    }
+
     public Integer getStatus() {
         return status;
     }
@@ -138,6 +188,46 @@ public class OrderEntity {
 
     public void setCancelTime(LocalDateTime cancelTime) {
         this.cancelTime = cancelTime;
+    }
+
+    public LocalDateTime getPaymentTime() {
+        return paymentTime;
+    }
+
+    public void setPaymentTime(LocalDateTime paymentTime) {
+        this.paymentTime = paymentTime;
+    }
+
+    public LocalDateTime getShipTime() {
+        return shipTime;
+    }
+
+    public void setShipTime(LocalDateTime shipTime) {
+        this.shipTime = shipTime;
+    }
+
+    public LocalDateTime getExpectedDeliveryTime() {
+        return expectedDeliveryTime;
+    }
+
+    public void setExpectedDeliveryTime(LocalDateTime expectedDeliveryTime) {
+        this.expectedDeliveryTime = expectedDeliveryTime;
+    }
+
+    public LocalDateTime getCompleteTime() {
+        return completeTime;
+    }
+
+    public void setCompleteTime(LocalDateTime completeTime) {
+        this.completeTime = completeTime;
+    }
+
+    public LocalDateTime getRefundTime() {
+        return refundTime;
+    }
+
+    public void setRefundTime(LocalDateTime refundTime) {
+        this.refundTime = refundTime;
     }
 
     public LocalDateTime getCreateTime() {

@@ -33,9 +33,21 @@ Important columns currently used:
 - `cancel_time`
 - `version`
 
+Phase 3 workflow preparation columns:
+
+- `origin_amount`
+- `discount_amount`
+- `final_amount`
+- `payment_time`
+- `ship_time`
+- `expected_delivery_time`
+- `complete_time`
+- `refund_time`
+
 Additional Phase 2 table:
 
 - `t_order_outbox`
+- `t_order_coupon_issue_task`
 
 ## Important Environment Requirement
 
@@ -53,6 +65,7 @@ Without that grant, the service cannot boot because JPA cannot initialize agains
 ## Current Endpoints
 
 - `POST /orders`
+- `POST /orders/{id}/pay`
 - `POST /orders/{id}/cancel`
 - `GET /orders/my`
 - `GET /admin/orders`
@@ -61,6 +74,12 @@ Without that grant, the service cannot boot because JPA cannot initialize agains
 - `GET /health`
 - `GET /ready`
 - `GET /live`
+
+Admin workflow semantics (Phase 3):
+
+- `approve` transitions order to shipping state, with expected delivery time set to next workday at `09:15`
+- `reject` now triggers refund flow first; after refund success, order transitions to `REJECTED`
+- shipped orders are auto-completed by scheduler with a main trigger at workdays `09:15` and hourly compensation scanning
 
 ## Event Publishing
 
@@ -99,6 +118,33 @@ See:
 
 - `services/order-service/.env.example`
 
+Workflow integration toggles (Phase 3 preparation, disabled by default):
+
+- `APP_COUPON_PLATFORM_ENABLED`
+- `APP_COUPON_PLATFORM_BASE_URL`
+- `APP_COUPON_PLATFORM_ISSUE_PATH_TEMPLATE`
+- `APP_COUPON_PLATFORM_CLAIM_BEST_PATH_TEMPLATE`
+- `APP_COUPON_PLATFORM_INTERNAL_TOKEN`
+- `APP_COUPON_PLATFORM_CONNECT_TIMEOUT_MS`
+- `APP_COUPON_PLATFORM_READ_TIMEOUT_MS`
+- `APP_PAYMENT_PLATFORM_ENABLED`
+- `APP_PAYMENT_PLATFORM_PAY_DELAY_MS`
+- `APP_PAYMENT_PLATFORM_REFUND_DELAY_MS`
+- `APP_PAYMENT_PLATFORM_CONNECT_TIMEOUT_MS`
+- `APP_PAYMENT_PLATFORM_READ_TIMEOUT_MS`
+- `APP_WORKFLOW_EXECUTOR_CORE_POOL_SIZE`
+- `APP_WORKFLOW_EXECUTOR_MAX_POOL_SIZE`
+- `APP_WORKFLOW_EXECUTOR_QUEUE_CAPACITY`
+- `APP_WORKFLOW_EXTERNAL_SEMAPHORE_PERMITS`
+- `APP_WORKFLOW_SEMAPHORE_ACQUIRE_TIMEOUT_MS`
+- `APP_WORKFLOW_COUPON_ISSUE_RETRY_FIXED_DELAY_MS`
+- `APP_WORKFLOW_COUPON_ISSUE_RETRY_DELAY_SECONDS`
+- `APP_WORKFLOW_COUPON_ISSUE_MAX_RETRIES`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_MAIN_CRON`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_ZONE`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_COMPENSATION_FIXED_DELAY_MS`
+- `APP_WORKFLOW_ORDER_AUTO_COMPLETE_BATCH_SIZE`
+
 ## Docker
 
 - Dockerfile: `services/order-service/Dockerfile`
@@ -117,9 +163,111 @@ See:
 
 - JSON output uses `snake_case` to align with the current frontend contract.
 - The service trusts gateway-provided request headers for user context in Phase 1.
-- Create-order logic is intentionally synchronous for now: reserve stock first, then persist order.
+- Create-order now follows a two-step checkout model:
+  - create order first (`PAYING`)
+  - then user triggers pay endpoint to complete payment and move to `PAID_PENDING_APPROVAL`
+- Coupon claim and payment simulation run during the pay step, not the create step.
 - If order persistence fails after stock reservation, the service currently attempts stock release as compensation.
 - RabbitMQ delivery now goes through `t_order_outbox`, so order transactions and event staging happen together before relay publishing.
+
+## Concurrency Flow
+
+The pay path uses a dedicated workflow thread pool, a semaphore guard for external calls, and a per-order lock for the same `order_id`.
+This keeps concurrent retries safe while still allowing different orders to proceed in parallel.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as "FrontEnd"
+    participant OS as "OrderService"
+    participant LKM as "OrderInFlightLockManager"
+    participant EAG as "ExternalCallGuard"
+    participant TP as "orderWorkflowExecutor"
+    participant SEM as "orderExternalCallSemaphore"
+    participant CP as "CouponPlatformClient"
+    participant PP as "PaymentPlatformClient"
+    participant RY as "CouponIssueRetryService"
+
+    FE->>OS: POST /orders/{id}/pay
+    OS->>LKM: withOrderLock(orderId)
+    LKM->>OS: doPayOrder()
+
+    critical Locked by orderId
+        OS->>EAG: callSync("coupon-claim")
+        EAG->>SEM: tryAcquire()
+        SEM-->>EAG: permit acquired
+        EAG->>TP: submit task
+        TP->>CP: claimBestCoupon(...)
+        CP-->>TP: coupon result
+        TP-->>EAG: result
+        EAG->>SEM: release()
+
+        OS->>EAG: callSync("payment-pay")
+        EAG->>SEM: tryAcquire()
+        SEM-->>EAG: permit acquired
+        EAG->>TP: submit task
+        TP->>PP: pay(...)
+        PP-->>TP: payment result
+        TP-->>EAG: result
+        EAG->>SEM: release()
+
+        OS->>OS: save status = PAID_PENDING_APPROVAL
+
+        OS->>EAG: callAsync("coupon-issue")
+        EAG->>SEM: tryAcquire()
+        SEM-->>EAG: permit acquired
+        EAG->>TP: submit task
+    end
+
+    TP->>CP: issueCoupon(...)
+    alt success
+        CP-->>TP: success
+        TP->>SEM: release()
+    else failure
+        CP-->>TP: error
+        TP->>SEM: release()
+        TP-->>RY: onFailure(error)
+        RY->>RY: write retry task and schedule retry
+    end
+
+    Note over OS,TP: `callAsync` is submitted inside the lock, but the coupon issue job itself runs after the lock is released.
+```
+
+## Component Map
+
+This map shows how the concurrency-related pieces in `order-service` relate to each other.
+`WorkflowConcurrencyConfig` creates the shared executor and semaphore, `OrderInFlightLockManager` protects the same order id, and `ExternalCallGuard` wraps all external calls through the shared concurrency tools.
+
+```mermaid
+flowchart LR
+    FE["FrontEnd / Gateway"]
+    OS["OrderService"]
+    CFG["WorkflowConcurrencyConfig"]
+    PROP["WorkflowProperties"]
+    TP["orderWorkflowExecutor"]
+    SEM["orderExternalCallSemaphore"]
+    LKM["OrderInFlightLockManager"]
+    EAG["ExternalCallGuard"]
+    CP["CouponPlatformClient"]
+    PP["PaymentPlatformClient"]
+    RY["CouponIssueRetryService"]
+
+    PROP --> CFG
+    CFG --> TP
+    CFG --> SEM
+    OS --> LKM
+    OS --> EAG
+    EAG --> TP
+    EAG --> SEM
+    OS --> CP
+    OS --> PP
+    OS --> RY
+    FE --> OS
+
+    style CFG fill:#eef6ff,stroke:#4b82c3,stroke-width:1px
+    style EAG fill:#fff4e6,stroke:#d98c00,stroke-width:1px
+    style LKM fill:#eefaf0,stroke:#3a9d5d,stroke-width:1px
+```
 
 ## Near-Term TODO
 

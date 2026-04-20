@@ -41,6 +41,14 @@ public class OrderController {
         return ApiResponse.success(orderService.cancelOrder(requestUser, orderId));
     }
 
+    @PostMapping("/{orderId}/pay")
+    public ApiResponse<OrderResponse> payOrder(
+            RequestUser requestUser,
+            @PathVariable Long orderId
+    ) {
+        return ApiResponse.success(orderService.payOrder(requestUser, orderId));
+    }
+
     @GetMapping("/my")
     public ApiResponse<PageResponse<OrderResponse>> myOrders(
             RequestUser requestUser,
