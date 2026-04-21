@@ -11,6 +11,7 @@ Each document can be reviewed and executed separately.
 
 ## Execution Order
 
+0. `batch-7-execution-sop-for-pressure-team.md` (must-read handoff guide)
 1. `batch-7.1-baseline-and-observability.md`
 2. `batch-7.2-checkout-concurrency-validation.md`
 3. `batch-7.3-jvm-tuning-and-diagnostics.md`

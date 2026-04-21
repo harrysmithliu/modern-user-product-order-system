@@ -1,0 +1,3 @@
+NAME                               IMAGE                     COMMAND                  SERVICE      CREATED       STATUS             PORTS
+modern-upo-monitoring-grafana      grafana/grafana:11.2.0    "/run.sh"                grafana      2 weeks ago   Up About an hour   0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+modern-upo-monitoring-prometheus   prom/prometheus:v2.54.1   "/bin/prometheus --c…"   prometheus   2 weeks ago   Up About an hour   0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp
