@@ -1,0 +1,2 @@
+run_id,case,vus,stage_result,iterations,http_reqs,http_req_failed_rate,http_req_duration_p95_ms,create_p95_ms,pay_p95_ms,http_400_total,http_429_total,http_502_total,http_5xx_total,unexpected_5xx_rate
+s1_rerun_temp_limiter,unique_orders,500,failed_stop_escalation,10870,10965,0.9881440948472412,3401.5798428,3401.66855795,342.1332046,10802,0,33,33,0.0030103995621237

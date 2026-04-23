@@ -1,0 +1,59 @@
+# Batch 7.3.2 Command Log
+
+## Pre-checks and snapshots
+
+docker exec modern-upo-sandbox-order-service sh -lc 'for c in jstat jstack jmap jcmd; do if command -v $c >/dev/null 2>&1; then echo "$c=$(command -v $c)"; else echo "$c=NOT_FOUND"; fi; done'
+curl -sS http://127.0.0.1:8000/ready
+curl -sS http://127.0.0.1:8080/actuator/health
+curl -sS http://127.0.0.1:9090/-/ready
+curl -sS http://127.0.0.1:3000/api/health
+curl -sS http://127.0.0.1:8080/actuator/prometheus
+curl -sS http://127.0.0.1:9090/api/v1/targets
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-gateway
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT id,product_code,stock,status FROM h_product_db.t_product WHERE id=2;"
+
+## Temporary gateway limiter for service-concurrency lane
+
+SANDBOX_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS=60000 SANDBOX_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS=60 \
+docker compose -f infra/docker/docker-compose.sandbox.yml up -d --force-recreate --no-deps gateway
+curl -sS http://127.0.0.1:8000/ready
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-gateway
+
+## k6 reproduction run
+
+docker run --rm -i -v "$PWD:/work" grafana/k6 run \
+  -e BASE_URL=http://host.docker.internal:8000 \
+  -e TEST_CASE=unique_orders \
+  -e PRODUCT_ID=2 \
+  -e VUS=500 -e WARMUP=20s -e STEADY=40s -e COOLDOWN=10s \
+  --summary-export /work/scripts/test/7-3/2026-04-23-7.3.2-repro-s1-summary.json \
+  /work/scripts/load/k6-batch7-checkout-concurrency.js \
+  > scripts/test/7-3/2026-04-23-7.3.2-repro-s1.log
+
+## Mid-run diagnostics
+
+curl -sS http://127.0.0.1:8080/actuator/prometheus
+docker stats --no-stream modern-upo-sandbox-order-service modern-upo-sandbox-gateway
+curl -sS --get --data-urlencode 'query=histogram_quantile(...)' http://127.0.0.1:9090/api/v1/query
+curl -sS --get --data-urlencode 'query=sum(rate(...)) by (uri,status)' http://127.0.0.1:9090/api/v1/query
+
+## Post-run diagnostics and SQL checks
+
+curl -sS http://127.0.0.1:8080/actuator/prometheus
+curl -sS http://127.0.0.1:9090/api/v1/targets
+curl -sS --get --data-urlencode 'query=sum(http_server_requests_seconds_count{method="POST",uri=~"/orders|/orders/\\{orderId\\}/pay|/admin/orders/\\{orderId\\}/approve|/admin/orders/\\{orderId\\}/reject"}) by (uri,status)' http://127.0.0.1:9090/api/v1/query
+docker stats --no-stream modern-upo-sandbox-order-service modern-upo-sandbox-gateway
+docker logs --since 20m modern-upo-sandbox-order-service
+docker logs --since 20m modern-upo-sandbox-gateway
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT id,product_code,stock,status FROM h_product_db.t_product WHERE id=2;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT status, COUNT(*) FROM h_order_db.t_order GROUP BY status ORDER BY status;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT user_id, request_no, COUNT(*) cnt FROM h_order_db.t_order WHERE request_no IS NOT NULL GROUP BY user_id, request_no HAVING cnt > 1;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT status, COUNT(*) FROM h_order_db.t_order_coupon_issue_task GROUP BY status;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT COUNT(*) AS due_shipping FROM h_order_db.t_order WHERE status = 6 AND expected_delivery_time <= NOW();"
+
+## Restore gateway limiter defaults
+
+SANDBOX_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS=20 SANDBOX_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS=60 \
+docker compose -f infra/docker/docker-compose.sandbox.yml up -d --force-recreate --no-deps gateway
+curl -sS http://127.0.0.1:8000/ready
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-gateway

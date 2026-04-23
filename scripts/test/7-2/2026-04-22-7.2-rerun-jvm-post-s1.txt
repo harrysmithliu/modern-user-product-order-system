@@ -1,0 +1,102 @@
+executor_active_threads{name="orderWorkflowExecutor"} 0.0
+executor_active_threads{name="taskScheduler"} 0.0
+executor_completed_tasks_total{name="orderWorkflowExecutor"} 0.0
+executor_completed_tasks_total{name="taskScheduler"} 388.0
+executor_pool_core_threads{name="orderWorkflowExecutor"} 16.0
+executor_pool_core_threads{name="taskScheduler"} 1.0
+executor_pool_max_threads{name="orderWorkflowExecutor"} 64.0
+executor_pool_max_threads{name="taskScheduler"} 2.147483647E9
+executor_pool_size_threads{name="orderWorkflowExecutor"} 0.0
+executor_pool_size_threads{name="taskScheduler"} 1.0
+executor_queue_remaining_tasks{name="orderWorkflowExecutor"} 2000.0
+executor_queue_remaining_tasks{name="taskScheduler"} 2.147483647E9
+executor_queued_tasks{name="orderWorkflowExecutor"} 0.0
+executor_queued_tasks{name="taskScheduler"} 4.0
+http_server_requests_seconds_count{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/health"} 1
+http_server_requests_seconds_sum{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/health"} 0.112015
+http_server_requests_seconds_count{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/prometheus"} 39
+http_server_requests_seconds_sum{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/prometheus"} 0.653307461
+http_server_requests_seconds_count{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/admin/orders"} 12
+http_server_requests_seconds_sum{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/admin/orders"} 0.414386418
+http_server_requests_seconds_count{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/orders/my"} 11
+http_server_requests_seconds_sum{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/orders/my"} 0.30500871
+http_server_requests_seconds_count{error="none",exception="none",method="POST",outcome="CLIENT_ERROR",status="400",uri="/orders"} 10802
+http_server_requests_seconds_sum{error="none",exception="none",method="POST",outcome="CLIENT_ERROR",status="400",uri="/orders"} 1821.338378263
+http_server_requests_seconds_count{error="none",exception="none",method="POST",outcome="SERVER_ERROR",status="502",uri="/orders"} 33
+http_server_requests_seconds_sum{error="none",exception="none",method="POST",outcome="SERVER_ERROR",status="502",uri="/orders"} 2.838357666
+http_server_requests_seconds_count{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/admin/orders/{orderId}/approve"} 11
+http_server_requests_seconds_sum{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/admin/orders/{orderId}/approve"} 0.291914291
+http_server_requests_seconds_count{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/admin/orders/{orderId}/reject"} 24
+http_server_requests_seconds_sum{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/admin/orders/{orderId}/reject"} 1.508665792
+http_server_requests_seconds_count{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/orders"} 35
+http_server_requests_seconds_sum{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/orders"} 3.053282252
+http_server_requests_seconds_count{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/orders/{orderId}/pay"} 35
+http_server_requests_seconds_sum{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/orders/{orderId}/pay"} 1.274172957
+http_server_requests_seconds_max{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/health"} 0.0
+http_server_requests_seconds_max{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/prometheus"} 0.018324667
+http_server_requests_seconds_max{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/admin/orders"} 0.089485833
+http_server_requests_seconds_max{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/orders/my"} 0.077249125
+http_server_requests_seconds_max{error="none",exception="none",method="POST",outcome="CLIENT_ERROR",status="400",uri="/orders"} 1.291858626
+http_server_requests_seconds_max{error="none",exception="none",method="POST",outcome="SERVER_ERROR",status="502",uri="/orders"} 0.131671375
+http_server_requests_seconds_max{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/admin/orders/{orderId}/approve"} 0.088019917
+http_server_requests_seconds_max{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/admin/orders/{orderId}/reject"} 0.114818666
+http_server_requests_seconds_max{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/orders"} 0.212385208
+http_server_requests_seconds_max{error="none",exception="none",method="POST",outcome="SUCCESS",status="200",uri="/orders/{orderId}/pay"} 0.082209416
+jvm_info{runtime="OpenJDK Runtime Environment",vendor="Eclipse Adoptium",version="17.0.18+8"} 1
+jvm_buffer_count_buffers{id="direct"} 204.0
+jvm_buffer_count_buffers{id="mapped"} 0.0
+jvm_buffer_count_buffers{id="mapped - 'non-volatile memory'"} 0.0
+jvm_buffer_memory_used_bytes{id="direct"} 1673224.0
+jvm_buffer_memory_used_bytes{id="mapped"} 0.0
+jvm_buffer_memory_used_bytes{id="mapped - 'non-volatile memory'"} 0.0
+jvm_buffer_total_capacity_bytes{id="direct"} 1673224.0
+jvm_buffer_total_capacity_bytes{id="mapped"} 0.0
+jvm_buffer_total_capacity_bytes{id="mapped - 'non-volatile memory'"} 0.0
+jvm_classes_loaded_classes 18785.0
+jvm_classes_unloaded_classes_total 2.0
+jvm_compilation_time_ms_total{compiler="HotSpot 64-Bit Tiered Compilers"} 43160.0
+jvm_gc_live_data_size_bytes 7.766784E7
+jvm_gc_max_data_size_bytes 2.05520896E9
+jvm_gc_memory_allocated_bytes_total 2.722103208E9
+jvm_gc_memory_promoted_bytes_total 1.04218624E8
+jvm_gc_overhead 0.0012033333333333334
+jvm_gc_pause_seconds_count{action="end of minor GC",cause="G1 Evacuation Pause",gc="G1 Young Generation"} 59
+jvm_gc_pause_seconds_sum{action="end of minor GC",cause="G1 Evacuation Pause",gc="G1 Young Generation"} 0.388
+jvm_gc_pause_seconds_max{action="end of minor GC",cause="G1 Evacuation Pause",gc="G1 Young Generation"} 0.02
+jvm_memory_committed_bytes{area="heap",id="G1 Eden Space"} 6.9206016E7
+jvm_memory_committed_bytes{area="heap",id="G1 Old Gen"} 1.82452224E8
+jvm_memory_committed_bytes{area="heap",id="G1 Survivor Space"} 4194304.0
+jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 2555904.0
+jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 1.9202048E7
+jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 3.178496E7
+jvm_memory_committed_bytes{area="nonheap",id="Compressed Class Space"} 1.3172736E7
+jvm_memory_committed_bytes{area="nonheap",id="Metaspace"} 9.9155968E7
+jvm_memory_max_bytes{area="heap",id="G1 Eden Space"} -1.0
+jvm_memory_max_bytes{area="heap",id="G1 Old Gen"} 2.05520896E9
+jvm_memory_max_bytes{area="heap",id="G1 Survivor Space"} -1.0
+jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 5840896.0
+jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 1.22908672E8
+jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 1.22908672E8
+jvm_memory_max_bytes{area="nonheap",id="Compressed Class Space"} 1.073741824E9
+jvm_memory_max_bytes{area="nonheap",id="Metaspace"} -1.0
+jvm_memory_usage_after_gc{area="heap",pool="long-lived"} 0.0672477877869898
+jvm_memory_used_bytes{area="heap",id="G1 Eden Space"} 5.9768824E7
+jvm_memory_used_bytes{area="heap",id="G1 Old Gen"} 1.38208256E8
+jvm_memory_used_bytes{area="heap",id="G1 Survivor Space"} 3520096.0
+jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 1410560.0
+jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 1.9136768E7
+jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 2.5943424E7
+jvm_memory_used_bytes{area="nonheap",id="Compressed Class Space"} 1.2787456E7
+jvm_memory_used_bytes{area="nonheap",id="Metaspace"} 9.8381E7
+jvm_threads_daemon_threads 210.0
+jvm_threads_live_threads 217.0
+jvm_threads_peak_threads 219.0
+jvm_threads_started_threads_total 224.0
+jvm_threads_states_threads{state="blocked"} 0.0
+jvm_threads_states_threads{state="new"} 0.0
+jvm_threads_states_threads{state="runnable"} 8.0
+jvm_threads_states_threads{state="terminated"} 0.0
+jvm_threads_states_threads{state="timed-waiting"} 207.0
+jvm_threads_states_threads{state="waiting"} 2.0
+process_uptime_seconds 589.011
+rabbitmq_published_total{name="rabbit"} 70.0
