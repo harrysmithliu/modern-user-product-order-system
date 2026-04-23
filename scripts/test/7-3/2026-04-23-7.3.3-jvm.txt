@@ -1,0 +1,50 @@
+Batch 7.3.3 JVM/Runtime Diagnostic Snapshot
+Date: 2026-04-23
+Source stage: 7.3.2
+
+[Observed JVM signals]
+- jvm_gc_overhead:
+  - pre: 0.0
+  - mid1: 1.4666666666666666E-4
+  - mid2: 5.233333333333333E-4
+  - post: 3.1666666666666665E-4
+- G1 Old Gen used bytes:
+  - pre: 62985216 (60.067 MiB)
+  - mid1: 63095296 (60.172 MiB)
+  - mid2: 63179776 (60.253 MiB)
+  - post: 63179776 (60.253 MiB)
+- live threads:
+  - pre: 27
+  - mid1: 76
+  - mid2: 27
+  - post: 27
+
+[Interpretation]
+- No Full-GC storm signal from actuator snapshots.
+- No monotonic old-gen growth pattern indicating leak risk in this run window.
+- JVM heap/GC is not the primary bottleneck for the observed p95 latency spike.
+
+[Tool availability status]
+- In stage 7.3.2 runtime image, JDK diagnostics tools were missing:
+  - jstat=NOT_FOUND
+  - jstack=NOT_FOUND
+  - jmap=NOT_FOUND
+  - jcmd=NOT_FOUND
+
+[Recommended JVM baseline for next verification run]
+-JAVA_TOOL_OPTIONS:
+  -Xms1g
+  -Xmx1g
+  -XX:+UseG1GC
+  -XX:MaxGCPauseMillis=200
+  -XX:MetaspaceSize=256m
+  -XX:MaxMetaspaceSize=512m
+  -XX:+HeapDumpOnOutOfMemoryError
+
+[Recommended DB pool baseline for next verification run]
+- SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=20
+- SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=10
+- SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT=3000
+
+[Note]
+Current stage is diagnostics summary only; these tuning values still require controlled rerun validation.
