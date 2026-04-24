@@ -41,9 +41,12 @@ public class ExternalCallGuard {
         submittedCalls.incrementAndGet();
         acquirePermit(operation);
         try {
-            T result = supplier.get();
+            T result = CompletableFuture.supplyAsync(supplier, workflowExecutor).join();
             succeededCalls.incrementAndGet();
             return result;
+        } catch (CompletionException ex) {
+            failedCalls.incrementAndGet();
+            throw unwrap(ex);
         } catch (RuntimeException ex) {
             failedCalls.incrementAndGet();
             throw ex;
