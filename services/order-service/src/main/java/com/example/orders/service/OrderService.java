@@ -83,7 +83,7 @@ public class OrderService {
             return toResponse(existing);
         }
 
-        ProductSnapshot product = productClient.getProduct(request.productId());
+        ProductSnapshot product = getProductGuarded(request.productId());
         if (product.status() == null || product.status() != 1) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Product is off sale");
         }
@@ -91,7 +91,7 @@ public class OrderService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Insufficient stock");
         }
 
-        ProductSnapshot reserved = productClient.reserveStock(request.productId(), request.quantity());
+        ProductSnapshot reserved = reserveProductGuarded(request.productId(), request.quantity());
         String orderNo = OrderNoGenerator.next();
         BigDecimal originAmount = reserved.price().multiply(BigDecimal.valueOf(request.quantity()));
 
@@ -112,12 +112,12 @@ public class OrderService {
             return toResponse(orderRepository.save(entity));
         } catch (DataIntegrityViolationException ex) {
             // Concurrent duplicate request_no may race to insert; release the reserved stock and return existing order.
-            productClient.releaseStock(request.productId(), request.quantity());
+            tryReleaseProduct(request.productId(), request.quantity());
             return orderRepository.findByUserIdAndRequestNo(requestUser.userId(), request.requestNo())
                     .map(this::toResponse)
                     .orElseThrow(() -> new BusinessException(HttpStatus.CONFLICT, "Duplicate order request"));
         } catch (RuntimeException ex) {
-            productClient.releaseStock(request.productId(), request.quantity());
+            tryReleaseProduct(request.productId(), request.quantity());
             throw ex;
         }
     }
@@ -139,7 +139,7 @@ public class OrderService {
         entity.setStatus(OrderStatus.CANCELLED.getCode());
         entity.setCancelTime(LocalDateTime.now());
         OrderEntity saved = orderRepository.save(entity);
-        productClient.releaseStock(saved.getProductId(), saved.getQuantity());
+        releaseProductGuarded(saved.getProductId(), saved.getQuantity());
         orderEventPublisher.publishCancelled(saved, requestUser);
         return toResponse(saved);
     }
@@ -206,9 +206,34 @@ public class OrderService {
         refunding.setStatus(OrderStatus.REJECTED.getCode());
         refunding.setRefundTime(toLocalDateTime(refundResult.completedAt()));
         OrderEntity saved = orderRepository.save(refunding);
-        productClient.releaseStock(saved.getProductId(), saved.getQuantity());
+        releaseProductGuarded(saved.getProductId(), saved.getQuantity());
         orderEventPublisher.publishRejected(saved, requestUser, request.rejectReason());
         return toResponse(saved);
+    }
+
+    private ProductSnapshot getProductGuarded(Long productId) {
+        return externalCallGuard.callSync("product-get", () -> productClient.getProduct(productId));
+    }
+
+    private ProductSnapshot reserveProductGuarded(Long productId, int quantity) {
+        return externalCallGuard.callSync("product-reserve", () -> productClient.reserveStock(productId, quantity));
+    }
+
+    private void releaseProductGuarded(Long productId, int quantity) {
+        externalCallGuard.callSync("product-release", () -> productClient.releaseStock(productId, quantity));
+    }
+
+    private void tryReleaseProduct(Long productId, int quantity) {
+        try {
+            releaseProductGuarded(productId, quantity);
+        } catch (RuntimeException releaseEx) {
+            log.warn(
+                    "product release failed during create rollback product_id={} quantity={} error={}",
+                    productId,
+                    quantity,
+                    releaseEx.getMessage()
+            );
+        }
     }
 
     private void ensureAdmin(RequestUser requestUser) {

@@ -95,13 +95,24 @@ async def forward_request(request: Request, current_user: Optional[CurrentUser])
 
     body = await request.body()
     client = get_http_client()
-    upstream = await client.request(
-        request.method,
-        target_url,
-        content=body,
-        params=request.query_params,
-        headers=headers,
-    )
+    try:
+        upstream = await client.request(
+            request.method,
+            target_url,
+            content=body,
+            params=request.query_params,
+            headers=headers,
+        )
+    except httpx.TimeoutException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail=f"Upstream timeout: {ex.__class__.__name__}",
+        ) from ex
+    except httpx.RequestError as ex:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Upstream request error: {ex.__class__.__name__}",
+        ) from ex
 
     excluded_headers = {"content-encoding", "transfer-encoding", "connection"}
     response_headers = {
