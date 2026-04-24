@@ -1,0 +1,4 @@
+CONTAINER ID   NAME                                 CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+f168c47dfccc   modern-upo-sandbox-order-service     57.53%    1.078GiB / 7.654GiB   14.09%    43.7MB / 69.8MB   0B / 3.12MB   51
+a12225c7a486   modern-upo-sandbox-gateway           1.34%     115.8MiB / 7.654GiB   1.48%     190kB / 1.45MB    0B / 0B       9
+8fc3b15b3cd4   modern-upo-sandbox-product-service   0.17%     77.77MiB / 7.654GiB   0.99%     33.9MB / 39MB     20.7MB / 0B   6
