@@ -31,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -75,7 +76,6 @@ public class OrderService {
         this.couponIssueRetryService = couponIssueRetryService;
     }
 
-    @Transactional
     public OrderResponse createOrder(RequestUser requestUser, CreateOrderRequest request) {
         OrderEntity existing = orderRepository.findByUserIdAndRequestNo(requestUser.userId(), request.requestNo())
                 .orElse(null);
@@ -110,6 +110,12 @@ public class OrderService {
             entity.setVersion(0);
 
             return toResponse(orderRepository.save(entity));
+        } catch (DataIntegrityViolationException ex) {
+            // Concurrent duplicate request_no may race to insert; release the reserved stock and return existing order.
+            productClient.releaseStock(request.productId(), request.quantity());
+            return orderRepository.findByUserIdAndRequestNo(requestUser.userId(), request.requestNo())
+                    .map(this::toResponse)
+                    .orElseThrow(() -> new BusinessException(HttpStatus.CONFLICT, "Duplicate order request"));
         } catch (RuntimeException ex) {
             productClient.releaseStock(request.productId(), request.quantity());
             throw ex;

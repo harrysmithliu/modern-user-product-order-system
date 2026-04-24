@@ -1,0 +1,63 @@
+# Batch 7.3.5 Command Log
+
+## 1) Apply minimal order-service DB contention fix
+
+mvn -f services/order-service/pom.xml -DskipTests compile
+docker compose -f infra/docker/docker-compose.sandbox.yml up -d --build --no-deps order-service
+
+## 2) Pre-run snapshots
+
+curl -sS http://127.0.0.1:8000/ready
+curl -sS http://127.0.0.1:8080/actuator/health
+curl -sS http://127.0.0.1:9090/-/ready
+curl -sS http://127.0.0.1:9090/api/v1/targets
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-gateway
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-order-service
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT id,product_code,stock,status FROM h_product_db.t_product WHERE id=2;"
+
+## 3) Temporary gateway limiter override for concurrency lane
+
+SANDBOX_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS=60000 SANDBOX_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS=60 \
+docker compose -f infra/docker/docker-compose.sandbox.yml up -d --force-recreate --no-deps gateway
+curl -sS http://127.0.0.1:8000/ready
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-gateway
+
+## 4) DB diagnostics lane and reruns
+
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -e "SET GLOBAL log_output='TABLE'; SET GLOBAL slow_query_log=ON; SET GLOBAL long_query_time=0.05; SET GLOBAL min_examined_row_limit=0;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -e "TRUNCATE TABLE mysql.slow_log;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -e "TRUNCATE TABLE performance_schema.events_statements_summary_by_digest;"
+
+docker run --rm -i -v "$PWD:/work" grafana/k6 run \
+  -e BASE_URL=http://host.docker.internal:8000 \
+  -e TEST_CASE=unique_orders \
+  -e PRODUCT_ID=2 \
+  -e VUS=500 -e WARMUP=20s -e STEADY=40s -e COOLDOWN=10s \
+  --summary-export /work/scripts/test/7-3/2026-04-23-7.3.5-dbfix-s1-summary.json \
+  /work/scripts/load/k6-batch7-checkout-concurrency.js | tee scripts/test/7-3/2026-04-23-7.3.5-dbfix-s1.log
+
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -e "SET GLOBAL slow_query_log=OFF; SET GLOBAL long_query_time=10;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -e "TRUNCATE TABLE performance_schema.events_statements_summary_by_digest;"
+
+docker run --rm -i -v "$PWD:/work" grafana/k6 run \
+  -e BASE_URL=http://host.docker.internal:8000 \
+  -e TEST_CASE=unique_orders \
+  -e PRODUCT_ID=2 \
+  -e VUS=500 -e WARMUP=20s -e STEADY=40s -e COOLDOWN=10s \
+  --summary-export /work/scripts/test/7-3/2026-04-23-7.3.5-dbfix-s2-summary.json \
+  /work/scripts/load/k6-batch7-checkout-concurrency.js | tee scripts/test/7-3/2026-04-23-7.3.5-dbfix-s2.log
+
+## 5) Post-run diagnostics and evidence snapshots
+
+docker logs --since 25m modern-upo-sandbox-gateway > scripts/test/7-3/2026-04-23-7.3.5-gateway-logs-post.log 2>&1
+docker logs --since 25m modern-upo-sandbox-order-service > scripts/test/7-3/2026-04-23-7.3.5-order-service-logs-post.log 2>&1
+docker logs --since 25m modern-upo-sandbox-product-service > scripts/test/7-3/2026-04-23-7.3.5-product-service-logs-s2.log 2>&1
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT * FROM sys.innodb_lock_waits;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT digest_text,count_star,sum_timer_wait FROM performance_schema.events_statements_summary_by_digest ORDER BY sum_timer_wait DESC LIMIT 30;"
+
+## 6) Restore limiter defaults
+
+SANDBOX_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS=20 SANDBOX_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS=60 \
+docker compose -f infra/docker/docker-compose.sandbox.yml up -d --force-recreate --no-deps gateway
+curl -sS http://127.0.0.1:8000/ready
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-gateway
