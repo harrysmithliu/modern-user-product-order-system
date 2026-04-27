@@ -11,7 +11,14 @@ import urllib.request
 BASE_URL = os.getenv("SMOKE_TEST_BASE_URL", "http://127.0.0.1:8000")
 
 
-def request(method: str, path: str, data=None, token: str | None = None):
+def request(
+    method: str,
+    path: str,
+    data=None,
+    token: str | None = None,
+    expect_status: int | tuple[int, ...] = 200,
+):
+    expected_statuses = {expect_status} if isinstance(expect_status, int) else set(expect_status)
     body = None if data is None else json.dumps(data).encode()
     req = urllib.request.Request(BASE_URL + path, data=body, method=method)
     req.add_header("Content-Type", "application/json")
@@ -27,7 +34,9 @@ def request(method: str, path: str, data=None, token: str | None = None):
             parsed = json.loads(payload)
         except json.JSONDecodeError:
             parsed = {"raw": payload}
-        raise RuntimeError(f"{method} {path} failed with HTTP {exc.code}: {parsed}") from exc
+        if exc.code not in expected_statuses:
+            raise RuntimeError(f"{method} {path} failed with HTTP {exc.code}: {parsed}") from exc
+        return exc.code, parsed
 
 
 def expect(label: str, condition: bool, details: str):
@@ -50,8 +59,32 @@ def create_order(user_token: str, product_id: int, suffix: str):
     return response["data"]
 
 
+def pay_order(user_token: str, order_id: int):
+    for attempt in range(1, 6):
+        status, response = request(
+            "POST",
+            f"/api/orders/{order_id}/pay",
+            token=user_token,
+            expect_status=(200, 504),
+        )
+        if status == 504:
+            print(f"[WARN] Pay attempt {attempt} timed out for id={order_id}, retrying...")
+            time.sleep(1)
+            continue
+
+        payload = response["data"]
+        expect(
+            "Pay order",
+            payload["status_label"] == "PAID_PENDING_APPROVAL",
+            f"id={order_id}",
+        )
+        return payload
+
+    raise RuntimeError(f"Pay order failed after 5 retries: id={order_id}")
+
+
 def main():
-    print("Phase 1 smoke test started.")
+    print("Phase 1 checkout smoke test started.")
 
     _, user_login = request("POST", "/api/auth/login", {"username": "john_smith", "password": "User@123"})
     user_token = user_login["data"]["access_token"]
@@ -67,19 +100,21 @@ def main():
     product_id = items[0]["id"]
 
     cancel_order = create_order(user_token, product_id, "CANCEL")
-    expect("Create order for cancel flow", cancel_order["status_label"] == "PENDING_APPROVAL", f"id={cancel_order['id']}")
+    expect("Create order for cancel flow", cancel_order["status_label"] == "PAYING", f"id={cancel_order['id']}")
 
     _, cancelled = request("POST", f"/api/orders/{cancel_order['id']}/cancel", token=user_token)
     expect("Cancel order", cancelled["data"]["status_label"] == "CANCELLED", f"id={cancel_order['id']}")
 
     approve_order = create_order(user_token, product_id, "APPROVE")
-    expect("Create order for approve flow", approve_order["status_label"] == "PENDING_APPROVAL", f"id={approve_order['id']}")
+    expect("Create order for approve flow", approve_order["status_label"] == "PAYING", f"id={approve_order['id']}")
+    pay_order(user_token, approve_order["id"])
 
     _, approved = request("POST", f"/api/admin/orders/{approve_order['id']}/approve", token=admin_token)
-    expect("Approve order", approved["data"]["status_label"] == "APPROVED", f"id={approve_order['id']}")
+    expect("Approve order", approved["data"]["status_label"] == "SHIPPING", f"id={approve_order['id']}")
 
     reject_order = create_order(user_token, product_id, "REJECT")
-    expect("Create order for reject flow", reject_order["status_label"] == "PENDING_APPROVAL", f"id={reject_order['id']}")
+    expect("Create order for reject flow", reject_order["status_label"] == "PAYING", f"id={reject_order['id']}")
+    pay_order(user_token, reject_order["id"])
 
     _, rejected = request(
         "POST",
@@ -93,7 +128,7 @@ def main():
     latest_statuses = [item["status_label"] for item in my_orders["data"]["items"][:3]]
     expect(
         "Latest orders sorted desc",
-        latest_statuses[:3] == ["REJECTED", "APPROVED", "CANCELLED"],
+        latest_statuses[:3] == ["REJECTED", "SHIPPING", "CANCELLED"],
         f"latest={latest_statuses[:3]}",
     )
 
