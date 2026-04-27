@@ -9,6 +9,23 @@ from app.core.config import settings
 from app.core.security import CurrentUser, get_current_user, get_optional_current_user
 
 router = APIRouter()
+_http_client: httpx.AsyncClient | None = None
+
+
+def set_http_client(client: httpx.AsyncClient) -> None:
+    global _http_client
+    _http_client = client
+
+
+def clear_http_client() -> None:
+    global _http_client
+    _http_client = None
+
+
+def get_http_client() -> httpx.AsyncClient:
+    if _http_client is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Gateway upstream client not ready")
+    return _http_client
 
 
 def resolve_target(path: str) -> str:
@@ -77,9 +94,8 @@ async def forward_request(request: Request, current_user: Optional[CurrentUser])
         headers["x-user-role"] = current_user.role
 
     body = await request.body()
-    timeout = httpx.Timeout(settings.request_timeout_seconds)
-
-    async with httpx.AsyncClient(timeout=timeout) as client:
+    client = get_http_client()
+    try:
         upstream = await client.request(
             request.method,
             target_url,
@@ -87,6 +103,16 @@ async def forward_request(request: Request, current_user: Optional[CurrentUser])
             params=request.query_params,
             headers=headers,
         )
+    except httpx.TimeoutException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail=f"Upstream timeout: {ex.__class__.__name__}",
+        ) from ex
+    except httpx.RequestError as ex:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Upstream request error: {ex.__class__.__name__}",
+        ) from ex
 
     excluded_headers = {"content-encoding", "transfer-encoding", "connection"}
     response_headers = {

@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     product_service_url: str = "http://localhost:8002"
     order_service_url: str = "http://localhost:8080"
     request_timeout_seconds: int = 15
+    upstream_max_connections: int = 2048
+    upstream_max_keepalive_connections: int = 512
+    upstream_keepalive_expiry_seconds: int = 30
     redis_enabled: bool = True
     redis_host: str = "localhost"
     redis_port: int = 6379

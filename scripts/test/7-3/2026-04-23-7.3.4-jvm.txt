@@ -1,0 +1,42 @@
+Batch 7.3.4 JVM Snapshot (Tuned Rerun)
+Date: 2026-04-23
+
+[Runtime configuration observed]
+- JAVA_TOOL_OPTIONS:
+  -Xms1g -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError
+- Hikari:
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=20
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=10
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT=3000
+
+[Actuator snapshots]
+- pre:
+  hikaricp max/active/idle/pending = 20 / 1 / 10 / 0
+  jvm_gc_overhead = 0
+  old gen = 1.3978624E7 bytes
+  live threads = 27
+- mid1:
+  hikaricp max/active/idle/pending = 20 / 1 / 19 / 0
+  jvm_gc_overhead = 5.233333333333333E-4
+  old gen = 6.0665856E7 bytes
+  live threads = 217
+- post:
+  hikaricp max/active/idle/pending = 20 / 1 / 19 / 0
+  jvm_gc_overhead = 5.233333333333333E-4
+  old gen = 6.0665856E7 bytes
+  live threads = 217
+
+[Log evidence]
+- Latest-run focused window (s2): no WARN/ERROR in order-service and gateway.
+- Prior attempt (s1) had transient Hikari timeout errors in logs:
+  "Connection is not available, request timed out after 3001ms (total=20, active=20, idle=0, waiting=...)"
+
+[JDK diagnostics tools]
+- jstat=NOT_FOUND
+- jstack=NOT_FOUND
+- jmap=NOT_FOUND
+- jcmd=NOT_FOUND
+
+[Interpretation]
+- GC is still not the primary bottleneck signal.
+- Gateway side pressure is reduced after tuning; remaining tail latency suggests downstream (order-service/DB) contention under peak.

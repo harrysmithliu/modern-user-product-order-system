@@ -1,0 +1,5 @@
+endpoint,samples,avg_ms,p95_ms,error_rate,status_hist
+POST /api/orders,10,47.274,251.513,0.0,"{""200"": 10}"
+POST /api/orders/{id}/pay,10,18.355,43.445,0.0,"{""200"": 10}"
+POST /api/admin/orders/{id}/approve,5,18.742,28.268,0.0,"{""200"": 5}"
+POST /api/admin/orders/{id}/reject,5,23.221,32.498,0.0,"{""200"": 5}"

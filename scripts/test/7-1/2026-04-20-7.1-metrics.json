@@ -1,0 +1,92 @@
+{
+  "date": "2026-04-20",
+  "start_utc": "2026-04-20T22:05:22.317709+00:00",
+  "end_utc": "2026-04-20T22:05:23.502400+00:00",
+  "base_url": "http://127.0.0.1:8000",
+  "product_id": 8,
+  "samples": 10,
+  "created_order_ids": [
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66
+  ],
+  "latency_summary": [
+    {
+      "endpoint": "POST /api/orders",
+      "samples": 10,
+      "avg_ms": 47.274,
+      "p95_ms": 251.513,
+      "error_rate": 0.0,
+      "status_hist": {
+        "200": 10
+      }
+    },
+    {
+      "endpoint": "POST /api/orders/{id}/pay",
+      "samples": 10,
+      "avg_ms": 18.355,
+      "p95_ms": 43.445,
+      "error_rate": 0.0,
+      "status_hist": {
+        "200": 10
+      }
+    },
+    {
+      "endpoint": "POST /api/admin/orders/{id}/approve",
+      "samples": 5,
+      "avg_ms": 18.742,
+      "p95_ms": 28.268,
+      "error_rate": 0.0,
+      "status_hist": {
+        "200": 5
+      }
+    },
+    {
+      "endpoint": "POST /api/admin/orders/{id}/reject",
+      "samples": 5,
+      "avg_ms": 23.221,
+      "p95_ms": 32.498,
+      "error_rate": 0.0,
+      "status_hist": {
+        "200": 5
+      }
+    }
+  ],
+  "transition_counts": {
+    "PAYING->PAID_PENDING_APPROVAL": 10,
+    "PAID_PENDING_APPROVAL->SHIPPING": 5,
+    "PAID_PENDING_APPROVAL->REJECTED": 5
+  },
+  "failures": [],
+  "my_orders_top_statuses": [
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING"
+  ],
+  "admin_orders_top_statuses": [
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING",
+    "REJECTED",
+    "SHIPPING"
+  ]
+}

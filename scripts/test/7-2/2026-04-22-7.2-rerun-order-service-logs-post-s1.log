@@ -1,0 +1,114 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-04-23T03:39:35.520Z  INFO 1 --- [order-service] [           main] c.e.orders.OrderServiceApplication       : Starting OrderServiceApplication v0.1.0 using Java 17.0.18 with PID 1 (/app/app.jar started by root in /app)
+2026-04-23T03:39:35.522Z  INFO 1 --- [order-service] [           main] c.e.orders.OrderServiceApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-04-23T03:39:36.691Z  INFO 1 --- [order-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-23T03:39:36.763Z  INFO 1 --- [order-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 62 ms. Found 3 JPA repository interfaces.
+2026-04-23T03:39:37.797Z  INFO 1 --- [order-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-23T03:39:37.805Z  INFO 1 --- [order-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-23T03:39:37.806Z  INFO 1 --- [order-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+2026-04-23T03:39:37.829Z  INFO 1 --- [order-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-23T03:39:37.830Z  INFO 1 --- [order-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2276 ms
+2026-04-23T03:39:38.146Z  INFO 1 --- [order-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-23T03:39:38.348Z  INFO 1 --- [order-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7417ef4f
+2026-04-23T03:39:38.349Z  INFO 1 --- [order-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-23T03:39:38.490Z  INFO 1 --- [order-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-23T03:39:38.575Z  INFO 1 --- [order-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-04-23T03:39:38.604Z  INFO 1 --- [order-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-23T03:39:38.777Z  INFO 1 --- [order-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-23T03:39:39.282Z  INFO 1 --- [order-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-23T03:39:39.283Z  INFO 1 --- [order-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-23T03:39:40.169Z  WARN 1 --- [order-service] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 4f1127e4-3f18-4e44-b178-2b9fe41cd2b1
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-04-23T03:39:40.181Z  INFO 1 --- [order-service] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-04-23T03:39:40.797Z  INFO 1 --- [order-service] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-04-23T03:39:40.876Z  INFO 1 --- [order-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-04-23T03:39:40.890Z  INFO 1 --- [order-service] [           main] c.e.orders.OrderServiceApplication       : Started OrderServiceApplication in 6.287 seconds (process running for 7.51)
+2026-04-23T03:39:41.012Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderAutoCompleteService   : order auto-complete triggered trigger=compensation candidate_count=13
+2026-04-23T03:39:44.747Z  INFO 1 --- [order-service] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-23T03:39:44.748Z  INFO 1 --- [order-service] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-23T03:39:44.749Z  INFO 1 --- [order-service] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-04-23T03:42:11.013Z  INFO 1 --- [order-service] [nio-8080-exec-3] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [rabbitmq:5672]
+2026-04-23T03:42:11.063Z  INFO 1 --- [order-service] [nio-8080-exec-3] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#6971c6b7:0/SimpleConnection@5433e18e [delegate=amqp://admin@172.20.0.5:5672/, localPort=42596]
+2026-04-23T03:47:24.956Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=f1e1dbd0-601f-48b0-a26f-3116cb835c72 routing_key=order.created outbox_id=170
+2026-04-23T03:47:24.957Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=56aa2c68-edbb-414d-a3a6-00f132eac93d routing_key=order.created outbox_id=171
+2026-04-23T03:47:24.958Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=8123e5e7-e6d4-4184-b28e-70b65a89161a routing_key=order.created outbox_id=172
+2026-04-23T03:47:24.958Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=40886599-228d-4e24-b81c-98e0f4aa5b7f routing_key=order.created outbox_id=173
+2026-04-23T03:47:24.959Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=77ce0d8e-58b2-4efe-918e-705bb7f67ebe routing_key=order.created outbox_id=174
+2026-04-23T03:47:24.959Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=f7969db6-2dd6-4a99-97ae-4f6717efe266 routing_key=order.created outbox_id=175
+2026-04-23T03:47:24.959Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=00758419-14f0-4f0d-a396-fbe469454302 routing_key=order.approved outbox_id=176
+2026-04-23T03:47:24.959Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=edd0cef3-eeba-4798-85be-7fac6cef0ddd routing_key=order.approved outbox_id=177
+2026-04-23T03:47:24.960Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=590fad09-9f4d-4204-a0ae-672012ed6439 routing_key=order.rejected outbox_id=178
+2026-04-23T03:47:24.960Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=c3f01e1d-171e-48cc-b245-26b61abcc18b routing_key=order.rejected outbox_id=179
+2026-04-23T03:47:24.960Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=100f981e-77ab-418c-96e9-22e625251fbc routing_key=order.approved outbox_id=180
+2026-04-23T03:47:24.960Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=6e915900-dbb4-418f-9daa-8f3cb646d3b6 routing_key=order.created outbox_id=181
+2026-04-23T03:47:24.961Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=38e178a2-d96c-432d-a420-31cb34b98231 routing_key=order.created outbox_id=182
+2026-04-23T03:47:24.962Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=283bdb21-93e2-433e-8898-0577d7f1abe9 routing_key=order.rejected outbox_id=183
+2026-04-23T03:47:24.962Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=67c18c51-ed95-41a5-b207-2d5267e915f3 routing_key=order.rejected outbox_id=184
+2026-04-23T03:47:24.963Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=a68f7f99-bdeb-46c1-bdd7-02e46a800dc6 routing_key=order.rejected outbox_id=185
+2026-04-23T03:47:24.963Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=7334eb26-b4a8-41b6-bbae-7b1a7f75d498 routing_key=order.created outbox_id=186
+2026-04-23T03:47:24.964Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=86272752-3b5c-4dc3-88c0-335dd755b301 routing_key=order.created outbox_id=187
+2026-04-23T03:47:24.964Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=83704da9-f954-4654-8d73-aa0c98bea798 routing_key=order.created outbox_id=188
+2026-04-23T03:47:24.964Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=22f25370-779f-4953-b76a-12128f183692 routing_key=order.approved outbox_id=189
+2026-04-23T03:47:24.964Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=36bd362f-07b7-45f4-902c-d115e898b122 routing_key=order.created outbox_id=190
+2026-04-23T03:47:24.965Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=e08b6d74-2bca-4735-ad7a-1e527aa4084e routing_key=order.rejected outbox_id=191
+2026-04-23T03:47:24.965Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=11418482-9daf-4baa-82e6-ed6c11e5176a routing_key=order.rejected outbox_id=192
+2026-04-23T03:47:24.965Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=77b3f883-f21e-4fdd-a78e-9a4f500ae707 routing_key=order.created outbox_id=193
+2026-04-23T03:47:24.966Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=161ee73b-1372-4dfc-b8b5-0caf99dba237 routing_key=order.created outbox_id=194
+2026-04-23T03:47:24.966Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=ed6cd6d2-4773-4c77-b19d-c6152312510b routing_key=order.created outbox_id=195
+2026-04-23T03:47:24.966Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=c88371f1-1106-4bed-b83b-69a76be16bc8 routing_key=order.created outbox_id=196
+2026-04-23T03:47:24.966Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=a32c6020-1684-4b4f-aa8e-70a22558bf9d routing_key=order.created outbox_id=197
+2026-04-23T03:47:24.967Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=9ede53e1-6e93-42fd-b8e1-8a4c68876951 routing_key=order.created outbox_id=198
+2026-04-23T03:47:24.967Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=cb2f23c8-7153-4441-a277-49ce597950e1 routing_key=order.rejected outbox_id=199
+2026-04-23T03:47:24.967Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=82ab2add-3d41-4ff2-989a-6a935e695284 routing_key=order.approved outbox_id=200
+2026-04-23T03:47:24.967Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=1ce5da95-cc56-4b0f-9c34-1024ed9a3c5c routing_key=order.rejected outbox_id=201
+2026-04-23T03:47:24.968Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=ff55af1a-fa6e-4329-aeef-5b7c09c337cf routing_key=order.rejected outbox_id=202
+2026-04-23T03:47:24.968Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=58149e15-70d0-4195-b206-f7969645ea56 routing_key=order.approved outbox_id=203
+2026-04-23T03:47:24.968Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=133cf9ad-b2a3-4a33-8532-f90d6b0a9edf routing_key=order.rejected outbox_id=204
+2026-04-23T03:47:24.969Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=b86aa744-ff8b-4f3e-8d2c-76a299a35b28 routing_key=order.rejected outbox_id=205
+2026-04-23T03:47:24.969Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=7c8c0fa0-12dd-45d3-bcef-4fb7946ace11 routing_key=order.created outbox_id=206
+2026-04-23T03:47:28.011Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=b72e1e45-8e2b-4537-85e8-2d88e68f5147 routing_key=order.created outbox_id=207
+2026-04-23T03:47:28.012Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=6266ccc1-8d35-478e-a312-22a575779369 routing_key=order.rejected outbox_id=208
+2026-04-23T03:47:28.012Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=fb6450ef-6575-4576-b466-55267599dc1e routing_key=order.created outbox_id=209
+2026-04-23T03:47:28.012Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=af422f4f-1e42-4afc-863b-eb2f7adb3038 routing_key=order.created outbox_id=210
+2026-04-23T03:47:28.012Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=66230b1c-89c1-4c11-9e90-0e2bbe0c621d routing_key=order.created outbox_id=211
+2026-04-23T03:47:28.012Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=3bcd6913-3a22-446c-a3a2-0a78087954b7 routing_key=order.approved outbox_id=212
+2026-04-23T03:47:28.012Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=f3e2cb66-da1c-4064-a504-7cf3300613a7 routing_key=order.created outbox_id=213
+2026-04-23T03:47:28.013Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=dcaef6b0-1e9e-4df0-9d9b-b759290c2eec routing_key=order.rejected outbox_id=214
+2026-04-23T03:47:28.013Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=f04cd55d-185c-47b9-96ec-9fe076bc14f2 routing_key=order.rejected outbox_id=215
+2026-04-23T03:47:28.013Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=4dbcf155-d27b-4b01-bb95-3202618fee7d routing_key=order.rejected outbox_id=216
+2026-04-23T03:47:28.013Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=268484a8-94f8-4ff8-bdc7-2d6f5b5e6c4d routing_key=order.rejected outbox_id=217
+2026-04-23T03:47:28.013Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=3921840f-4262-4a10-99e4-dc9cc9541e38 routing_key=order.created outbox_id=218
+2026-04-23T03:47:28.013Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=46b0d7c2-ae59-4358-a669-ad8ada06906c routing_key=order.created outbox_id=219
+2026-04-23T03:47:28.013Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=d3583214-cdc8-411d-a4db-2aabdda9fd0d routing_key=order.created outbox_id=220
+2026-04-23T03:47:28.014Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=4b109f7e-6fe6-436f-8a1c-3c31441dd2a6 routing_key=order.created outbox_id=221
+2026-04-23T03:47:28.014Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=798ea73f-89e0-442a-9da7-ace866448dce routing_key=order.approved outbox_id=222
+2026-04-23T03:47:28.014Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=179092ac-709f-4b04-be55-a781cc42514f routing_key=order.rejected outbox_id=223
+2026-04-23T03:47:28.015Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=2763cfb6-dadb-49cf-898b-b13b84a60f2b routing_key=order.rejected outbox_id=224
+2026-04-23T03:47:28.015Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=27d78283-170f-4795-b1bf-735692cb0fc4 routing_key=order.rejected outbox_id=225
+2026-04-23T03:47:28.015Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=f582705d-52a3-44b4-919d-0e7ef0bb1463 routing_key=order.created outbox_id=226
+2026-04-23T03:47:28.016Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=08179093-8004-4cb0-8700-ddb99d77ff01 routing_key=order.created outbox_id=227
+2026-04-23T03:47:28.016Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=f771d284-0344-4e4e-b6b5-63f0f047b797 routing_key=order.created outbox_id=228
+2026-04-23T03:47:28.016Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=8247fef4-037c-4f6b-8b74-b1f52f9e4dbc routing_key=order.rejected outbox_id=229
+2026-04-23T03:47:28.016Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=3ed3e53a-4197-4391-be60-643fc4d7557c routing_key=order.rejected outbox_id=230
+2026-04-23T03:47:28.016Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=aa9f6023-cc32-4b1a-ab80-9560c54fc1fa routing_key=order.rejected outbox_id=231
+2026-04-23T03:47:28.016Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=0a1cbc40-2c68-4ac0-af0c-400ad0107627 routing_key=order.created outbox_id=232
+2026-04-23T03:47:28.025Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=8a2c6961-cf9d-41c0-8ffd-ef0df9669f20 routing_key=order.created outbox_id=233
+2026-04-23T03:47:28.026Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=1fa4ef24-bcc5-46f3-aa23-e6faa7047416 routing_key=order.created outbox_id=234
+2026-04-23T03:47:28.026Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=27d5d70f-2bf5-49dd-b247-460c073739f4 routing_key=order.approved outbox_id=235
+2026-04-23T03:47:28.026Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=e126aa45-57ea-4d4a-9be9-5ac57e8b898c routing_key=order.approved outbox_id=236
+2026-04-23T03:47:28.026Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=c9d1700e-ecfd-4e90-b56f-cf503dd5d7b6 routing_key=order.rejected outbox_id=237
+2026-04-23T03:47:28.026Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=ce5ec93c-56a0-4390-97a6-c2bc7daaad43 routing_key=order.created outbox_id=238
+2026-04-23T03:47:31.137Z  INFO 1 --- [order-service] [   scheduling-1] c.e.o.service.OrderOutboxRelayService    : outbox event published message_id=6609346d-6d26-4515-bfc6-c75172b526ce routing_key=order.approved outbox_id=239

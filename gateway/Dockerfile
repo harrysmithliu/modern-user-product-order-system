@@ -12,4 +12,4 @@ COPY gateway/app ./app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${GATEWAY_UVICORN_WORKERS:-2}"]

@@ -1,0 +1,49 @@
+# Batch 7.1 Command Log (Key Commands)
+
+## Environment bootstrap
+
+docker compose --env-file infra/docker/.env.sandbox.example -f infra/docker/docker-compose.sandbox.yml up -d --build
+docker compose --env-file infra/docker/.env.monitoring.example -f infra/docker/docker-compose.monitoring.yml up -d
+docker compose -f infra/docker/docker-compose.sandbox.yml ps
+docker compose -f infra/docker/docker-compose.monitoring.yml ps
+
+## Entry gate checks
+
+curl -sS http://127.0.0.1:8000/ready
+curl -sS http://127.0.0.1:8000/live
+curl -sS http://127.0.0.1:8080/actuator/health
+curl -sS http://127.0.0.1:9090/-/ready
+curl -sS http://127.0.0.1:3000/api/health
+
+## SOP schema sanity check
+
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='h_user_db' AND TABLE_NAME='t_user' AND COLUMN_NAME IN ('login_enabled');"
+
+## Baseline metadata
+
+git branch --show-current
+git rev-parse --short HEAD
+docker inspect modern-upo-sandbox-order-service --format '{{range .Config.Env}}{{println .}}{{end}}'
+
+## Observability snapshots
+
+curl -sS http://127.0.0.1:9090/api/v1/targets
+curl -sS http://127.0.0.1:8080/actuator/prometheus
+
+## Small-sample flow run
+
+python3 (inline script)
+- login: /api/auth/login (user/admin)
+- sample chain x10:
+  - POST /api/orders
+  - POST /api/orders/{id}/pay
+  - POST /api/admin/orders/{id}/approve or /reject
+- aggregate avg/p95/error_rate and transition counts
+- export:
+  - scripts/test/7-1/2026-04-20-7.1-metrics.json
+  - scripts/test/7-1/2026-04-20-7.1-metrics.csv
+  - scripts/test/7-1/2026-04-20-7.1-request-log.jsonl
+
+## Status transition evidence
+
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT status, COUNT(*) FROM h_order_db.t_order GROUP BY status ORDER BY status;"

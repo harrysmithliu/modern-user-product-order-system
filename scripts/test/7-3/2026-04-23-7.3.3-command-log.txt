@@ -1,0 +1,49 @@
+# Batch 7.3.3 Command Log
+
+## Baseline check
+
+git status --short
+ls -1 scripts/test/7-3
+git rev-parse --abbrev-ref HEAD
+git rev-parse --short HEAD
+date '+%Y-%m-%d %H:%M:%S %Z (%z)'
+
+## Input review
+
+sed -n '1,320p' scripts/test/7-3/2026-04-23-7.3.2-summary.md
+sed -n '1,260p' scripts/test/7-3/2026-04-23-7.3.2-repro-s1.log
+sed -n '1,260p' docs/high-concurrency-validation-and-jvm-tuning/batch-7.3-jvm-tuning-and-diagnostics.md
+sed -n '1,320p' docs/high-concurrency-validation-and-jvm-tuning/batch-7-execution-sop-for-pressure-team.md
+
+## Metric extraction and diagnosis scripts
+
+python3 - <<'PY'  # extract key k6 metrics from 2026-04-23-7.3.2-repro-s1-summary.json
+...
+PY
+
+python3 - <<'PY'  # parse actuator pre/mid1/mid2/post snapshots and compute delta-window averages
+...
+PY
+
+python3 - <<'PY'  # parse docker stats snapshots for order-service and gateway
+...
+PY
+
+python3 - <<'PY'  # count WARN/ERROR lines in gateway/order-service logs
+...
+PY
+
+python3 - <<'PY'  # parse stock before/post delta
+...
+PY
+
+python3 - <<'PY'  # parse prometheus targets health before/post
+...
+PY
+
+## Runtime/code context checks
+
+sed -n '1,220p' services/order-service/src/main/resources/application.yml
+sed -n '1,260p' infra/docker/docker-compose.sandbox.yml
+sed -n '1,220p' gateway/Dockerfile
+sed -n '1,260p' gateway/app/core/proxy.py
