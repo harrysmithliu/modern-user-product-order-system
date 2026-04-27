@@ -1,0 +1,122 @@
+Batch 7.2 Fix Report
+Date: 2026-04-21
+Scope: scripts/test/7-2 run results remediation
+
+1) Problem Summary
+
+- 7.2 matrix run M1 (same_order_retry, 200 VUs) passed.
+- 7.2 stage S1 (unique_orders, 500 VUs) failed and escalation was stopped per SOP.
+- Core symptom:
+  - POST /api/orders status distribution: 200=37, 429=50759, 502=4
+  - http_req_failed (S1) = 99.73%
+- Evidence files:
+  - scripts/test/7-2/2026-04-20-7.2-summary.md
+  - scripts/test/7-2/2026-04-20-7.2-s1-summary.json
+  - scripts/test/7-2/2026-04-20-7.2-post-orders-status-dist.txt
+
+2) Root Cause Analysis
+
+RC-1: Gateway order-create limiter became the dominant bottleneck.
+- Current sandbox gateway default:
+  - GATEWAY_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS=20
+  - GATEWAY_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS=60
+- Source:
+  - infra/docker/docker-compose.sandbox.yml
+  - gateway/app/core/config.py
+  - gateway/app/core/proxy.py
+
+RC-2: The S1 test model triggers create per iteration.
+- In unique_orders path, each loop tries create -> pay -> approve/reject.
+- At 500 VUs, create QPS greatly exceeded gateway policy, so 429 flood happened before order-service concurrency behavior could be observed.
+
+RC-3: Test objective and protection policy were mixed in one run.
+- Goal of 7.2 is order-service checkout concurrency behavior.
+- Actual S1 mostly measured gateway protection behavior.
+
+3) Data Integrity Impact
+
+- Duplicate user_id + request_no: not detected (pre and post checks empty).
+- Coupon retry task status: no rows in this window/profile.
+- Due shipping scan: 0.
+- No direct evidence of data corruption from this run.
+
+4) Remediation Plan
+
+4.1 Immediate (No code change) - unblock next 7.2 validation
+
+A) Split test purpose into two lanes:
+
+Lane 1: Service concurrency lane (for 7.2 core objective)
+- Temporarily raise sandbox order-create limiter during test window only.
+- Recommended temporary env for gateway in sandbox:
+  - SANDBOX_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS=60000
+  - SANDBOX_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS=60
+- After run, restore original values.
+
+Lane 2: Gateway protection lane (separate report)
+- Keep default limiter values.
+- Verify expected 429 behavior without treating it as order-service concurrency failure.
+
+B) Keep SOP staged escalation rule:
+- Re-run S1 first.
+- Only proceed to S2/S3/S4 if S1 exits with acceptable failure behavior for selected lane.
+
+4.2 Script-level improvements (recommended)
+
+A) Add explicit mode flag in k6 script:
+- mode=service_concurrency
+- mode=gateway_protection
+
+B) Avoid create-heavy distortion in service_concurrency mode:
+- Pre-create order pool in a controlled pre-step (low-rate creator run).
+- Main concurrent run focuses on pay/review path over prepared orders.
+
+C) Add per-endpoint threshold metrics:
+- Separate fail-rate for:
+  - /api/orders
+  - /api/orders/{id}/pay
+  - /api/admin/orders/{id}/approve|reject
+- This avoids one endpoint masking all others.
+
+4.3 Profile B completion
+
+- 7.2 currently only covered Profile A.
+- For resilience validation, run Profile B with:
+  - APP_PAYMENT_PLATFORM_ENABLED=true
+  - APP_COUPON_PLATFORM_ENABLED=true
+- Then verify expected 504/retry patterns and task progression.
+
+5) Re-run Procedure (Proposed)
+
+Step 1: Save current limiter settings and apply temporary service-concurrency settings.
+Step 2: Restart gateway container.
+Step 3: Re-run S1 with current k6 stage profile.
+Step 4: If pass, continue S2 -> S3 -> S4 per SOP.
+Step 5: Export metrics/log/sql evidence to scripts/test/7-2.
+Step 6: Restore limiter settings to baseline.
+
+6) Acceptance Criteria for Next Attempt
+
+Service concurrency lane:
+- No duplicate idempotency keys.
+- No integrity anomalies in order lifecycle checks.
+- 5xx remains low and explainable.
+- /pay and admin endpoints show stable p95 under stage target.
+
+Gateway protection lane:
+- 429 appears as expected under protection pressure.
+- No sustained internal 5xx storm.
+- Data integrity remains clean.
+
+7) Deliverables to Produce After Fix
+
+- scripts/test/7-2/2026-04-21-7.2-rerun-summary.md
+- scripts/test/7-2/2026-04-21-7.2-rerun-metrics.csv
+- scripts/test/7-2/2026-04-21-7.2-rerun-jvm.txt
+- scripts/test/7-2/2026-04-21-7.2-rerun-gateway-status-dist.txt
+- scripts/test/7-2/2026-04-21-7.2-rerun-sql-checks.txt
+
+8) Conclusion
+
+The 7.2 failure is primarily a test-lane design and gateway policy interaction issue, not an immediate order-service data-integrity issue.
+Applying lane separation + temporary benchmark limiter policy + rerun stages will produce valid concurrency evidence and keep gateway protection verification intact.

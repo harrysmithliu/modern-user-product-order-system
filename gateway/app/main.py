@@ -1,16 +1,27 @@
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.config import settings
-from app.core.proxy import router
+from app.core.proxy import clear_http_client, router, set_http_client
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    timeout = httpx.Timeout(settings.request_timeout_seconds)
+    limits = httpx.Limits(
+        max_connections=settings.upstream_max_connections,
+        max_keepalive_connections=settings.upstream_max_keepalive_connections,
+        keepalive_expiry=settings.upstream_keepalive_expiry_seconds,
+    )
+    client = httpx.AsyncClient(timeout=timeout, limits=limits)
+    set_http_client(client)
     yield
+    await client.aclose()
+    clear_http_client()
 
 
 app = FastAPI(

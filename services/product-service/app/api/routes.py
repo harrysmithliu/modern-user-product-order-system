@@ -1,3 +1,5 @@
+import random
+
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -8,10 +10,13 @@ from app.core.cache import (
     make_product_list_cache_key,
     set_cached_json,
 )
-from app.core.security import require_admin
+from app.core.config import settings
+from app.core.security import require_admin, require_internal_caller
 from app.db.session import get_db
 from app.schemas.common import ApiResponse
 from app.schemas.product import (
+    CouponClaimBestRequest,
+    CouponIssueRequest,
     ProductCreateRequest,
     ProductInternalResponse,
     ProductPageResponse,
@@ -22,9 +27,14 @@ from app.schemas.product import (
     UpdateProductStockRequest,
 )
 from app.services.product_service import (
+    claim_best_coupon_for_order,
     create_product,
+    get_user_coupon_balances,
+    get_user_coupon_issue_by_order,
+    get_user_coupon_selection_by_order,
     get_product_or_404,
     import_products_from_csv,
+    issue_coupon_for_order,
     paginate_products,
     release_stock,
     reserve_stock,
@@ -34,6 +44,26 @@ from app.services.product_service import (
 )
 
 router = APIRouter()
+
+
+def _should_simulate_coupon_issue_failure() -> bool:
+    if not settings.coupon_issue_fail_sim_enabled:
+        return False
+    ratio = settings.coupon_issue_fail_sim_ratio
+    if ratio <= 0:
+        return False
+    if ratio >= 1:
+        return True
+    return random.random() < ratio
+
+
+def _require_request_user_id(x_user_id: str | None = Header(default=None)) -> int:
+    if not x_user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    try:
+        return int(x_user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid x-user-id header") from exc
 
 
 @router.get("/health", include_in_schema=False)
@@ -86,6 +116,35 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     product = get_product_or_404(db, product_id)
     payload = ProductResponse.model_validate(product, from_attributes=True)
     set_cached_json(cache_key, payload.model_dump(mode="json"))
+    return ApiResponse(data=payload)
+
+
+@router.get("/products/me/coupons", response_model=ApiResponse)
+def get_my_coupon_balances(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(_require_request_user_id),
+):
+    payload = get_user_coupon_balances(db, user_id)
+    return ApiResponse(data=payload)
+
+
+@router.get("/products/me/coupons/orders/{order_no}/issued", response_model=ApiResponse)
+def get_my_coupon_issue_by_order(
+    order_no: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(_require_request_user_id),
+):
+    payload = get_user_coupon_issue_by_order(db, user_id, order_no)
+    return ApiResponse(data=payload)
+
+
+@router.get("/products/me/coupons/orders/{order_no}/selected", response_model=ApiResponse)
+def get_my_coupon_selection_by_order(
+    order_no: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(_require_request_user_id),
+):
+    payload = get_user_coupon_selection_by_order(db, user_id, order_no)
     return ApiResponse(data=payload)
 
 
@@ -171,3 +230,36 @@ def release_stock_endpoint(
     product = release_stock(db, product_id, payload.quantity)
     bump_catalog_version()
     return ApiResponse(data=ProductInternalResponse.model_validate(product, from_attributes=True))
+
+
+@router.post(
+    "/internal/products/{userId}/coupons/issue",
+    response_model=ApiResponse,
+    dependencies=[Depends(require_internal_caller)],
+)
+def issue_coupon_endpoint(
+    userId: int,
+    payload: CouponIssueRequest,
+    db: Session = Depends(get_db),
+):
+    if _should_simulate_coupon_issue_failure():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Simulated coupon issue failure",
+        )
+    result = issue_coupon_for_order(db, userId, payload.order_amount, payload.order_no)
+    return ApiResponse(data=result)
+
+
+@router.post(
+    "/internal/products/{userId}/coupons/claim-best",
+    response_model=ApiResponse,
+    dependencies=[Depends(require_internal_caller)],
+)
+def claim_best_coupon_endpoint(
+    userId: int,
+    payload: CouponClaimBestRequest,
+    db: Session = Depends(get_db),
+):
+    result = claim_best_coupon_for_order(db, userId, payload.order_amount, payload.order_no)
+    return ApiResponse(data=result)

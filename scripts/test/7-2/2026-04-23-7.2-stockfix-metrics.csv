@@ -1,0 +1,2 @@
+run_id,case,product_id,vus,stage_result,iterations,http_reqs,http_req_failed_rate,http_req_duration_p95_ms,create_p95_ms,pay_p95_ms,http_orders_200,pay_200,admin_review_200,http_5xx_total,unexpected_5xx_rate
+s1_stockfix_product2,unique_orders,2,500,failed_latency_thresholds,2834,10394,0,3551.30662645,20598.165584449984,3374.67071855,2834,2834,2834,0,0

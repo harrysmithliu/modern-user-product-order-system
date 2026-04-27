@@ -1,0 +1,45 @@
+category,metric,value,unit,source,note
+k6,http_req_failed_rate,0,ratio,2026-04-23-7.3.2-repro-s1-summary.json,functional failure not observed
+k6,http_req_duration_p95,5896.9417215,ms,2026-04-23-7.3.2-repro-s1-summary.json,target<3000ms failed
+k6,create_latency_p95,25608.81343145,ms,2026-04-23-7.3.2-repro-s1-summary.json,target<2000ms failed
+k6,pay_latency_p95,4343.26688705,ms,2026-04-23-7.3.2-repro-s1-summary.json,target<2500ms failed
+k6,http_reqs,9426,count,2026-04-23-7.3.2-repro-s1-summary.json,
+k6,iterations,2570,count,2026-04-23-7.3.2-repro-s1-summary.json,
+hikari,hikari_max_mid1,10,connections,2026-04-23-7.3.2-order-actuator-mid1.txt,
+hikari,hikari_active_mid1,10,connections,2026-04-23-7.3.2-order-actuator-mid1.txt,pool fully used
+hikari,hikari_idle_mid1,0,connections,2026-04-23-7.3.2-order-actuator-mid1.txt,
+hikari,hikari_pending_mid1,17,threads,2026-04-23-7.3.2-order-actuator-mid1.txt,threads waiting for db connection
+hikari,hikari_acquire_avg_pre_to_mid1,10.72865166,ms,7.3.2 actuator pre/mid1 delta,acquire sum/count delta
+hikari,hikari_acquire_avg_mid1_to_mid2,40.79745872,ms,7.3.2 actuator mid1/mid2 delta,acquire latency worsened
+service,orders_avg_pre_to_mid1,119.1337184,ms,7.3.2 actuator pre/mid1 delta,http_server_requests_seconds sum/count
+service,orders_avg_mid1_to_mid2,283.9569463,ms,7.3.2 actuator mid1/mid2 delta,http_server_requests_seconds sum/count
+service,pay_avg_pre_to_mid1,23.4800464,ms,7.3.2 actuator pre/mid1 delta,http_server_requests_seconds sum/count
+service,pay_avg_mid1_to_mid2,72.42540877,ms,7.3.2 actuator mid1/mid2 delta,http_server_requests_seconds sum/count
+service,approve_avg_pre_to_mid1,23.57025725,ms,7.3.2 actuator pre/mid1 delta,http_server_requests_seconds sum/count
+service,approve_avg_mid1_to_mid2,65.5020623,ms,7.3.2 actuator mid1/mid2 delta,http_server_requests_seconds sum/count
+service,reject_avg_pre_to_mid1,102.897405,ms,7.3.2 actuator pre/mid1 delta,http_server_requests_seconds sum/count
+service,reject_avg_mid1_to_mid2,235.5531476,ms,7.3.2 actuator mid1/mid2 delta,http_server_requests_seconds sum/count
+jvm,jvm_gc_overhead_mid1,0.0001466667,ratio,2026-04-23-7.3.2-order-actuator-mid1.txt,low gc overhead
+jvm,jvm_gc_overhead_mid2,0.0005233333,ratio,2026-04-23-7.3.2-order-actuator-mid2.txt,low gc overhead
+jvm,g1_old_gen_pre,60.06738281,MiB,2026-04-23-7.3.2-order-actuator-pre.txt,no leak trend
+jvm,g1_old_gen_post,60.25292969,MiB,2026-04-23-7.3.2-order-actuator-post.txt,small and stable
+jvm,live_threads_mid1,76,count,2026-04-23-7.3.2-order-actuator-mid1.txt,temporary spike
+jvm,live_threads_post,27,count,2026-04-23-7.3.2-order-actuator-post.txt,returned to baseline
+executor,orderWorkflowExecutor_active_mid1,0,count,2026-04-23-7.3.2-order-actuator-mid1.txt,no executor queue pressure signal
+executor,orderWorkflowExecutor_queued_mid1,0,count,2026-04-23-7.3.2-order-actuator-mid1.txt,no executor queue pressure signal
+container,gateway_cpu_mid1,101.88,pct,2026-04-23-7.3.2-docker-stats-mid1.txt,hotspot at gateway
+container,order_service_cpu_mid1,41.14,pct,2026-04-23-7.3.2-docker-stats-mid1.txt,
+container,gateway_mem_mid1,442.4,MiB,2026-04-23-7.3.2-docker-stats-mid1.txt,
+container,gateway_mem_mid2,773.8,MiB,2026-04-23-7.3.2-docker-stats-mid2.txt,
+container,order_service_mem_mid1,752.5,MiB,2026-04-23-7.3.2-docker-stats-mid1.txt,
+logs,order_service_warn,0,count,2026-04-23-7.3.2-order-service-logs-post.log,
+logs,order_service_error,0,count,2026-04-23-7.3.2-order-service-logs-post.log,
+logs,gateway_warn,0,count,2026-04-23-7.3.2-gateway-logs-post.log,
+logs,gateway_error,0,count,2026-04-23-7.3.2-gateway-logs-post.log,
+data,product2_stock_before,50000,count,2026-04-23-7.3.2-product2-stock-before.tsv,
+data,product2_stock_post,48733,count,2026-04-23-7.3.2-product2-stock-post.tsv,
+data,product2_stock_delta,-1267,count,before vs post,equals approve count window
+prometheus,active_targets_before,9,count,2026-04-23-7.3.2-prometheus-targets-before.json,
+prometheus,up_targets_before,5,count,2026-04-23-7.3.2-prometheus-targets-before.json,dev targets are expected down
+prometheus,active_targets_post,9,count,2026-04-23-7.3.2-prometheus-targets-post.json,
+prometheus,up_targets_post,5,count,2026-04-23-7.3.2-prometheus-targets-post.json,dev targets are expected down

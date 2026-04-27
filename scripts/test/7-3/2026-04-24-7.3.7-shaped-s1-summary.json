@@ -1,0 +1,216 @@
+{
+    "metrics": {
+        "vus": {
+            "value": 76,
+            "min": 15,
+            "max": 500
+        },
+        "http_req_waiting": {
+            "max": 24655.441081,
+            "p(90)": 4417.5603773,
+            "p(95)": 6190.116554099999,
+            "avg": 1862.6605140184763,
+            "min": 4.651458,
+            "med": 1137.4268345
+        },
+        "vus_max": {
+            "value": 500,
+            "min": 500,
+            "max": 500
+        },
+        "iteration_duration": {
+            "avg": 6933.969710353181,
+            "min": 163.808583,
+            "med": 5495.517294,
+            "max": 36051.047599,
+            "p(90)": 14410.047372900004,
+            "p(95)": 17719.875547149994
+        },
+        "http_req_sending": {
+            "p(95)": 0.056084,
+            "avg": 0.031171339143690326,
+            "min": 0.00225,
+            "med": 0.012625,
+            "max": 80.95175,
+            "p(90)": 0.031262600000000015
+        },
+        "data_received": {
+            "count": 26961699,
+            "rate": 383293.9898325961
+        },
+        "b72_my_orders_latency_ms": {
+            "avg": 1731.5165556931474,
+            "min": 4.691,
+            "med": 969.2107505,
+            "max": 19924.172579,
+            "p(90)": 4356.8388562,
+            "p(95)": 6203.12104715
+        },
+        "b72_approve_latency_ms": {
+            "p(90)": 4301.2270893,
+            "p(95)": 6019.403151499998,
+            "avg": 1742.06592535978,
+            "min": 8.396,
+            "med": 985.024834,
+            "max": 24280.891123
+        },
+        "b72_admin_orders_latency_ms": {
+            "max": 19801.79862,
+            "p(90)": 4214.559005800001,
+            "p(95)": 5361.394540799997,
+            "avg": 1665.296613213556,
+            "min": 5.451583,
+            "med": 943.6132084999999
+        },
+        "http_reqs": {
+            "count": 15088,
+            "rate": 214.49463250050414
+        },
+        "http_req_blocked": {
+            "avg": 0.1283343985286337,
+            "min": 0.0005,
+            "med": 0.003458,
+            "max": 96.405042,
+            "p(90)": 0.008,
+            "p(95)": 0.01977489999999989
+        },
+        "http_req_receiving": {
+            "min": 0.006625,
+            "med": 0.057125,
+            "max": 27.54825,
+            "p(90)": 0.110333,
+            "p(95)": 0.14365164999999996,
+            "avg": 0.078047246818664
+        },
+        "iterations": {
+            "count": 4114,
+            "rate": 58.48561228175199
+        },
+        "http_req_connecting": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.11356540588547187,
+            "min": 0,
+            "med": 0,
+            "max": 96.280417
+        },
+        "checks": {
+            "passes": 4116,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_duration{expected_response:true}": {
+            "min": 4.691,
+            "med": 1137.515709,
+            "max": 24655.647664,
+            "p(90)": 4417.6488024,
+            "p(95)": 6190.211253999999,
+            "avg": 1862.7697326044597
+        },
+        "data_sent": {
+            "count": 6416406,
+            "rate": 91217.1690710518
+        },
+        "b72_unexpected_5xx_rate": {
+            "passes": 0,
+            "fails": 15086,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0
+        },
+        "b72_reject_latency_ms": {
+            "min": 13.89625,
+            "med": 1117.1564165,
+            "max": 19091.996675,
+            "p(90)": 4613.4970646,
+            "p(95)": 6576.460343649999,
+            "avg": 1967.4286555300969
+        },
+        "b72_pay_latency_ms": {
+            "p(95)": 5988.788869049999,
+            "avg": 1785.0364267160935,
+            "min": 9.549041,
+            "med": 1032.3535630000001,
+            "max": 21624.773455,
+            "p(90)": 4360.7887188,
+            "thresholds": {
+                "p(95)<2500": true
+            }
+        },
+        "b72_create_latency_ms": {
+            "avg": 2058.836034154354,
+            "min": 21.970416,
+            "med": 1452.013313,
+            "max": 24655.647664,
+            "p(90)": 4599.571935800001,
+            "p(95)": 6446.6873393,
+            "thresholds": {
+                "p(95)<2000": true
+            }
+        },
+        "http_req_duration": {
+            "avg": 1862.7697326044597,
+            "min": 4.691,
+            "med": 1137.515709,
+            "max": 24655.647664,
+            "p(90)": 4417.6488024,
+            "p(95)": 6190.211253999999,
+            "thresholds": {
+                "p(95)<3000": true
+            }
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 15088,
+            "thresholds": {
+                "rate<0.30": false
+            },
+            "value": 0
+        },
+        "http_req_tls_handshaking": {
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0
+        }
+    },
+    "setup_data": {
+        "adminToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFETUlOIiwiZXhwIjoxNzc3MDUwODMwLCJqdGkiOiI5MmI1MzU2YS1jZGU5LTRhYmUtOWJkZC0wOWVhNGQ2MzAyZWEifQ.PsAwOxPcXQEwys5HVsh_AOswxQCwD4Yc8uDtAxM5lj4",
+        "productId": 2,
+        "userToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6ImpvaG5fc21pdGgiLCJyb2xlIjoiVVNFUiIsImV4cCI6MTc3NzA1MDgyOSwianRpIjoiOGZkMDUxNTYtYzNmYy00OGE2LWFkNjQtMWRjZDI5YjlmZDc2In0.yTWsDH7qt6mv7NZOhuL7zKh2-UN5wR9qZie6BpU5Nps"
+    },
+    "root_group": {
+        "groups": {
+            "setup": {
+                "name": "setup",
+                "path": "::setup",
+                "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+                "groups": {},
+                "checks": {
+                        "login status is 200": {
+                            "name": "login status is 200",
+                            "path": "::setup::login status is 200",
+                            "id": "bb27b460b057923f4a083e3603c038b9",
+                            "passes": 2,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {
+            "create order status is 200": {
+                "name": "create order status is 200",
+                "path": "::create order status is 200",
+                "id": "8b64a034600749938d900c612cd0f342",
+                "passes": 4114,
+                "fails": 0
+            }
+        },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+}

@@ -55,6 +55,44 @@ Not planned for the critical write path:
 
 This project keeps the order write path in MySQL and pushes side-channel event work into RabbitMQ. The message path is intentionally split into a reliable main chain and a few supporting side chains.
 
+## Message Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User / Frontend
+    participant G as gateway
+    participant O as order-service
+    participant P as product-service
+    participant DB as MySQL
+    participant R as Outbox relay
+    participant MQ as RabbitMQ
+    participant N as notification-service
+    participant M as MongoDB
+
+    U->>G: Create / cancel / approve / reject order
+    G->>O: Forward request with user context
+
+    O->>P: Reserve / release stock
+    P-->>O: Stock result
+
+    O->>DB: Save order change
+    O->>DB: Save pending event in t_order_outbox
+    DB-->>O: Transaction commit success
+
+    R->>DB: Poll PENDING outbox rows
+    R->>MQ: Publish event to order.events
+    MQ-->>N: Deliver routed message
+
+    N->>N: Build structured log record
+    opt Audit enabled
+        N->>M: Save order_event_timeline
+    end
+
+    N-->>MQ: ACK message
+
+```
+
 ### Main Chain
 
 ![RabbitMQ Main Chain](screenshots/rmq_main_chain.png)

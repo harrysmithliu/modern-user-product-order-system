@@ -1,0 +1,19 @@
+category,metric,shaped_7_3_7_s1,syncguard_7_3_8_s1,rollback_7_3_9_1_s1,delta_7_3_9_1_vs_7_3_7,note
+k6,http_req_failed_rate,0,0,0,0,failed requests stayed at zero
+k6,b72_unexpected_5xx_rate,0,0,0,0,unexpected 5xx stayed at zero
+k6,http_req_duration_p95_ms,6190.211254,8987.3590336,8822.93881295,2632.72755895,rollback run still worse than 7.3.7
+k6,http_req_duration_median_ms,1137.515709,1685.558917,1601.069063,463.553354,median still above 7.3.7
+k6,b72_create_latency_p95_ms,6446.6873393,9297.7471212,9504.39641055,3057.70907125,create p95 remains high and regressed
+k6,b72_pay_latency_p95_ms,5988.78886905,9211.2553426,9206.6654274,3217.87655835,pay p95 remains high and regressed
+k6,http_reqs_count,15088,10435,10820,-4268,throughput remains below 7.3.7
+k6,iterations_count,4114,2845,2950,-1164,completed business flows remain below 7.3.7
+k6,checks_success_rate,1,1,1,0,all checks passed
+runtime,gateway_readtimeout_occurrences,0,0,0,0,no timeout keyword in sampled gateway logs
+runtime,product_pool_timeout_occurrences,0,0,0,0,no pool-timeout keyword in sampled product logs
+runtime,order_guard_reject_occurrences,0,0,0,0,no guard-reject keyword in sampled order logs
+db,innodb_lock_wait_rows,NA,NA,0,NA,no active lock-wait row captured at sampling moment
+db,top_digest_sum_wait_s,NA,NA,81.334,NA,dominant SQL is stock decrement update on product row
+db,top_digest_lock_s,NA,NA,79.930,NA,top digest lock-time concentration indicates row hotspot
+data,duplicate_requestno_rows,0,0,0,0,integrity check passed
+data,product2_stock_delta,-2054,-1466,-1475,579,stock moved from 40680 to 39205 in this run
+ops,gateway_rate_limit_restore,20/60,20/60,20/60,0,restored after run

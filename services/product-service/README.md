@@ -82,6 +82,20 @@ Important Redis-related variables:
 - `PRODUCT_SERVICE_REDIS_PASSWORD`
 - `PRODUCT_SERVICE_REDIS_CACHE_TTL_SECONDS`
 
+Connection pool variables:
+
+- `PRODUCT_SERVICE_SQLALCHEMY_POOL_SIZE`
+- `PRODUCT_SERVICE_SQLALCHEMY_MAX_OVERFLOW`
+- `PRODUCT_SERVICE_SQLALCHEMY_POOL_TIMEOUT_SECONDS`
+- `PRODUCT_SERVICE_SQLALCHEMY_POOL_RECYCLE_SECONDS`
+
+Coupon/internal variables:
+
+- `PRODUCT_SERVICE_INTERNAL_API_TOKEN`
+- `PRODUCT_SERVICE_COUPON_RATE_LIMIT_WINDOW_SECONDS`
+- `PRODUCT_SERVICE_COUPON_ISSUE_RATE_LIMIT_MAX_REQUESTS`
+- `PRODUCT_SERVICE_COUPON_CLAIM_RATE_LIMIT_MAX_REQUESTS`
+
 ## Docker
 
 - Dockerfile: `services/product-service/Dockerfile`
@@ -107,6 +121,8 @@ Internal:
 - `GET /internal/products/{product_id}`
 - `POST /internal/products/{product_id}/reserve`
 - `POST /internal/products/{product_id}/release`
+- `POST /internal/products/{userId}/coupons/issue`
+- `POST /internal/products/{userId}/coupons/claim-best`
 
 ## Maintenance Notes
 
@@ -115,6 +131,8 @@ Internal:
 - Inventory still lives in `t_product`; a dedicated inventory table can be introduced later if the domain grows.
 - Redis now caches public product list queries, public product detail queries, and internal product detail lookups.
 - Product creation, updates, stock changes, and reserve/release operations bump a shared catalog cache version so stale keys fall out naturally.
+- Coupon issue/claim-best is stored in Redis hash per user and `claim-best` uses a Lua script for atomic best-coupon deduction.
+- Coupon internal endpoints require `X-Internal-Token` header and include Redis-backed rate limiting.
 
 ## Near-Term TODO
 

@@ -6,7 +6,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-@EnableConfigurationProperties(AppProperties.class)
+@EnableConfigurationProperties({
+        AppProperties.class,
+        CouponPlatformProperties.class,
+        PaymentPlatformProperties.class
+})
 public class HttpClientConfig {
 
     @Bean

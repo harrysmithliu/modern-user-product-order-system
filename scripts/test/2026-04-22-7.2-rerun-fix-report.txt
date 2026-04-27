@@ -1,0 +1,96 @@
+Batch 7.2 Rerun Fix Report
+Date: 2026-04-22
+Scope: scripts/test/7-2 rerun evidence with temporary gateway limiter
+
+1) Purpose and What Was Changed
+
+- Purpose: validate whether 7.2 S1 failure was only caused by gateway create rate limiting.
+- Temporary rerun change:
+  - GATEWAY_ORDER_CREATE_RATE_LIMIT_MAX_REQUESTS: 20 -> 60000
+  - GATEWAY_ORDER_CREATE_RATE_LIMIT_WINDOW_SECONDS: 60 (unchanged)
+- Gateway limiter was restored to default (20/60) after run.
+
+2) Rerun Result Summary
+
+- Scenario: unique_orders, 500 VUs, 20s/40s/10s.
+- k6 result: FAIL (exit code 99).
+- Key metrics:
+  - http_req_failed: 98.81%
+  - http_req_duration p95: 3401.58 ms
+  - create p95: 3401.67 ms
+  - pay p95: 342.13 ms
+
+3) What Improved vs Previous S1
+
+- Previous S1 blocker (2026-04-20): dominant 429 flood on POST /api/orders.
+- Rerun with temporary limiter:
+  - 429 no longer dominant (none observed in gateway status distribution file).
+  - This confirms gateway limiter was a real blocker in the previous run.
+
+4) New Dominant Failure Pattern
+
+Gateway create status distribution in rerun:
+
+- POST /api/orders: 200=35, 400=10802, 502=33
+- POST /api/orders/{id}/pay: 200=35
+- POST /api/admin/orders/{id}/approve|reject: 200=35
+
+Supporting observability evidence:
+
+- order-service actuator counters:
+  - /orders status=400 count=10802
+  - /orders status=502 count=33
+  - /orders status=200 count=35
+
+Interpretation:
+
+- Failure shifted from gateway protection (429) to create-path business/client errors (400).
+- The run now exposes an order-creation data/setup bottleneck rather than gateway throttling.
+
+5) Root Cause (Current Rerun)
+
+High-confidence cause: selected test SKU exhausted stock during run.
+
+- k6 setup selected productId=8.
+- product snapshot after run shows:
+  - id=8, product_code=P1008, stock=0
+- B72 order distribution is concentrated on product_id=8.
+- Successful create volume is only 35, matching order status delta (+35).
+
+6) Data Integrity Assessment
+
+- duplicate user_id + request_no: none found.
+- due_shipping: 0.
+- coupon task table: no rows in this profile/window.
+- No evidence of idempotency corruption.
+
+7) Recommended Fixes Before Next 7.2 Attempt
+
+A) Test data baseline fix (required)
+- Use a high-stock SKU explicitly via k6 env:
+  - PRODUCT_ID=<high_stock_product_id>
+- Or pre-replenish stock for selected SKU before S1/S2/S3/S4.
+
+B) Script hardening (recommended)
+- In setup(), reject low-stock product for service-concurrency lane.
+- Add explicit 4xx counters by endpoint (current custom counters focus on 409/429/504/5xx).
+- Emit failure reason buckets so 400 causes are visible in summary-export directly.
+
+C) Execution guardrail (recommended)
+- Add pre-run stock check SQL gate:
+  - abort run if target SKU stock < expected minimum for stage.
+
+8) Next-Run Acceptance Target
+
+- Repeat S1 after stock baseline fix and temporary limiter (or equivalent controlled lane settings).
+- Continue to S2/S3/S4 only if S1 no longer fails due to test-data exhaustion.
+
+9) Evidence Bundle
+
+- scripts/test/7-2/2026-04-22-7.2-rerun-summary.md
+- scripts/test/7-2/2026-04-22-7.2-rerun-metrics.csv
+- scripts/test/7-2/2026-04-22-7.2-rerun-s1.log
+- scripts/test/7-2/2026-04-22-7.2-rerun-s1-summary.json
+- scripts/test/7-2/2026-04-22-7.2-rerun-post-orders-status-dist.txt
+- scripts/test/7-2/2026-04-22-7.2-rerun-jvm-post-s1.txt
+- scripts/test/7-2/2026-04-22-7.2-rerun-product-stock-post.tsv

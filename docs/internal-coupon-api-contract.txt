@@ -1,0 +1,191 @@
+Product-Service Internal Coupon API Contract
+===========================================
+
+Version
+-------
+- Updated: 2026-04-19
+- Scope: order-service to product-service internal coupon APIs
+
+1) Authentication (Current Implementation)
+-----------------------------------------
+- Scope: only these two endpoints:
+  - POST /internal/products/{userId}/coupons/issue
+  - POST /internal/products/{userId}/coupons/claim-best
+- Method: header token check in product-service
+  - Required header: X-Internal-Token: <token>
+  - Product-service compares this value with PRODUCT_SERVICE_INTERNAL_API_TOKEN
+  - Missing token -> 401 {"detail":"Internal token required"}
+  - Invalid token -> 403 {"detail":"Invalid internal token"}
+- No gateway/JWT role check for these two endpoints currently.
+
+
+2) API: Issue Coupon
+--------------------
+Endpoint:
+POST /internal/products/{userId}/coupons/issue
+
+Headers:
+Content-Type: application/json
+X-Internal-Token: <internal-token>
+
+Request body:
+{
+  "order_amount": 520,
+  "order_no": "ORD-20260419-0001"
+}
+
+Request field notes:
+- `order_amount`: required, decimal > 0
+- `order_no`: optional, max length 64
+  - when provided, product-service stores order-level issue record for later user query
+
+Success response (threshold matched, example 520 -> 20%):
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "order_amount": "520.00",
+    "issued": true,
+    "coupon_type": 20,
+    "discount_rate": "0.20",
+    "balance_after_issue": 1,
+    "message": "Coupon issued"
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T14:20:00.000000"
+}
+
+Success response (threshold not met, order_amount < 200):
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "order_amount": "180.00",
+    "issued": false,
+    "coupon_type": null,
+    "discount_rate": null,
+    "balance_after_issue": null,
+    "message": "Order amount does not meet issue threshold"
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T14:20:00.000000"
+}
+
+
+3) API: Claim Best Coupon
+-------------------------
+Endpoint:
+POST /internal/products/{userId}/coupons/claim-best
+
+Headers:
+Content-Type: application/json
+X-Internal-Token: <internal-token>
+
+Request body:
+{
+  "order_amount": 680,
+  "order_no": "ORD-20260419-0001"
+}
+
+Request field notes:
+- `order_amount`: required, decimal > 0
+- `order_no`: optional, max length 64
+  - when provided, product-service stores order-level selected-coupon record for later user query
+
+Success response (claimed):
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "order_amount": "680.00",
+    "claimed": true,
+    "coupon_type": 20,
+    "discount_rate": "0.20",
+    "discount_amount": "136.00",
+    "final_amount": "544.00",
+    "message": "Coupon claimed"
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T14:21:00.000000"
+}
+
+Success response (no eligible coupon available):
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "order_amount": "680.00",
+    "claimed": false,
+    "coupon_type": null,
+    "discount_rate": "0",
+    "discount_amount": "0",
+    "final_amount": "680.00",
+    "message": "No eligible coupon available"
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T14:21:00.000000"
+}
+
+Success response (claim threshold not met, order_amount < 300):
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "user_id": 3,
+    "order_amount": "280.00",
+    "claimed": false,
+    "coupon_type": null,
+    "discount_rate": "0",
+    "discount_amount": "0",
+    "final_amount": "280.00",
+    "message": "Order amount does not meet claim threshold"
+  },
+  "traceId": "-",
+  "timestamp": "2026-04-19T14:21:00.000000"
+}
+
+
+4) Common Error Responses
+-------------------------
+401:
+{"detail":"Internal token required"}
+
+403:
+{"detail":"Invalid internal token"}
+
+422 (invalid request body):
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": ["body", "order_amount"],
+      "msg": "Field required",
+      "input": {}
+    }
+  ]
+}
+
+429:
+{"detail":"Issue coupon rate limit exceeded"}
+or
+{"detail":"Claim coupon rate limit exceeded"}
+
+503:
+{"detail":"Coupon engine unavailable"}
+
+503 (only when issue-failure simulation is enabled):
+{"detail":"Simulated coupon issue failure"}
+
+
+5) Order-Level Record Behavior (for Frontend Query APIs)
+---------------------------------------------------------
+- If order-service sends `order_no` to internal issue/claim-best calls:
+  - issue record is saved for: "user got which coupon from this order"
+  - claim record is saved for: "user selected which coupon for this order"
+- If `order_no` is omitted:
+  - internal issue/claim works normally
+  - no order-level record exists for frontend query APIs

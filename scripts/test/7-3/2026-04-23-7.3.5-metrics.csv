@@ -1,0 +1,13 @@
+category,metric,baseline_7_3_4_s2,dbfix_7_3_5_s1,dbfix_7_3_5_s2,delta_vs_7_3_4_s2,note
+k6,http_req_failed_rate,0,0.8178121187,0.7848027842,0.7848027842,severe regression after dbfix attempt
+k6,b72_unexpected_5xx_rate,0,0.730972731,0.7542077771,0.7542077771,5xx became dominant
+k6,b72_http_5xx_total,0,1796,2599,2599,high 5xx volume
+k6,http_req_duration_p95_ms,10413.4845908,15026.4988451,15063.4347558,4649.950165,p95 shifted to timeout band
+k6,b72_create_latency_p95_ms,11059.871171,15027.5314432,15072.4360476,4012.5648766,create path timed out
+k6,b72_pay_latency_p95_ms,10282.487532,142.67183695,52.5142794,-10229.9732526,misleading because pay mostly not reached in failed flows
+k6,http_reqs_count,11593,2459,3448,-8145,lower throughput than 7.3.4
+k6,iterations_count,3161,2111,2879,-282,fewer completed end-to-end flows
+k6,checks_success_rate,1,0.061465721,0.0753210691,-0.9246789309,create status check heavily failed
+runtime,product_pool_timeout_occurrences,0,NA,778,778,product-service logs show QueuePool size5 overflow10 timeouts
+runtime,gateway_readtimeout_occurrences,0,NA,1796,1796,gateway upstream read timeout evidence
+ops,gateway_rate_limit_restore,20/60,NA,20/60,0,restored after test
