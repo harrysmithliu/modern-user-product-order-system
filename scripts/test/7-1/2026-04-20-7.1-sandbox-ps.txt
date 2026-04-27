@@ -1,0 +1,11 @@
+NAME                                      IMAGE                              COMMAND                  SERVICE                CREATED          STATUS                       PORTS
+modern-upo-sandbox-frontend               upo-frontend:sandbox               "/docker-entrypoint.…"   frontend               36 minutes ago   Up 36 minutes                0.0.0.0:5173->80/tcp, [::]:5173->80/tcp
+modern-upo-sandbox-gateway                upo-gateway:sandbox                "uvicorn app.main:ap…"   gateway                36 minutes ago   Up 36 minutes                0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+modern-upo-sandbox-mongodb                mongo:7                            "docker-entrypoint.s…"   mongodb                2 days ago       Up About an hour             0.0.0.0:27018->27017/tcp, [::]:27018->27017/tcp
+modern-upo-sandbox-mysql                  mysql:8.4                          "docker-entrypoint.s…"   mysql                  2 days ago       Up About an hour (healthy)   0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp
+modern-upo-sandbox-notification-service   upo-notification-service:sandbox   "python -m app.main"     notification-service   36 minutes ago   Up 36 minutes                
+modern-upo-sandbox-order-service          upo-order-service:sandbox          "java -jar /app/app.…"   order-service          36 minutes ago   Up 36 minutes                0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+modern-upo-sandbox-product-service        upo-product-service:sandbox        "uvicorn app.main:ap…"   product-service        36 minutes ago   Up 36 minutes                0.0.0.0:8002->8002/tcp, [::]:8002->8002/tcp
+modern-upo-sandbox-rabbitmq               rabbitmq:3-management              "docker-entrypoint.s…"   rabbitmq               2 days ago       Up About an hour             0.0.0.0:5673->5672/tcp, [::]:5673->5672/tcp, 0.0.0.0:15673->15672/tcp, [::]:15673->15672/tcp
+modern-upo-sandbox-redis                  redis:7.0                          "docker-entrypoint.s…"   redis                  3 weeks ago      Up About an hour             0.0.0.0:6380->6379/tcp, [::]:6380->6379/tcp
+modern-upo-sandbox-user-service           upo-user-service:sandbox           "uvicorn app.main:ap…"   user-service           36 minutes ago   Up 36 minutes                0.0.0.0:8001->8001/tcp, [::]:8001->8001/tcp

@@ -4,6 +4,16 @@
 
 Tune JVM runtime behavior for the checkout-heavy workload and provide a repeatable diagnostics workflow.
 
+## Current Execution Status (2026-04-24 Snapshot)
+
+- Stage status: `IN PROGRESS` (executed to `7.3.9.1`, not closed).
+- Latest run summary: `scripts/test/7-3/2026-04-24-7.3.9-summary.md`
+- Current conclusion:
+  - stability is acceptable (`0%` failed requests in latest lane),
+  - latency thresholds are still not met,
+  - dominant hotspot evidence points to stock row lock contention on product update SQL.
+- Resume reference: `batch-7-open-items-and-resume-plan.md`
+
 ## Baseline JVM Focus Areas
 
 1. Heap sizing (`-Xms`, `-Xmx`)

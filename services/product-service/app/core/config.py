@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     db_name: str = "h_product_db"
     db_user: str = "app"
     db_password: str = "app_pass"
+    sqlalchemy_pool_size: int = 30
+    sqlalchemy_max_overflow: int = 60
+    sqlalchemy_pool_timeout_seconds: int = 10
+    sqlalchemy_pool_recycle_seconds: int = 1800
     jwt_secret: str = "change-me-in-env"
     jwt_algorithm: str = "HS256"
     redis_enabled: bool = True
