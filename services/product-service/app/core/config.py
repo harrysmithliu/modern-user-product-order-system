@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     db_name: str = "h_product_db"
     db_user: str = "app"
     db_password: str = "app_pass"
+    sqlalchemy_pool_size: int = 30
+    sqlalchemy_max_overflow: int = 60
+    sqlalchemy_pool_timeout_seconds: int = 10
+    sqlalchemy_pool_recycle_seconds: int = 1800
     jwt_secret: str = "change-me-in-env"
     jwt_algorithm: str = "HS256"
     redis_enabled: bool = True
@@ -20,6 +24,9 @@ class Settings(BaseSettings):
     coupon_rate_limit_window_seconds: int = 60
     coupon_issue_rate_limit_max_requests: int = 30
     coupon_claim_rate_limit_max_requests: int = 60
+    coupon_order_record_ttl_seconds: int = 2592000
+    coupon_issue_fail_sim_enabled: bool = False
+    coupon_issue_fail_sim_ratio: float = 0.3
 
     model_config = SettingsConfigDict(
         env_file=".env",

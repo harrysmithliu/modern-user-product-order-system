@@ -1,0 +1,204 @@
+Order-Service Checkout Flow and API Contract (Frontend Facing)
+=============================================================
+
+Version
+-------
+- Scope: current order-service implementation (two-step checkout payment, coupon claim/issue, approve=shipping, reject=refund then rejected)
+- Entry point: Gateway only, with `/api` prefix
+- Purpose: frontend integration and UI state mapping
+
+
+1. User Checkout Flow
+---------------------
+1) User submits create-order request: `POST /api/orders`
+2) Order service validates product status and stock, then reserves stock
+3) Order is created with status `PAYING`
+4) User clicks the pay button on frontend: `POST /api/orders/{order_id}/pay`
+5) During pay step, order service calls coupon `claim-best` to calculate discount/final amount
+6) Order service calls payment platform (simulated payment)
+7) On payment success, order status becomes `PAID_PENDING_APPROVAL`
+8) After payment success, order service triggers coupon `issue` (failure does not roll back the paid order)
+9) API returns order details, including `origin_amount`, `discount_amount`, `final_amount`
+
+Notes
+- If coupon/payment integrations are disabled by config:
+  - no coupon claim (`discount_amount = 0`)
+  - payment step is skipped but pay API still returns success
+- Payment simulation has a 30% random timeout probability (`HTTP 504`)
+- Coupon issue may also fail (for example 30% failure on upstream side); current design is best-effort and non-blocking for checkout success
+- When coupon issue fails, backend now schedules retry tasks asynchronously (frontend flow stays unchanged)
+
+
+2. Admin Workflow
+-----------------
+Approve flow:
+- `POST /api/admin/orders/{order_id}/approve`
+- status transitions to `SHIPPING`
+- `ship_time` is set
+- `expected_delivery_time = next workday 09:15` (fixed business checkpoint)
+- backend scheduler automatically transitions `SHIPPING -> COMPLETED` when expected delivery time is reached and writes `complete_time`
+- scheduler strategy: workday `09:15` main trigger + hourly compensation scan for missed windows
+
+Reject flow:
+- `POST /api/admin/orders/{order_id}/reject`
+- status first transitions to `REFUNDING`
+- payment platform refund is executed (simulated)
+- after refund success, status becomes `REJECTED` and `refund_time` is set
+
+
+3. Gateway API List (Frontend Calls)
+------------------------------------
+User-side:
+- `POST /api/orders`
+- `POST /api/orders/{order_id}/pay`
+- `POST /api/orders/{order_id}/cancel`
+- `GET  /api/orders/my?page=1&size=10`
+
+Admin-side:
+- `GET  /api/admin/orders?page=1&size=10&status={optional_status_code}`
+- `POST /api/admin/orders/{order_id}/approve`
+- `POST /api/admin/orders/{order_id}/reject`
+
+
+4. Request Payloads (JSON, snake_case)
+--------------------------------------
+4.1 Create order
+`POST /api/orders`
+{
+  "request_no": "REQ-20260419-0001",
+  "product_id": 1001,
+  "quantity": 2
+}
+
+Field constraints:
+- `request_no`: required, non-empty string (idempotency key)
+- `product_id`: required, Long
+- `quantity`: required, positive integer
+
+4.2 Pay order
+`POST /api/orders/{order_id}/pay`
+Request body: none
+
+4.3 Admin reject
+`POST /api/admin/orders/{order_id}/reject`
+{
+  "reject_reason": "risk control rejected"
+}
+
+
+5. Unified Response Envelope
+----------------------------
+Success:
+{
+  "code": 0,
+  "message": "success",
+  "data": { ... },
+  "trace_id": "-",
+  "timestamp": "2026-04-19T20:00:00Z"
+}
+
+Failure example:
+{
+  "code": 400,
+  "message": "Order is not pending approval",
+  "data": null,
+  "trace_id": "-",
+  "timestamp": "2026-04-19T20:00:00Z"
+}
+
+Notes:
+- `code = 0` means success
+- `code != 0` usually matches HTTP status code value
+
+
+6. OrderResponse Fields (Core for Frontend)
+-------------------------------------------
+Order object (`data`) includes:
+- `id`: Long
+- `order_no`: String
+- `request_no`: String
+- `user_id`: Long
+- `product_id`: Long
+- `quantity`: int
+- `total_amount`: decimal
+- `origin_amount`: decimal | null
+- `discount_amount`: decimal | null
+- `final_amount`: decimal | null
+- `status`: int
+- `status_label`: String
+- `reject_reason`: String | null
+- `payment_time`: datetime | null
+- `ship_time`: datetime | null
+- `expected_delivery_time`: datetime | null
+- `complete_time`: datetime | null
+- `refund_time`: datetime | null
+- `approve_time`: datetime | null
+- `cancel_time`: datetime | null
+- `create_time`: datetime
+- `update_time`: datetime
+
+
+7. Order Status Dictionary (`status` / `status_label`)
+------------------------------------------------------
+- `0` = `PENDING_APPROVAL` (legacy)
+- `1` = `APPROVED` (legacy)
+- `2` = `REJECTED`
+- `3` = `CANCELLED`
+- `4` = `PAYING`
+- `5` = `PAID_PENDING_APPROVAL`
+- `6` = `SHIPPING`
+- `7` = `COMPLETED`
+- `8` = `REFUNDING`
+
+Compatibility note:
+- status `0/1` is kept for historical-order compatibility; new checkout flow should create `4 (PAYING)` first, then move to `5/6/2/3/8` based on later actions.
+
+Frontend recommendation:
+- use `status_label` for display text
+- use numeric `status` for flow branching
+
+
+8. Frontend Integration Recommendations
+---------------------------------------
+After create-order success:
+- status is `PAYING`
+- route user to payment UI and show "Pay Now"
+
+After pay API call:
+- show amount breakdown:
+  - `origin_amount` (original price)
+  - `discount_amount` (coupon discount)
+  - `final_amount` (actual paid)
+- on payment success, status becomes `PAID_PENDING_APPROVAL`
+- on payment timeout (`504`), order remains `PAYING`, and user can retry pay
+
+My Orders page:
+- default sorted by `create_time` desc (backend pagination)
+- suggested actions by status:
+  - `PAYING`: show "Pay Now" and "Cancel Order"
+  - `PAID_PENDING_APPROVAL`: optionally allow cancel based on product policy
+  - `SHIPPING`: show `expected_delivery_time`
+  - `REJECTED`: show `reject_reason` and `refund_time`
+
+Admin review page:
+- approve returns `SHIPPING` immediately
+- reject returns `REJECTED` after refund completes (may take several seconds)
+
+
+9. Common Error Codes and Frontend Handling
+-------------------------------------------
+- `400`: bad request or invalid state transition (toast + keep page state)
+- `401`: unauthenticated (redirect to login)
+- `403`: forbidden (role/permission issue)
+- `404`: order not found
+- `409`: stock conflict / concurrency conflict (suggest refresh and retry)
+- `429`: gateway rate limit (add client throttling / retry hint)
+- `504`: payment timeout (simulated, about 30% probability in pay step; suggest retry)
+- `500`: internal server error
+
+
+10. Important Notes
+-------------------
+- datetime fields are serialized in UTC; frontend should render in local timezone
+- `complete_time` is filled by backend auto-complete scheduler after expected delivery time is reached
+- Gateway injects user context headers for downstream services; frontend should not send internal user headers manually

@@ -42,6 +42,33 @@ management:
 app:
   product-service:
     base-url: ${APP_PRODUCT_SERVICE_BASE_URL:http://localhost:8002}
+  coupon-platform:
+    enabled: ${APP_COUPON_PLATFORM_ENABLED:false}
+    base-url: ${APP_COUPON_PLATFORM_BASE_URL:http://localhost:8002}
+    issue-path-template: ${APP_COUPON_PLATFORM_ISSUE_PATH_TEMPLATE:/internal/products/%d/coupons/issue}
+    claim-best-path-template: ${APP_COUPON_PLATFORM_CLAIM_BEST_PATH_TEMPLATE:/internal/products/%d/coupons/claim-best}
+    internal-token: ${APP_COUPON_PLATFORM_INTERNAL_TOKEN:change-me}
+    connect-timeout-ms: ${APP_COUPON_PLATFORM_CONNECT_TIMEOUT_MS:1500}
+    read-timeout-ms: ${APP_COUPON_PLATFORM_READ_TIMEOUT_MS:4000}
+  payment-platform:
+    enabled: ${APP_PAYMENT_PLATFORM_ENABLED:false}
+    pay-delay-ms: ${APP_PAYMENT_PLATFORM_PAY_DELAY_MS:3000}
+    refund-delay-ms: ${APP_PAYMENT_PLATFORM_REFUND_DELAY_MS:5000}
+    connect-timeout-ms: ${APP_PAYMENT_PLATFORM_CONNECT_TIMEOUT_MS:1000}
+    read-timeout-ms: ${APP_PAYMENT_PLATFORM_READ_TIMEOUT_MS:6000}
+  workflow:
+    executor-core-pool-size: ${APP_WORKFLOW_EXECUTOR_CORE_POOL_SIZE:16}
+    executor-max-pool-size: ${APP_WORKFLOW_EXECUTOR_MAX_POOL_SIZE:64}
+    executor-queue-capacity: ${APP_WORKFLOW_EXECUTOR_QUEUE_CAPACITY:2000}
+    external-semaphore-permits: ${APP_WORKFLOW_EXTERNAL_SEMAPHORE_PERMITS:200}
+    semaphore-acquire-timeout-ms: ${APP_WORKFLOW_SEMAPHORE_ACQUIRE_TIMEOUT_MS:200}
+    coupon-issue-retry-fixed-delay-ms: ${APP_WORKFLOW_COUPON_ISSUE_RETRY_FIXED_DELAY_MS:3000}
+    coupon-issue-retry-delay-seconds: ${APP_WORKFLOW_COUPON_ISSUE_RETRY_DELAY_SECONDS:30}
+    coupon-issue-max-retries: ${APP_WORKFLOW_COUPON_ISSUE_MAX_RETRIES:8}
+    order-auto-complete-main-cron: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_MAIN_CRON:0 15 9 * * MON-FRI}
+    order-auto-complete-zone: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_ZONE:America/Toronto}
+    order-auto-complete-compensation-fixed-delay-ms: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_COMPENSATION_FIXED_DELAY_MS:3600000}
+    order-auto-complete-batch-size: ${APP_WORKFLOW_ORDER_AUTO_COMPLETE_BATCH_SIZE:100}
   order-events:
     exchange: ${APP_ORDER_EVENTS_EXCHANGE:order.events}
     outbox-batch-size: ${APP_ORDER_EVENTS_OUTBOX_BATCH_SIZE:50}

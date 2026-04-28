@@ -1,0 +1,2 @@
+run_id,case,product_id,vus,stage_result,iterations,http_reqs,http_req_failed_rate,http_req_duration_p95_ms,create_p95_ms,pay_p95_ms,http_5xx_total,unexpected_5xx_rate,product2_stock_before,product2_stock_after,product2_stock_delta,order_service_cpu_mid1_pct,gateway_cpu_mid1_pct
+s1_repro_product2,unique_orders,2,500,failed_latency_thresholds,2570,9426,0,5896.941721499999,25608.813431449984,4343.266887049999,0,0,50000,48733,-1267,41.14,101.88

@@ -1,0 +1,78 @@
+Batch 7.2 Stock-Fixed Rerun Report
+Date: 2026-04-23
+Scope: Follow-up rerun after 2026-04-22 fix report
+
+1) Action Taken
+
+- Applied stock baseline fix:
+  - pinned test SKU: PRODUCT_ID=2
+  - replenished stock for product 2 to 50000 before run
+- Applied temporary gateway create limiter for service-concurrency lane:
+  - MAX_REQUESTS=60000, WINDOW_SECONDS=60
+- Ran S1 again:
+  - unique_orders, 500 VUs, 20s/40s/10s
+- Restored gateway limiter to default:
+  - MAX_REQUESTS=20, WINDOW_SECONDS=60
+
+2) Result Overview
+
+- k6 process status: FAIL (exit code 99)
+- Direct reason: latency thresholds crossed
+  - create p95 = 20598 ms (target < 2000)
+  - pay p95 = 3375 ms (target < 2500)
+  - overall http p95 = 3551 ms (target < 3000)
+- Functional stability:
+  - http_req_failed = 0.00%
+  - http_5xx_total = 0
+
+3) What Was Fixed Compared to Earlier Runs
+
+- Gateway 429 flood is no longer the blocker.
+- Stock exhaustion 400 flood is no longer the blocker.
+- Endpoint execution became functionally stable:
+  - /orders 200 = 2834
+  - /orders/{id}/pay 200 = 2834
+  - /admin/orders approve|reject 200 = 2834
+
+4) Data Integrity Outcome
+
+- duplicate user_id + request_no: none found.
+- due_shipping: 0.
+- coupon task table: no rows in this profile/window.
+- order status change is consistent with successful flow volume:
+  - status 2: +1395
+  - status 6: +1439
+  - total +2834 orders.
+
+5) Remaining Bottleneck
+
+Current blocker has shifted from correctness to performance:
+
+- under S1 load, requests mostly succeed but latency exceeds acceptance thresholds.
+- no evidence of data corruption in this run.
+
+6) Recommended Next Fix Iteration
+
+A) Performance-focused profiling (7.3 linkage)
+- capture stage-window Prometheus query snapshots for:
+  - p95 by endpoint
+  - DB connection pool wait/usage
+  - thread/executor saturation
+  - JVM GC pause and allocation pressure
+
+B) Load model adjustment for 7.2 service-concurrency lane
+- keep fixed high-stock product pool.
+- keep gateway limiter override only for service lane.
+- optionally reduce VUs step width temporarily (e.g., 300 -> 500) to locate inflection point.
+
+C) JVM/executor tuning candidate path (after evidence)
+- evaluate workflow executor sizing and queue strategy.
+- correlate latency spikes with DB and downstream dependencies before changing thresholds.
+
+7) Deliverables
+
+- scripts/test/7-2/2026-04-23-7.2-stockfix-summary.md
+- scripts/test/7-2/2026-04-23-7.2-stockfix-metrics.csv
+- scripts/test/7-2/2026-04-23-7.2-stockfix-command-log.txt
+- scripts/test/7-2/2026-04-23-7.2-stockfix-s1.log
+- scripts/test/7-2/2026-04-23-7.2-stockfix-s1-summary.json

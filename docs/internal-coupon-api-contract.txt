@@ -1,6 +1,11 @@
 Product-Service Internal Coupon API Contract
 ===========================================
 
+Version
+-------
+- Updated: 2026-04-19
+- Scope: order-service to product-service internal coupon APIs
+
 1) Authentication (Current Implementation)
 -----------------------------------------
 - Scope: only these two endpoints:
@@ -25,8 +30,14 @@ X-Internal-Token: <internal-token>
 
 Request body:
 {
-  "order_amount": 520
+  "order_amount": 520,
+  "order_no": "ORD-20260419-0001"
 }
+
+Request field notes:
+- `order_amount`: required, decimal > 0
+- `order_no`: optional, max length 64
+  - when provided, product-service stores order-level issue record for later user query
 
 Success response (threshold matched, example 520 -> 20%):
 {
@@ -74,8 +85,14 @@ X-Internal-Token: <internal-token>
 
 Request body:
 {
-  "order_amount": 680
+  "order_amount": 680,
+  "order_no": "ORD-20260419-0001"
 }
+
+Request field notes:
+- `order_amount`: required, decimal > 0
+- `order_no`: optional, max length 64
+  - when provided, product-service stores order-level selected-coupon record for later user query
 
 Success response (claimed):
 {
@@ -160,3 +177,15 @@ or
 503:
 {"detail":"Coupon engine unavailable"}
 
+503 (only when issue-failure simulation is enabled):
+{"detail":"Simulated coupon issue failure"}
+
+
+5) Order-Level Record Behavior (for Frontend Query APIs)
+---------------------------------------------------------
+- If order-service sends `order_no` to internal issue/claim-best calls:
+  - issue record is saved for: "user got which coupon from this order"
+  - claim record is saved for: "user selected which coupon for this order"
+- If `order_no` is omitted:
+  - internal issue/claim works normally
+  - no order-level record exists for frontend query APIs

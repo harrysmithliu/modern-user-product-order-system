@@ -1,5 +1,16 @@
 import { apiClient, saveToken } from "./client";
-import type { ApiResponse, LoginResponse, Order, PageResponse, Product, ProductPage, UserProfile } from "./types";
+import type {
+  ApiResponse,
+  LoginResponse,
+  Order,
+  OrderIssuedCouponResponse,
+  OrderSelectedCouponResponse,
+  PageResponse,
+  Product,
+  ProductPage,
+  UserCouponBalanceResponse,
+  UserProfile,
+} from "./types";
 
 export async function login(username: string, password: string) {
   const response = await apiClient.post<ApiResponse<LoginResponse>>("/api/auth/login", { username, password });
@@ -38,6 +49,25 @@ export async function listProducts(params: {
   return response.data.data;
 }
 
+export async function fetchMyCouponBalances() {
+  const response = await apiClient.get<ApiResponse<UserCouponBalanceResponse>>("/api/products/me/coupons");
+  return response.data.data;
+}
+
+export async function fetchIssuedCouponByOrder(orderNo: string) {
+  const response = await apiClient.get<ApiResponse<OrderIssuedCouponResponse>>(
+    `/api/products/me/coupons/orders/${orderNo}/issued`,
+  );
+  return response.data.data;
+}
+
+export async function fetchSelectedCouponByOrder(orderNo: string) {
+  const response = await apiClient.get<ApiResponse<OrderSelectedCouponResponse>>(
+    `/api/products/me/coupons/orders/${orderNo}/selected`,
+  );
+  return response.data.data;
+}
+
 export async function createOrder(payload: { request_no: string; product_id: number; quantity: number }) {
   const response = await apiClient.post<ApiResponse<Order>>("/api/orders", payload);
   return response.data.data;
@@ -52,6 +82,11 @@ export async function listMyOrders(page: number, size: number) {
 
 export async function cancelOrder(orderId: number) {
   const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${orderId}/cancel`);
+  return response.data.data;
+}
+
+export async function payOrder(orderId: number) {
+  const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${orderId}/pay`);
   return response.data.data;
 }
 

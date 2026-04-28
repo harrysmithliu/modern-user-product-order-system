@@ -1,0 +1,28 @@
+category,metric,baseline_7_3_2,retest_7_3_4_s2,delta,retest_7_3_4_s1,note
+k6,http_req_failed_rate,0,0,0,0.0005420642,s2 no failed requests; s1 had tiny 5xx tail
+k6,http_req_duration_p95_ms,5896.9417215,10413.4845908,4516.5428693,10226.3624404,worse tail latency vs baseline
+k6,b72_create_latency_p95_ms,25608.81343145,11059.871171,-14548.94226045,10597.255891,improved vs baseline but still over threshold
+k6,b72_pay_latency_p95_ms,4343.26688705,10282.487532,5939.22064495,10283.47793965,worse vs baseline
+k6,http_reqs_count,9426,11593,2167,9224,higher throughput in s2
+k6,iterations_count,2570,3161,591,2516,higher completed flows in s2
+k6,http_req_duration_median_ms,2546.4282095,988.009709,-1558.4185005,934.798974,median improved while p95 worsened
+gateway,gateway_uvicorn_workers,1,2,1,2,tuning applied
+gateway,upstream_max_connections,NA,2048,NA,2048,tuning applied
+gateway,upstream_max_keepalive_connections,NA,512,NA,512,tuning applied
+gateway,upstream_keepalive_expiry_seconds,NA,30,NA,30,tuning applied
+order,hikari_max_pool,10,20,10,20,tuning applied
+order,hikari_min_idle,default,10,NA,10,tuning applied
+order,hikari_connection_timeout_ms,default,3000,NA,3000,tuning applied
+order,java_tool_options,java -jar only,-Xms1g -Xmx1g G1GC etc,NA,-Xms1g -Xmx1g G1GC etc,tuning applied
+runtime,docker_cpu_gateway_mid_pct,101.88,4.80,-97.08,NA,gateway CPU bottleneck relieved
+runtime,docker_cpu_order_mid_pct,41.14,81.09,39.95,NA,load shifted to order-service
+runtime,docker_mem_order_mid_mib,752.5,1110.016,357.516,NA,approx 1.084GiB in s2 mid snapshot
+runtime,hikari_pending_mid_snapshot,17,0,-17,0,s2 mid snapshot did not hit peak queue
+runtime,jvm_gc_overhead_mid,0.0001466667,0.0005233333,0.0003766666,0.0005233333,still low absolute GC overhead
+runtime,g1_old_gen_pre_mib,60.06738281,13.33007812,-46.73730469,13.33007812,new process baseline after restart
+runtime,g1_old_gen_mid_mib,60.17236328,57.85546875,-2.31689453,57.85546875,within normal load growth
+runtime,live_threads_mid,76,217,141,217,thread count significantly higher under tuned run
+logs,order_service_warn_error_latest_run,0/0,0/0,0/0,0/0,latest s2 window has no warn/error
+data,duplicate_requestno_rows,0,0,0,0,integrity check passed
+data,due_shipping_count,0,0,0,0,integrity check passed
+data,product2_stock_delta,-1267,-2875,-1608,-2875,higher successful throughput consumes more stock

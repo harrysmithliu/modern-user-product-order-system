@@ -4,6 +4,7 @@ import com.example.orders.dto.ApiResponse;
 import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,6 +25,12 @@ public class GlobalExceptionHandler {
                 : "Validation failed";
         return ResponseEntity.badRequest()
                 .body(new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), message, null, "-", Instant.now()));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLocking(ObjectOptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>(HttpStatus.CONFLICT.value(), "Concurrent update conflict, please retry", null, "-", Instant.now()));
     }
 
     @ExceptionHandler(Exception.class)

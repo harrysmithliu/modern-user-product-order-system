@@ -1,0 +1,43 @@
+# Batch 7.3.1 Command Log
+
+## Docs and workspace checks
+
+sed -n '1,260p' docs/high-concurrency-validation-and-jvm-tuning/batch-7.3-jvm-tuning-and-diagnostics.md
+sed -n '1,220p' docs/high-concurrency-validation-and-jvm-tuning/batch-7-execution-sop-for-pressure-team.md
+mkdir -p scripts/test/7-3
+
+## Code/version baseline
+
+git rev-parse --abbrev-ref HEAD
+git rev-parse HEAD
+git show -s --format='%ci | %s' HEAD
+git status --short
+git status --short | wc -l
+date '+%Y-%m-%d %H:%M:%S %Z (%z)'
+
+## Artifact fingerprint baseline
+
+shasum -a 256 infra/docker/docker-compose.sandbox.yml scripts/load/k6-batch7-checkout-concurrency.js
+stat -f '%N | size=%z | mtime=%Sm' scripts/load/k6-batch7-checkout-concurrency.js
+
+## Runtime/container baseline
+
+docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}'
+docker inspect --format '{{.Name}}|image={{.Config.Image}}|image_id={{.Image}}|cpus={{.HostConfig.NanoCpus}}|memory={{.HostConfig.Memory}}' modern-upo-sandbox-order-service modern-upo-sandbox-gateway modern-upo-sandbox-mysql
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' modern-upo-sandbox-gateway | rg 'GATEWAY_ORDER_CREATE_RATE_LIMIT|GATEWAY_LOGIN_RATE_LIMIT|GATEWAY_REDIS_ENABLED|GATEWAY_ORDER_SERVICE_URL|GATEWAY_PRODUCT_SERVICE_URL|GATEWAY_USER_SERVICE_URL|GATEWAY_JWT_ALGORITHM'
+docker exec modern-upo-sandbox-order-service env | sort | rg '^(JAVA_|JDK_|SERVER_PORT|SPRING_DATASOURCE_|SPRING_RABBITMQ_|APP_PRODUCT_SERVICE_BASE_URL|APP_ORDER_EVENTS_EXCHANGE|SPRING_PROFILES_ACTIVE|TZ|LANG)'
+docker exec modern-upo-sandbox-order-service java -version
+docker exec modern-upo-sandbox-order-service sh -lc "tr '\000' ' ' </proc/1/cmdline"
+docker exec modern-upo-sandbox-order-service jcmd 1 VM.flags
+
+## Health gate snapshot
+
+curl -sS http://127.0.0.1:8000/ready
+curl -sS http://127.0.0.1:8080/actuator/health
+curl -sS http://127.0.0.1:9090/-/ready
+
+## Product stock baseline lock
+
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT id,product_code,stock,status FROM h_product_db.t_product ORDER BY id;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -e "UPDATE h_product_db.t_product SET stock=50000 WHERE id=2;"
+docker exec modern-upo-sandbox-mysql mysql -uroot -proot_pass -N -e "SELECT id,product_code,stock,status FROM h_product_db.t_product ORDER BY id;"

@@ -1,0 +1,22 @@
+id	bigint	NO	PRI	NULL	auto_increment
+order_no	varchar(32)	NO	UNI	NULL	
+request_no	varchar(64)	YES		NULL	
+user_id	bigint	NO	MUL	NULL	
+product_id	bigint	NO	MUL	NULL	
+quantity	int	NO		NULL	
+total_amount	decimal(10,2)	NO	MUL	NULL	
+origin_amount	decimal(10,2)	YES		NULL	
+discount_amount	decimal(10,2)	YES		NULL	
+final_amount	decimal(10,2)	YES		NULL	
+status	tinyint	NO	MUL	0	
+reject_reason	varchar(255)	YES		NULL	
+approve_time	datetime	YES		NULL	
+cancel_time	datetime	YES		NULL	
+payment_time	datetime	YES		NULL	
+ship_time	datetime	YES		NULL	
+expected_delivery_time	datetime	YES		NULL	
+complete_time	datetime	YES		NULL	
+refund_time	datetime	YES		NULL	
+create_time	datetime	NO	MUL	CURRENT_TIMESTAMP	DEFAULT_GENERATED
+update_time	datetime	NO		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+version	int	NO		0	

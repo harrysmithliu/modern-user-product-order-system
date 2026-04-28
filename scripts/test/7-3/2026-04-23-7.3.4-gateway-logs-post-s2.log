@@ -1,0 +1,25 @@
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started parent process [7]
+INFO:     Started server process [10]
+INFO:     Started server process [9]
+INFO:     Waiting for application startup.
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Application startup complete.
+INFO:     172.20.0.1:64580 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:56334 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:63304 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:64742 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:63710 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:59074 - "GET /ready HTTP/1.1" 200 OK
+INFO:     172.20.0.1:59090 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:63562 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:55382 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:56984 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:60670 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:55084 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:59362 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:64034 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:64998 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:59812 - "GET /metrics HTTP/1.1" 200 OK
+INFO:     172.20.0.1:56338 - "GET /metrics HTTP/1.1" 200 OK
