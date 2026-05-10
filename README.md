@@ -16,51 +16,54 @@ The project is coordinated by the `Project Main Developer`, with specialist agen
 flowchart LR
     PMD[Project Main Developer]
 
-    subgraph FRONTEND[Frontend]
+    subgraph PRODUCT[Product Experience]
         FE[Frontend Agent]
     end
 
-    subgraph BACKEND[Backend Services]
+    subgraph SERVICES[Backend Service Delivery]
         JAVA[Java Agent]
         PY[Python Agent]
         RMQ[RabbitMQ Agent]
     end
 
-    subgraph DATA[Data Layer]
-        MONGO[MongoDB Agent]
+    subgraph DATA[Data and State]
         REDIS[Redis Agent]
+        MONGO[MongoDB Agent]
     end
 
-    subgraph INFRA[Infrastructure]
-        K8S[K8s Agent]
-        AWS[AWS Agent]
+    subgraph PLATFORM[Platform Delivery]
         DEVOPS[DevOps Agent]
         CICD[CI/CD Agent]
-        APPSEC[AppSec Agent]
+        K8S[K8s Agent]
+        AWS[AWS Agent]
     end
 
-    subgraph POST[Post Release]
+    subgraph OPERATIONS[Runtime Assurance]
+        APPSEC[AppSec Agent]
         SRE[SRE Agent]
         DEBUG[Debug Agent]
-        PRESENT[Presentation Agent]
-        INTERVIEW[Interview Agent]
     end
 
     PMD --> FE
     PMD --> JAVA
     PMD --> PY
-    PMD --> RMQ
-    PMD --> MONGO
-    PMD --> REDIS
-    PMD --> K8S
-    PMD --> AWS
-    PMD --> DEVOPS
-    PMD --> CICD
-    PMD --> APPSEC
-    PMD --> SRE
-    PMD --> DEBUG
-    PMD --> PRESENT
-    PMD --> INTERVIEW
+    FE --> JAVA
+    FE --> PY
+    JAVA --> RMQ
+    PY --> RMQ
+    JAVA --> REDIS
+    PY --> REDIS
+    RMQ --> MONGO
+    REDIS --> DEVOPS
+    MONGO --> DEVOPS
+    DEVOPS --> CICD
+    CICD --> K8S
+    K8S --> AWS
+    AWS --> SRE
+    SRE --> DEBUG
+    DEBUG --> PMD
+    APPSEC --> DEVOPS
+    APPSEC --> CICD
 ```
 
 - `Frontend Agent`: owns the user-facing UI, admin console, and backend-to-frontend integration.
@@ -76,8 +79,6 @@ flowchart LR
 - `AppSec Agent`: owns security hardening, secret handling, and Swagger exposure control.
 - `SRE Agent`: owns observability, health checks, and operational readiness.
 - `Debug Agent`: owns local debugging, issue reproduction, and root-cause analysis.
-- `Presentation Agent`: owns README polish, screenshots, and demo narrative.
-- `Interview Agent`: owns resume-oriented phrasing and interview storytelling.
 
 Current phased implementation status lives in [docs/current-status.md](docs/current-status.md).
 
