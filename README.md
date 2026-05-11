@@ -2,7 +2,7 @@
 
 <h2><strong>Main site: </strong><a href="https://harrysmithliu.com"><strong>https://harrysmithliu.com</strong></a></h2>
 
-This is a user-product-order system distilled from years of backend and full-stack development experience. The project compresses common real-world commerce platform concerns into a compact portfolio system covering users, products, orders, admin operations, messaging, caching, deployment, and operational readiness.
+This is a ERP-style system distilled from years of backend and full-stack development experience. The project compresses common real-world commerce platform concerns into a compact portfolio system covering users, products, orders, admin operations, messaging, caching, deployment, and operational readiness.
 
 The entire implementation was developed through an AI Coding Agent workflow, with agents assisting across architecture design, service implementation, debugging, documentation, infrastructure, CI/CD, and cloud deployment.
 
