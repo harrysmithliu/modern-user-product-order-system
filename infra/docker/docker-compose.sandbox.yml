@@ -180,13 +180,12 @@ services:
     image: upo-gateway:sandbox
     build:
       context: ../..
-      dockerfile: gateway/Dockerfile
+      dockerfile: gateway-go/Dockerfile
     container_name: modern-upo-sandbox-gateway
     restart: unless-stopped
     environment:
       GATEWAY_JWT_SECRET: ${SANDBOX_JWT_SECRET:-change-me-in-env}
       GATEWAY_JWT_ALGORITHM: HS256
-      GATEWAY_UVICORN_WORKERS: ${SANDBOX_GATEWAY_UVICORN_WORKERS:-2}
       GATEWAY_CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
       GATEWAY_USER_SERVICE_URL: http://user-service:8001
       GATEWAY_PRODUCT_SERVICE_URL: http://product-service:8002

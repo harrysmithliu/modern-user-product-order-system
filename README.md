@@ -1,65 +1,86 @@
 # Modern User-Product-Order System
 
-<h2><a href="https://harrysmithliu.com"><font color="#000000"><strong>Main site: https://harrysmithliu.com</strong></font></a></h2>
+<h2><strong>Main site: </strong><a href="https://harrysmithliu.com"><strong>https://harrysmithliu.com</strong></a></h2>
 
-A portfolio-focused polyglot microservices commerce demo built around three core domains:
+This is a SaaS-style microservices platform distilled from years of backend and full-stack development experience. The project compresses common real-world platform concerns into a compact portfolio system covering high-concurrency user, product, and order workflows, along with admin operations, messaging, caching, deployment, and operational readiness.
 
-- users
-- products
-- orders
+The entire implementation was developed through an AI Coding Agent workflow, with agents assisting across architecture design, service implementation, debugging, documentation, infrastructure, CI/CD, and cloud deployment.
 
-The project is intentionally designed as a **minimal but complete modern architecture demo**. It emphasizes clear service boundaries, runnable local development, API-driven frontend integration, and room for production-oriented upgrades such as Redis, RabbitMQ, Kubernetes, and cloud deployment.
+Technology-wise, the system combines React, Vite, and TypeScript on the frontend; FastAPI and Spring Boot on the backend; MySQL, Redis, MongoDB, and RabbitMQ across the data and messaging layers; and Docker, Kubernetes, AWS, Nginx, Let's Encrypt, Prometheus, Grafana, k6, and GitHub Actions for delivery and operations.
 
-## Highlights
+## Agent Delivery Model
 
-- Polyglot backend:
-  - `user-service` in Python / FastAPI
-  - `product-service` in Python / FastAPI
-  - `order-service` in Java / Spring Boot
-- Dedicated API gateway with JWT verification and route forwarding
-- React + Vite + TypeScript frontend
-- MySQL split by domain schema
-- Idempotency-ready order design with `request_no`
-- Admin and user flows in a single demo UI
-- Local-first development with infrastructure already available for Redis and RabbitMQ
+The project is coordinated by the `Project Main Developer`, with specialist agents owning clear delivery boundaries across frontend, backend services, data, infrastructure, and post-release work.
 
-## Current Status
+```mermaid
+flowchart LR
+    PMD[Project Main Developer]
 
-The repository is under phased implementation.
+    subgraph PRODUCT[Product Experience]
+        FE[Frontend Agent]
+    end
 
-- Phase 1:
-  - login
-  - profile update
-  - password change
-  - product listing
-  - create order
-  - cancel order
-  - admin order review
-  - admin product management
-- Phase 2:
-  - Redis-backed product cache
-  - Redis-backed logout blacklist
-  - Redis-backed gateway rate limiting
-  - RabbitMQ-backed order event flow
-  - outbox-backed event staging in `order-service`
-  - MongoDB-backed order event timeline sink
-  - Docker Compose
-  - unified production polish
-- Phase 3:
-  - Kubernetes
-  - monitoring
-  - load testing
-  - AWS migration notes
-  - CI/CD baseline
+    subgraph SERVICES[Backend Service Delivery]
+        JAVA[Java Agent]
+        PY[Go / Python Agent]
+        RMQ[RabbitMQ Agent]
+    end
 
-Phase 3 has now started with:
+    subgraph DATA[Data and State]
+        REDIS[Redis Agent]
+        MONGO[MongoDB Agent]
+    end
 
-- a Kubernetes sandbox manifest baseline under `infra/k8s/sandbox`
-- runtime-configurable frontend API routing for ingress-based deployments
-- Prometheus / Grafana bootstrap assets under `infra/monitoring`
-- starter `k6` load-test scripts under `scripts/load`
-- a first GitHub Actions CI workflow under `.github/workflows/ci.yml`
-- expanded AWS production migration notes under `infra/aws/prod`
+    subgraph PLATFORM[Platform Delivery]
+        DEVOPS[DevOps Agent]
+        CICD[CI/CD Agent]
+        K8S[K8s Agent]
+        AWS[AWS Agent]
+    end
+
+    subgraph OPERATIONS[Runtime Assurance]
+        APPSEC[AppSec Agent]
+        SRE[SRE Agent]
+        DEBUG[Debug Agent]
+    end
+
+    PMD --> FE
+    PMD --> JAVA
+    PMD --> PY
+    FE --> JAVA
+    FE --> PY
+    JAVA --> RMQ
+    PY --> RMQ
+    JAVA --> REDIS
+    PY --> REDIS
+    RMQ --> MONGO
+    REDIS --> DEVOPS
+    MONGO --> DEVOPS
+    DEVOPS --> CICD
+    CICD --> K8S
+    K8S --> AWS
+    AWS --> SRE
+    SRE --> DEBUG
+    DEBUG --> PMD
+    APPSEC --> DEVOPS
+    APPSEC --> CICD
+```
+
+- `Frontend Agent`: owns the user-facing UI, admin console, and backend-to-frontend integration.
+- `Java Agent`: owns the core backend services, business logic, concurrency, JVM behavior, and service-level testing.
+- `Go / Python Agent`: owns lightweight Python services, async consumers, and message-driven runtime logic.
+- `RabbitMQ Agent`: owns event publishing/consumption, routing, and outbox-style messaging flow.
+- `MongoDB Agent`: owns audit persistence and event trace storage.
+- `Redis Agent`: owns caching, rate limiting, and logout/session revocation support.
+- `K8s Agent`: owns Kubernetes manifests and sandbox deployment baseline.
+- `AWS Agent`: owns AWS rollout scripts and cloud deployment paths.
+- `DevOps Agent`: owns Docker Compose environments, release workflow, and environment promotion.
+- `CI/CD Agent`: owns GitHub Actions workflows and automated build/deploy pipelines.
+- `AppSec Agent`: owns security hardening, secret handling, and Swagger exposure control.
+- `SRE Agent`: owns observability, health checks, and operational readiness.
+- `Debug Agent`: owns local debugging, issue reproduction, and root-cause analysis.
+
+Current phased implementation status lives in [docs/current-status.md](docs/current-status.md).
 
 ## Screenshots
 
