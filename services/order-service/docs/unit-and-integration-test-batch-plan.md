@@ -101,12 +101,14 @@ Validate the external HTTP contract with `RestAssured`.
 - add API-level integration tests for order creation, payment, cancellation, approval, and rejection
 - assert HTTP status codes, response payloads, and critical business fields
 - validate the admin and user order flows through the actual web layer
+- pass the request-user headers exactly as the production controller contract expects
 
 ### Output
 
 - HTTP contract tests for the main order endpoints
 - repeatable API checks against a test-started Spring Boot application
 - evidence that the public order surface works end to end
+- executable examples of the current user/admin header-based request contract
 
 ## Batch 5 - JaCoCo Enforcement
 
