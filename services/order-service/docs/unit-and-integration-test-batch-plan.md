@@ -81,12 +81,14 @@ Verify that the order workflow persists the right data and transaction boundarie
 - verify order state transitions against the database
 - verify outbox record creation inside the same transaction
 - cover rollback or compensation behavior where it matters
+- run the persistence tests against an isolated in-memory test database
 
 ### Output
 
 - repository and transaction-level integration tests
 - confidence that the core order write path is consistent
 - stronger validation of database-backed workflow behavior
+- repeatable `verify` coverage without depending on an external MySQL instance
 
 ## Batch 4 - RestAssured API Coverage
 
