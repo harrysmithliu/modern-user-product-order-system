@@ -32,7 +32,7 @@ All agents should:
 - order lifecycle behavior
 - concurrency, JVM, persistence, and Java test coverage
 
-`Python Agent` owns:
+`Go / Python Agent` owns:
 
 - `gateway`
 - `services/user-service`

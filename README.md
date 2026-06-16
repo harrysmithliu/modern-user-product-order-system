@@ -22,7 +22,7 @@ flowchart LR
 
     subgraph SERVICES[Backend Service Delivery]
         JAVA[Java Agent]
-        PY[Python Agent]
+        PY[Go / Python Agent]
         RMQ[RabbitMQ Agent]
     end
 
@@ -68,7 +68,7 @@ flowchart LR
 
 - `Frontend Agent`: owns the user-facing UI, admin console, and backend-to-frontend integration.
 - `Java Agent`: owns the core backend services, business logic, concurrency, JVM behavior, and service-level testing.
-- `Python Agent`: owns lightweight Python services, async consumers, and message-driven runtime logic.
+- `Go / Python Agent`: owns lightweight Python services, async consumers, and message-driven runtime logic.
 - `RabbitMQ Agent`: owns event publishing/consumption, routing, and outbox-style messaging flow.
 - `MongoDB Agent`: owns audit persistence and event trace storage.
 - `Redis Agent`: owns caching, rate limiting, and logout/session revocation support.
