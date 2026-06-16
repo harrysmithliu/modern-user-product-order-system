@@ -122,12 +122,17 @@ Turn coverage reporting into a build quality gate.
 - fail the build if coverage falls below the agreed minimum
 - wire the coverage step into CI if needed
 - keep the thresholds realistic for the current codebase and batch history
+- use an initial bundle-level gate that matches the current test maturity:
+  - `LINE >= 55%`
+  - `METHOD >= 65%`
+  - keep branch coverage visible in reports, but do not gate on it yet
 
 ### Output
 
 - coverage reporting
 - coverage verification in `verify`
 - a CI-friendly quality gate for future changes
+- a documented first-step threshold baseline that can be raised in later batches
 
 ## Acceptance Criteria
 
